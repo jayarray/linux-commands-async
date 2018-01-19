@@ -4,8 +4,48 @@ var path = require('path');
 var childProcess = require('child_process');
 
 //-----------------------------------
+// ERROR CATCHING
+
+function fatalFail(error) {
+  console.log(error);
+  process.exit(-1);
+}
+
+//-----------------------------------
+// HELPER
+class SavedData {
+  constructor(thing) {
+    this.value = '';
+    thing.on('data', this.callback_.bind(this));
+  }
+
+  callback_(data) {
+    this.value += data.toString();
+  }
+}
+
+//-----------------------------------
 // EXECUTE
 
+class Execute {
+  static local(cmd, args) {
+    let child = childProcess.spawn(cmd, args);
+    let errors = new SavedData(child.stderr);
+    let outputs = new SavedData(child.stdout);
+
+    return new Promise(resolve => {
+      child.on('close', exitCode => {
+        resolve({
+          stderr: errors.value,
+          stdout: outputs.value,
+          exitCode: exitCode
+        });
+      });
+    });
+  }
+}
+
+/*
 class Execute {
   static local(cmd, args) {
     let process = childProcess.spawnSync(cmd, args);
@@ -29,7 +69,7 @@ class Execute {
       status: process.status && process.status.toString().trim()
     };
   }
-};
+};*/
 
 //---------------------------------------
 // TIMESTAMP
@@ -669,3 +709,16 @@ exports.Rename = Rename;
 exports.File = File;
 exports.Directory = Directory;
 exports.BashScript = BashScript;
+
+//---------------------------------------
+// TEST
+
+let cmd = 'ls';
+let args = ['/home/isa'];
+
+Execute.local(cmd, args).then((values) => {
+  console.log('VALUES');
+  console.log('stderr: ' + values.stderr);
+  console.log('stdout: ' + values.stdout);
+  console.log('exit_code: ' + values.exitCode);
+}).catch(fatalFail);
