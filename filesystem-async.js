@@ -1,6 +1,7 @@
+var path = require('path');
 var fs = require('fs-extra');
 var rsync = require('rsync');
-var path = require('path');
+var simpleSsh = require('simple-ssh');
 var childProcess = require('child_process');
 
 //-----------------------------------
@@ -43,33 +44,35 @@ class Execute {
       });
     });
   }
-}
-
-/*
-class Execute {
-  static local(cmd, args) {
-    let process = childProcess.spawnSync(cmd, args);
-
-    return {
-      error: process.error && process.error.toString().trim() || '',
-      stdout: process.stdout && process.stdout.toString().trim() || '',
-      stderr: process.stderr && process.stderr.toString().trim() || '',
-      status: process.status && process.status.toString().trim() || ''
-    };
-  }
 
   static remote(user, host, cmd) {
-    let remoteCmd = `ssh ${user}@${host} "${cmd}"`;
-    let process = childProcess.spawnSync(remoteCmd);
+    let ssh = new simpleSsh({
+      user: user,
+      host: host
+    });
 
-    return {
-      error: process.error && process.error.toString().trim(),
-      stdout: process.stdout && process.stdout.toString().trim(),
-      stderr: process.stderr && process.stderr.toString().trim(),
-      status: process.status && process.status.toString().trim()
-    };
+
+    return new Promise(resolve => {
+      ssh.exec(cmd, {
+        out: function (stdout) {
+          // TO DO
+        },
+        err: function (stderr) {
+          // TO DO
+        },
+        exit: function (code) {
+          // TO DO 
+        }
+      }).start();
+
+      resolve({
+        stdout: ssh.stdout,
+        stderr: ssh.stderr,
+        exitCode: ssh.exitCode
+      });
+    });
   }
-};*/
+}
 
 //---------------------------------------
 // TIMESTAMP
@@ -222,156 +225,175 @@ class Timestamp {
 }
 
 //-------------------------------------------
+// STATS
+class Stats {
+  static stats(path) {
+    return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ stats: null, error: error });
+        return;
+      }
+
+      fs.lstat(path, (err, stats) => {
+        if (err)
+          resolve({ stats: null, error: err });
+        else {
+          resolve({
+            stats: {
+              size: stats.size,  // bytes
+              mode: stats.mode,
+              uid: stats.uid,
+              gid: stats.gid,
+              others_x: stats.mode & 1 ? 'x' : '-',
+              others_w: stats.mode & 2 ? 'w' : '-',
+              others_r: stats.mode & 4 ? 'r' : '-',
+              group_x: stats.mode & 8 ? 'x' : '-',
+              group_w: stats.mode & 16 ? 'w' : '-',
+              group_r: stats.mode & 32 ? 'r' : '-',
+              owner_x: stats.mode & 64 ? 'x' : '-',
+              owner_w: stats.mode & 128 ? 'w' : '-',
+              owner_r: stats.mode & 256 ? 'r' : '-',
+              is_dir: stats.isDirectory(),
+              is_symlink: stats.isSymbolicLink()
+            },
+            error: null
+          });
+        }
+      });
+    });
+  }
+}
+
+//-------------------------------------------
 // PATH
 
 class Path {
-  static exists(path) {
-    if (!path)
-      return { exists: null, error: `Path is ${Path.get_invalid_type(path)}` };
-    return { exists: fs.existsSync(path.trim()), error: null };
+  static exists(p) {
+    return new Promise(resolve => {
+      let error = Path.error(p);
+      if (error) {
+        resolve({ exists: null, error: error });
+        return;
+      }
+
+      fs.access(p, fs.F_OK, (err) => {
+        if (err)
+          resolve({ exists: false, error: null });
+        else
+          resolve({ exists: true, error: null });
+      });
+    });
   }
 
-  static is_file(path) {
-    if (!path)
-      return { isFile: null, error: `Path is ${Path.get_invalid_type(path)}` };
+  static is_file(p) {
+    return new Promise(resolve => {
+      let error = Path.error(p);
+      if (error) {
+        resolve({ isFile: null, error: error });
+        return;
+      }
 
-    let pTrimmed = path.trim();
-    if (!Path.exists(pTrimmed))
-      return { isFile: null, error: 'Path does not exist' };
-
-    try {
-      let isFile = fs.lstatSync(pTrimmed).isFile();
-      let isDir = !fs.lstatSync(pTrimmed).isDirectory();
-      return { isFile: isFile && !isDir, error: null };
-    }
-    catch (e) {
-      return { isFile: null, error: e };
-    }
+      fs.lstat(p, (err, stats) => {
+        if (err)
+          resolve({ isFile: null, error: err });
+        else
+          resolve({ isFile: stats.isFile() && !stats.isDirectory(), error: null });
+      });
+    });
   }
 
-  static is_dir(path) {
-    if (!path)
-      return { isDir: null, error: `Path is ${Path.get_invalid_type(path)}` };
+  static is_dir(p) {
+    return new Promise(resolve => {
+      let error = Path.error(p);
+      if (error) {
+        resolve({ isDir: null, error: error });
+        return;
+      }
 
-    let pTrimmed = path.trim();
-    if (!Path.exists(pTrimmed))
-      return { isDir: null, error: 'Path does not exist' };
-
-    try {
-      let isDir = fs.lstatSync(pTrimmed).isDirectory();
-      return { isDir: isDir, error: null };
-    }
-    catch (e) {
-      return { isDir: null, error: e };
-    }
+      fs.lstat(p, (err, stats) => {
+        if (err)
+          resolve({ isDir: null, error: err });
+        else
+          resolve({ isDir: stats.isDirectory(), error: null });
+      });
+    });
   }
 
-  static filename(path) {
-    if (!path)
-      return { filename: null, error: `Path is ${Path.get_invalid_type(path)}` };
-
-    let pTrimmed = path.trim();
-    if (!Path.exists(pTrimmed))
-      return { filename: null, error: 'Path does not exist' };
-    return { filename: path.parse(pTrimmed).base, error: null };
+  static filename(p) {
+    let error = Path.error(p);
+    if (error)
+      return { name: null, error: error };
+    return { name: path.basename(p.trim()), error: null };
   }
 
-  static parent_dir_name(path) {
-    if (!path)
-      return { name: null, error: `Path is ${Path.get_invalid_type(path)}` };
-
-    let pTrimmed = path.trim();
-    if (!Path.exists(pTrimmed))
-      return { name: null, error: 'Path does not exist' };
-    return { name: path.parse(pTrimmed).base, error: null };
+  static extension(p) {
+    let error = Path.error(p);
+    if (error)
+      return { extension: null, error: error };
+    return { extension: path.extname(p.trim()), error: null };
   }
 
-  static parent_dir(path) {
-    if (!path)
-      return { dir: null, error: `Path is ${Path.get_invalid_type(path)}` };
-
-    let pTrimmed = path.trim();
-    if (!Path.exists(pTrimmed))
-      return { dir: null, error: 'Path does not exist' };
-    return { dir: path.dirname(path.trim()), error: null }; // Full path to parent dir
+  static parent_dir_name(p) {
+    let error = Path.error(p);
+    if (error)
+      return { dir: null, error: error };
+    return { dir: path.dirname(p.trim()).split(path.sep).pop(), error: null };
   }
 
-  static is_valid(path) {
-    return path != null && path != undefined && path != '' && path.trim() != '';
+  static parent_dir(p) {
+    let error = Path.error(p);
+    if (error)
+      return { dir: null, error: error };
+    return { dir: path.dirname(p.trim()), error: null }; // Full path to parent dir
   }
 
-  static get_invalid_type(path) {
-    if (path == null)
+  static is_valid(p) {
+    return p != null && p != undefined && p != '' && p.trim() != '';
+  }
+
+  static get_invalid_type(p) {
+    if (p == null)
       return 'null';
-    else if (path == undefined)
+    else if (p == undefined)
       return 'undefined';
-    else if (path == '')
+    else if (p == '')
       return 'empty string';
-    else if (path.trim() == '')
+    else if (p.trim() == '')
       return 'whitespace';
     else
-      return typeof path;
+      return typeof p;
   }
 
-  static escape(path) {
-    if (!path)
-      return { string: null, error: `Path is ${Path.get_invalid_type(path)}` };
+  static error(p) {
+    if (!Path.is_valid(p)) {
+      if (!p)
+        return `Path is ${Path.get_invalid_type(p)}`;
 
-    let pTrimmed = path.trim();
-    if (!Path.exists(pTrimmed))
-      return { string: null, error: 'Path does not exist' };
+      let pTrimmed = p.trim();
+      if (!Path.exists(pTrimmed))
+        return 'No such file or directory';
+    }
+    return null;
+  }
+
+  static escape(p) {
+    let error = Path.error(p);
+    if (error)
+      return { string: null, error: error };
     return { string: escape(path), error: null };
   }
 
-  static containsWhiteSpace(path) {
-    if (!path)
-      return { hasWhitespace: null, error: `Path is ${Path.get_invalid_type(path)}` };
-
-    let pTrimmed = path.trim();
-    if (!Path.exists(pTrimmed))
-      return { hasWhitespace: null, error: 'Path does not exist' };
+  static containsWhiteSpace(p) {
+    let error = Path.error(p);
+    if (error)
+      return { hasWhitespace: null, error: error };
 
     path.forEach(char => {
       if (char.trim() == '')
         return { hasWhitespace: true, error: null };
     });
     return { hasWhitespace: false, error: null };
-  }
-}
-
-//-------------------------------------------
-// STATS
-
-class Stats {
-  static stats(path) {
-    if (!path)
-      return { stats: null, error: `Path is ${Path.get_invalid_type(path)}` };
-
-    let pTrimmed = path.trim();
-    if (!Path.exists(pTrimmed))
-      return { stats: null, error: 'Path does not exist' };
-
-    let fstats = fs.statSync(path);
-
-    return {
-      stats: {
-        size: fstats.size,  // bytes
-        mode: fstats.mode,
-        others_x: fstats.mode & 1 ? 'x' : '-',
-        others_w: fstats.mode & 2 ? 'w' : '-',
-        others_r: fstats.mode & 4 ? 'r' : '-',
-        group_x: fstats.mode & 8 ? 'x' : '-',
-        group_w: fstats.mode & 16 ? 'w' : '-',
-        group_r: fstats.mode & 32 ? 'r' : '-',
-        owner_x: fstats.mode & 64 ? 'x' : '-',
-        owner_w: fstats.mode & 128 ? 'w' : '-',
-        owner_r: fstats.mode & 256 ? 'r' : '-',
-        is_dir: fstats.mode & 512 ? 'd' : '-',
-        uid: fstats.uid,
-        gid: fstats.gid
-      },
-      error: null
-    };
   }
 }
 
@@ -713,12 +735,29 @@ exports.BashScript = BashScript;
 //---------------------------------------
 // TEST
 
-let cmd = 'ls';
-let args = ['/home/isa'];
 
-Execute.local(cmd, args).then((values) => {
-  console.log('VALUES');
-  console.log('stderr: ' + values.stderr);
-  console.log('stdout: ' + values.stdout);
-  console.log('exit_code: ' + values.exitCode);
+
+let P = '/home/isa/test.txt';
+
+console.log('\nTesting Path (Async)');
+Path.exists(P).then(E => {
+  if (E.error) {
+    console.log(`E.error:: ${E.error}`);
+    return;
+  }
+  console.log(`EXISTS: ${E.exists}`);
+
+  Path.is_dir(P).then(D => {
+    if (D.error) {
+      console.log(`D.error:: ${D.error}`);
+      return;
+    }
+    console.log(`IS_DIR: ${D.isDir}`);
+
+    let pDir = Path.parent_dir(P);
+    if (pDir.error) {
+      console.log(`pDir.error:: ${pDir.error}`);
+    }
+    console.log(`PARENT_DIR: ${pDir.dir}`);
+  }).catch(fatalFail);
 }).catch(fatalFail);
