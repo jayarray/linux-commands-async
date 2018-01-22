@@ -741,10 +741,10 @@ class File {
     return new Promise(resolve => {
       fs.readFile(path, (err, data) => {
         if (err) {
-          resolve({content: null, error: err});
+          resolve({ content: null, error: err });
           return;
         }
-        resolve({content: data, error: null});
+        resolve({ content: data, error: null });
       });
     });
   }
@@ -753,10 +753,10 @@ class File {
     return new Promise(resolve => {
       File.read(path).then(values => {
         if (values.error) {
-          resolve({lines: null, error: values.error});
+          resolve({ lines: null, error: values.error });
           return;
         }
-        resolve({lines: values.content.toString().split('\n'), error: null});
+        resolve({ lines: values.content.toString().split('\n'), error: null });
       });
     });
   }
@@ -799,21 +799,21 @@ class BashScript {
     return new Promise(resolve => {
       File.create(path, `#!/bin/bash\n${content}`).then(results => {
         if (results.err) {
-          resolve({success: false, error: results.err});
+          resolve({ success: false, error: results.err });
           return;
         }
 
         if (!results.success) {
-          resolve({success: false, error: null});
+          resolve({ success: false, error: null });
           return;
         }
 
         Chmod.chmod(op, who, types, path).then(values => {
           if (values.error) {
-            resolve({success: false, error: values.error});
+            resolve({ success: false, error: values.error });
             return;
           }
-          resolve({success: values.success, error: null});
+          resolve({ success: values.success, error: null });
         });
       });
     });
@@ -823,23 +823,23 @@ class BashScript {
     return new Promise(resolve => {
       BashScript.create(path, content).then(results => {
         if (results.error) {
-          resolve({success: false, error: results.error});
+          resolve({ success: false, error: results.error });
           return;
         }
 
         if (!results.success) {
-          resolve({success: false, error: null});
+          resolve({ success: false, error: null });
           return;
         }
 
         Execute.local(path).then(values => {
           if (values.stderr) {
-            resolve({success: false, error: values.stderr});
+            resolve({ success: false, error: values.stderr });
             return;
           }
-          
-          resolve({success: true, error: null});
-          File.remove(path).then(ret => {});
+
+          resolve({ success: true, error: null });
+          File.remove(path).then(ret => { });
         });
       });
     });
@@ -871,17 +871,14 @@ exports.BashScript = BashScript;
 
 
 
-let P = '/home/isa/test_dir';
+let P = '/home/isa';
 
-console.log('Testing REMOVE (dir)...');
-Remove.directory(P).then(S => {
+console.log('Testing MKDIR (dir)...');
+List.visible(P).then(S => {
   if (S.error) {
-    console.log(`REMOVE_ERROR:: ${S.error}`);
+    console.log(`ERROR: ${S.error}`);
     return;
   }
-  console.log(`REMOVE_SUCCESSFUL: ${S.success}`);
+  console.log(`FILES: ${S.files.join('\n')}`);
 
-  Path.exists(P).then(E => {
-    console.log(`EXISTS: ${E.exists}`);
-  }).catch(fatalFail);
 }).catch(fatalFail);
