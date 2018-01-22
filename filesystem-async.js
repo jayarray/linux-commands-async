@@ -553,8 +553,15 @@ class Mkdir {
 
 class Move {
   static move(src, dest) {
-    fs.moveSync(src, dest);
-    return !Path.exists(src) && Path.exists(dest);
+    return new Promise(resolve => {
+      fs.move(src, dest, (err) => {
+        if (err) {
+          resolve({success: false, error: err});
+          return;
+        }
+        resolve({success: true, error: null});
+      });
+    });
   }
 }
 
