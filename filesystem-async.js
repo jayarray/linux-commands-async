@@ -611,18 +611,22 @@ class List {
 
 class Rsync {
   static rsync(user, host, src, dest) {
-    let r = new Rsync()
-      .shell('ssh')
-      .flags('av')
-      .set('progress')
-      .set('size-only')
-      .source(src)
-      .destination(dest);
+    return new Promise(resolve => {
+      let r = new Rsync()
+        .shell('ssh')
+        .flags('av')
+        .set('progress')
+        .set('size-only')
+        .source(src)
+        .destination(dest);
 
-    r.execute(function (error, code, cmd) {
-      if (error)
-        console.log(`ERROR: ${error}`);
-      console.log('Rsync complete!');
+      r.execute(function (error, code, cmd) {
+        if (error) {
+          resolve({success: false, error: error});
+          return;
+        }
+        resolve({success: true, error: null});
+      });
     });
   }
 }
@@ -865,20 +869,3 @@ exports.Rename = Rename;
 exports.File = File;
 exports.Directory = Directory;
 exports.BashScript = BashScript;
-
-//---------------------------------------
-// TEST
-
-
-
-let P = '/home/isa';
-
-console.log('Testing MKDIR (dir)...');
-List.visible(P).then(S => {
-  if (S.error) {
-    console.log(`ERROR: ${S.error}`);
-    return;
-  }
-  console.log(`FILES: ${S.files.join('\n')}`);
-
-}).catch(fatalFail);
