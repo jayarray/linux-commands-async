@@ -1,6 +1,5 @@
 var path = require('path');
 var fs = require('fs-extra');
-var rsync = require('rsync');
 var mkdirp = require('mkdirp');
 var childProcess = require('child_process');
 
@@ -13,7 +12,7 @@ function fatalFail(error) {
 }
 
 //-----------------------------------
-// HELPER
+// SAVING DATA (to string)
 class SavedData {
   constructor(thing) {
     this.value = '';
@@ -46,7 +45,22 @@ class Execute {
   }
 
   static remote(user, host, cmd) {
-    // TO DO
+    return new Promise(resolve => {
+      let args = `${user}@${host} '${cmd}'`;
+      let child = childProcess.spawn('ssh', args);
+      let errors = new SavedData(child.stderr);
+      let outputs = new SavedData(child.stdout);
+  
+      return new Promise(resolve => {
+        child.on('close', exitCode => {
+          resolve({
+            stderr: errors.value,
+            stdout: outputs.value,
+            exitCode: exitCode
+          });
+        });
+      });
+    });
   }
 }
 
