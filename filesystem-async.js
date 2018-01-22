@@ -1,6 +1,7 @@
 var path = require('path');
 var fs = require('fs-extra');
 var rsync = require('rsync');
+var mkdirp = require('mkdirp');
 var simpleSsh = require('simple-ssh');
 var childProcess = require('child_process');
 
@@ -267,7 +268,6 @@ class Stats {
 
 //-------------------------------------------
 // PATH
-
 class Path {
   static exists(p) {
     return new Promise(resolve => {
@@ -399,40 +399,48 @@ class Path {
 
 //-------------------------------------------
 // PERMISSIONS
-
 class Permissions {
   static permissions(path) {
-    let stats = fs.statSync(path);
+    return new Promise(resolve => {
+      fs.lstat(path, (err, stats) => {
+        if (err)
+          resolve({ permissions: null, error: err });
+        else {
+          let others = {
+            x: stats.mode & 1 ? 'x' : '-',
+            w: stats.mode & 2 ? 'w' : '-',
+            r: stats.mode & 4 ? 'r' : '-',
+          };
+          let others_string = `${others.r}${others.w}${others.x}`;
 
-    let others = {
-      x: stats.mode & 1 ? 'x' : '-',
-      w: stats.mode & 2 ? 'w' : '-',
-      r: stats.mode & 4 ? 'r' : '-',
-    };
-    let others_string = `${others.r}${others.w}${others.x}`;
+          let group = {
+            x: stats.mode & 8 ? 'x' : '-',
+            w: stats.mode & 16 ? 'w' : '-',
+            r: stats.mode & 32 ? 'r' : '-',
+          };
+          let group_string = `${group.r}${group.w}${group.x}`;
 
-    let group = {
-      x: stats.mode & 8 ? 'x' : '-',
-      w: stats.mode & 16 ? 'w' : '-',
-      r: stats.mode & 32 ? 'r' : '-',
-    };
-    let group_string = `${group.r}${group.w}${group.x}`;
+          let owner = {
+            x: stats.mode & 64 ? 'x' : '-',
+            w: stats.mode & 128 ? 'w' : '-',
+            r: stats.mode & 256 ? 'r' : '-',
+          };
+          let owner_string = `${owner.r}${owner.w}${owner.x}`;
 
-    let owner = {
-      x: stats.mode & 64 ? 'x' : '-',
-      w: stats.mode & 128 ? 'w' : '-',
-      r: stats.mode & 256 ? 'r' : '-',
-    };
-    let owner_string = `${owner.r}${owner.w}${owner.x}`;
-
-    return {
-      others: others,
-      others_string: others_string,
-      group: group,
-      group_string: group_string,
-      owner: owner,
-      owner_string: owner_string
-    };
+          resolve({
+            permissions: {
+              others: others,
+              others_string: others_string,
+              group: group,
+              group_string: group_string,
+              owner: owner,
+              owner_string: owner_string
+            },
+            error: null
+          });
+        }
+      });
+    });
   }
 
   static equal(p1, p2) {
@@ -470,41 +478,73 @@ class Permissions {
 
 //-------------------------------------------------
 // COPY (cp)
-
 class Copy {
   static copy(src, dest) {
-    fs.copyFileSync(src, dest);
-    return Path.exists(dest);
+    return new Promise(resolve => {
+      fs.copy(src, dest, (err) => {
+        if (err) {
+          resolve({ success: false, error: err });
+          return;
+        }
+        resolve({ success: true, error: null });
+      });
+    });
   }
 }
 
 //-------------------------------------------------
 // REMOVE (rm)
-
 class Remove {
   static file(path) {
-    fs.unlinkSync(path);
-    return !Path.exists(path);
+    return new Promise(resolve => {
+      fs.unlink(path, (err) => {
+        if (err) {
+          resolve({ success: false, error: err });
+          return;
+        }
+        resolve({ success: true, error: null });
+      });
+    });
   }
 
   static directory(path) {
-    fs.rmdirSync(path);
-    return !Path.exists(path);
+    return new Promise(resolve => {
+      fs.rmdir(path, (err) => {
+        if (err) {
+          resolve({ success: false, error: err });
+          return;
+        }
+        resolve({ success: true, error: null });
+      });
+    });
   }
 }
 
 //------------------------------------------------------
 // MKDIR (mkdir)
-
 class Mkdir {
   static mkdir(path) {
-    fs.mkdirSync(path);
-    return Path.exists(path);
+    return new Promise(resolve => {
+      fs.mkdir(path, (err) => {
+        if (err) {
+          resolve({ success: false, error: err });
+          return;
+        }
+        resolve({success: true, error: null});
+      });
+    });
   }
 
   static mkdirp(path) {
-    fs.mkdirpSync(path);
-    return Path.exists(path);
+    return new Promise(resolve => {
+      mkdirp(path, (err) => {
+        if (err) {
+          resolve({success: false, error: err});
+          return;
+        }
+        resolve({success: true, error: null});
+      });
+    });
   }
 }
 
@@ -737,27 +777,17 @@ exports.BashScript = BashScript;
 
 
 
-let P = '/home/isa/test.txt';
+let P = '/home/isa/test_dir';
 
-console.log('\nTesting Path (Async)');
-Path.exists(P).then(E => {
-  if (E.error) {
-    console.log(`E.error:: ${E.error}`);
+console.log('Testing REMOVE (dir)...');
+Remove.directory(P).then(S => {
+  if (S.error) {
+    console.log(`REMOVE_ERROR:: ${S.error}`);
     return;
   }
-  console.log(`EXISTS: ${E.exists}`);
+  console.log(`REMOVE_SUCCESSFUL: ${S.success}`);
 
-  Path.is_dir(P).then(D => {
-    if (D.error) {
-      console.log(`D.error:: ${D.error}`);
-      return;
-    }
-    console.log(`IS_DIR: ${D.isDir}`);
-
-    let pDir = Path.parent_dir(P);
-    if (pDir.error) {
-      console.log(`pDir.error:: ${pDir.error}`);
-    }
-    console.log(`PARENT_DIR: ${pDir.dir}`);
+  Path.exists(P).then(E => {
+    console.log(`EXISTS: ${E.exists}`);
   }).catch(fatalFail);
 }).catch(fatalFail);
