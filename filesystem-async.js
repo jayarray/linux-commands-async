@@ -597,11 +597,10 @@ class List {
 
 //------------------------------------------------
 // RSYNC
-
 class Rsync {
   static rsync(user, host, src, dest) {
     return new Promise(resolve => {
-      let argStr = `-av --progress --size-only ${src} ${user}@${host}:${dest}`;
+      let argStr = `-a ${src} ${user}@${host}:${dest}`;
       Execute.local('rsync', argStr.split(' ')).then(output => {
         if (output.stderr) {
           resolve({
@@ -624,7 +623,7 @@ class Rsync {
 
   static update(user, host, src, dest) { // Update dest if src was updated
     return new Promise(resolve => {
-      let argStr = `-av --update ${src} ${user}@${host}:${dest}`;
+      let argStr = `-a --update ${src} ${user}@${host}:${dest}`;
       Execute.local('rsync', argStr.split(' ')).then(output => {
         if (output.stderr) {
           resolve({
@@ -645,9 +644,9 @@ class Rsync {
     });
   }
 
-  static delete(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
+  static match(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
     return new Promise(resolve => {
-      let argStr = `-av --delete-after ${src} ${user}@${host}:${dest}`;
+      let argStr = `-a --delete-after ${src} ${user}@${host}:${dest}`;
       Execute.local('rsync', argStr.split(' ')).then(output => {
         if (output.stderr) {
           resolve({
@@ -668,10 +667,10 @@ class Rsync {
     });
   }
 
-  static manual(user, host, src, dest, options) {  // options = {flags: [chars], longOptions: [strings]}
+  static manual(user, host, src, dest, flags, options) {  // flags: [chars], options: [strings]
     return new Promise(resolve => {
-      let flagStr = `-${options.flags.join('')}`; // Ex.: -av
-      let optionStr = options.longOptions.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
+      let flagStr = `-${flags.join('')}`; // Ex.: -av
+      let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
 
       let argStr = `${flagStr} ${optionStr} ${src} ${user}@${host}:${dest}`;
       Execute.local('rsync', argStr.split(' ')).then(output => {
@@ -694,10 +693,10 @@ class Rsync {
     });
   }
 
-  static dry_run(user, host, src, dest, options) { // Will execute without making changes (for testing command)
+  static dry_run(user, host, src, dest, flags, options) { // Will execute without making changes (for testing command)
     return new Promise(resolve => {
-      let flagStr = `-${options.flags.join('')}`; // Ex.: -av
-      let optionStr = `-${options.longOptions.join(' ')}`;  // Ex.: --ignore times, --size-only, --exclude <pattern>
+      let flagStr = `-${flags.join('')}`; // Ex.: -av
+      let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
 
       let argStr = `${flagStr} --dry-run ${optionStr} ${src} ${user}@${host}:${dest}`;
       Execute.local('rsync', argStr.split(' ')).then(output => {
