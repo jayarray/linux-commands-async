@@ -530,7 +530,7 @@ class Mkdir {
           resolve({ success: false, error: err });
           return;
         }
-        resolve({success: true, error: null});
+        resolve({ success: true, error: null });
       });
     });
   }
@@ -539,10 +539,10 @@ class Mkdir {
     return new Promise(resolve => {
       mkdirp(path, (err) => {
         if (err) {
-          resolve({success: false, error: err});
+          resolve({ success: false, error: err });
           return;
         }
-        resolve({success: true, error: null});
+        resolve({ success: true, error: null });
       });
     });
   }
@@ -556,10 +556,10 @@ class Move {
     return new Promise(resolve => {
       fs.move(src, dest, (err) => {
         if (err) {
-          resolve({success: false, error: err});
+          resolve({ success: false, error: err });
           return;
         }
-        resolve({success: true, error: null});
+        resolve({ success: true, error: null });
       });
     });
   }
@@ -570,15 +570,39 @@ class Move {
 
 class List {
   static visible(path) {
-    return fs.readdirSync(path).filter(x => !x.startsWith('.'));
+    return new Promise(resolve => {
+      fs.readdir(path, (err, files) => {
+        if (err) {
+          resolve({ files: null, error: err });
+          return;
+        }
+        resolve({ files: files.filter(x => !x.startsWith('.')), error: null });
+      });
+    });
   }
 
   static hidden(path) {
-    return fs.readdirSync(path).filter(x => x.startsWith('.'));
+    return new Promise(resolve => {
+      fs.readdir(path, (err, files) => {
+        if (err) {
+          resolve({ files: null, error: err });
+          return;
+        }
+        resolve({ files: files.filter(x => x.startsWith('.')), error: null });
+      });
+    });
   }
 
   static all(path) {
-    return fs.readdirSync(path);
+    return new Promise(resolve => {
+      fs.readdir(path, (err, files) => {
+        if (err) {
+          resolve({ files: null, error: err });
+          return;
+        }
+        resolve({ files: files, error: null });
+      });
+    });
   }
 }
 
@@ -608,38 +632,42 @@ class Rsync {
 
 class Chmod {
   static chmod(op, who, types, path) {    // op = (- | + | =)  who = [u, g, o]  types = [r, w, x]
-    let perms = Permissions.permissions(path);
+    return new Promise(resolve => {
+      let perms = Permissions.permissions(path);
 
-    let whoMapping = { u: 'owner', g: 'group', o: 'others' };
-    who.forEach(w => {
-      let whoString = whoMapping[w];
+      let whoMapping = { u: 'owner', g: 'group', o: 'others' };
+      who.forEach(w => {
+        let whoString = whoMapping[w];
 
-      if (op == '=') {
-        let typesList = ['r', 'w', 'x'];
-        typesList.forEach(t => {
-          if (types.includes(t))
-            perms[whoString][t] = t;
-          else
-            perms[whoString][t] = '-';
-        });
-      }
-      else {
-        types.forEach(t => {
-          if (op == '+')  // ADD
-            perms[whoString][t] = t;
-          else if (op == '-')  // REMOVE
-            perms[whoString][t] = '-';
-        });
-      }
+        if (op == '=') {
+          let typesList = ['r', 'w', 'x'];
+          typesList.forEach(t => {
+            if (types.includes(t))
+              perms[whoString][t] = t;
+            else
+              perms[whoString][t] = '-';
+          });
+        }
+        else {
+          types.forEach(t => {
+            if (op == '+')  // ADD
+              perms[whoString][t] = t;
+            else if (op == '-')  // REMOVE
+              perms[whoString][t] = '-';
+          });
+        }
+      });
+
+      let obj = { u: perms.owner, g: perms.group, o: perms.others };
+      let newPermNumStr = Permissions.objToNumberString(obj);
+      fs.chmodSync(path, newPermNumStr, (err) => {
+        if (err) {
+          resolve({success: false, error: err});
+          return;
+        }
+        resolve({success: true, error: null});
+      });
     });
-
-    let obj = { u: perms.owner, g: perms.group, o: perms.others };
-    let newPermNumStr = Permissions.objToNumberString(obj);
-    fs.chmodSync(path, newPermNumStr);
-
-    perms = Permissions.permissions(path);
-    obj = { u: perms.owner, g: perms.group, o: perms.others };
-    return Permissions.objToNumberString(obj) == newPermNumStr;
   }
 }
 
