@@ -2,7 +2,6 @@ var path = require('path');
 var fs = require('fs-extra');
 var rsync = require('rsync');
 var mkdirp = require('mkdirp');
-var simpleSsh = require('simple-ssh');
 var childProcess = require('child_process');
 
 //-----------------------------------
@@ -47,31 +46,7 @@ class Execute {
   }
 
   static remote(user, host, cmd) {
-    let ssh = new simpleSsh({
-      user: user,
-      host: host
-    });
-
-
-    return new Promise(resolve => {
-      ssh.exec(cmd, {
-        out: function (stdout) {
-          // TO DO
-        },
-        err: function (stderr) {
-          // TO DO
-        },
-        exit: function (code) {
-          // TO DO 
-        }
-      }).start();
-
-      resolve({
-        stdout: ssh.stdout,
-        stderr: ssh.stderr,
-        exitCode: ssh.exitCode
-      });
-    });
+    // TO DO
   }
 }
 
