@@ -796,27 +796,53 @@ class Directory {
 
 class BashScript {
   static create(path, content) {
-    let fileCreated = File.create(path, `#!/bin/bash\n${content}`);
-    if (fileCreated) {
-      let op = '+';
-      let who = ['u', 'g', 'o'];
-      let types = ['x'];
-      return Chmod.chmod(op, who, types, path);
-    }
-    return false;
+    return new Promise(resolve => {
+      File.create(path, `#!/bin/bash\n${content}`).then(results => {
+        if (results.err) {
+          resolve({success: false, error: results.err});
+          return;
+        }
+
+        if (!results.success) {
+          resolve({success: false, error: null});
+          return;
+        }
+
+        Chmod.chmod(op, who, types, path).then(values => {
+          if (values.error) {
+            resolve({success: false, error: values.error});
+            return;
+          }
+          resolve({success: values.success, error: null});
+        });
+      });
+    });
   }
 
   static execute(path, content) {
-    let fileCreated = BashScript.create(path, content);
-    if (fileCreated) {
-      // Execute
-      let output = Execute.local(path);
+    return new Promise(resolve => {
+      BashScript.create(path, content).then(results => {
+        if (results.error) {
+          resolve({success: false, error: results.error});
+          return;
+        }
 
-      // Clean it up
-      File.remove(path);
-      return output;
-    }
-    return null;
+        if (!results.success) {
+          resolve({success: false, error: null});
+          return;
+        }
+
+        Execute.local(path).then(values => {
+          if (values.stderr) {
+            resolve({success: false, error: values.stderr});
+            return;
+          }
+          
+          resolve({success: true, error: null});
+          File.remove(path).then(ret => {});
+        });
+      });
+    });
   }
 }
 
