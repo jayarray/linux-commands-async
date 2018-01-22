@@ -587,20 +587,121 @@ class List {
 class Rsync {
   static rsync(user, host, src, dest) {
     return new Promise(resolve => {
-      let r = new Rsync()
-        .shell('ssh')
-        .flags('av')
-        .set('progress')
-        .set('size-only')
-        .source(src)
-        .destination(dest);
-
-      r.execute(function (error, code, cmd) {
-        if (error) {
-          resolve({success: false, error: error});
+      let argStr = `-av --progress --size-only ${src} ${user}@${host}:${dest}`;
+      Execute.local('rsync', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({
+            success: false,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
           return;
         }
-        resolve({success: true, error: null});
+        resolve({
+          success: true,
+          stdout: output.stdout,
+          stderr: output.stderr,
+          exitCode: output.exitCode
+        });
+      });
+    });
+  }
+
+  static update(user, host, src, dest) { // Update dest if src was updated
+    return new Promise(resolve => {
+      let argStr = `-av --update ${src} ${user}@${host}:${dest}`;
+      Execute.local('rsync', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({
+            success: false,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+          return;
+        }
+        resolve({
+          success: true,
+          stdout: output.stdout,
+          stderr: output.stderr,
+          exitCode: output.exitCode
+        });
+      });
+    });
+  }
+
+  static delete(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
+    return new Promise(resolve => {
+      let argStr = `-av --delete-after ${src} ${user}@${host}:${dest}`;
+      Execute.local('rsync', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({
+            success: false,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+          return;
+        }
+        resolve({
+          success: true,
+          stdout: output.stdout,
+          stderr: output.stderr,
+          exitCode: output.exitCode
+        });
+      });
+    });
+  }
+
+  static manual(user, host, src, dest, options) {  // options = {flags: [chars], longOptions: [strings]}
+    return new Promise(resolve => {
+      let flagStr = `-${options.flags.join('')}`; // Ex.: -av
+      let optionStr = options.longOptions.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
+
+      let argStr = `${flagStr} ${optionStr} ${src} ${user}@${host}:${dest}`;
+      Execute.local('rsync', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({
+            success: false,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+          return;
+        }
+        resolve({
+          success: true,
+          stdout: output.stdout,
+          stderr: output.stderr,
+          exitCode: output.exitCode
+        });
+      });
+    });
+  }
+
+  static dry_run(user, host, src, dest, options) { // Will execute without making changes (for testing command)
+    return new Promise(resolve => {
+      let flagStr = `-${options.flags.join('')}`; // Ex.: -av
+      let optionStr = `-${options.longOptions.join(' ')}`;  // Ex.: --ignore times, --size-only, --exclude <pattern>
+
+      let argStr = `${flagStr} --dry-run ${optionStr} ${src} ${user}@${host}:${dest}`;
+      Execute.local('rsync', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({
+            success: false,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+          return;
+        }
+        resolve({
+          success: true,
+          stdout: output.stdout,
+          stderr: output.stderr,
+          exitCode: output.exitCode
+        });
       });
     });
   }
@@ -608,7 +709,6 @@ class Rsync {
 
 //-----------------------------------------
 // CHMOD
-
 class Chmod {
   static chmod(op, who, types, path) {    // op = (- | + | =)  who = [u, g, o]  types = [r, w, x]
     return new Promise(resolve => {
@@ -844,3 +944,17 @@ exports.Rename = Rename;
 exports.File = File;
 exports.Directory = Directory;
 exports.BashScript = BashScript;
+
+//-----------------------------------
+// TEST
+
+let user = 'pi';
+let host = 'mama';
+let src = '/home/isa/test_file.txt';
+let dest = '/home/pi/test_file.txt';
+
+Rsync.rsync(user, host, src, dest).then(r => {
+  console.log(`RSYNC:: SUCCESS: ${r.success}`);
+  if (r.stderr)
+    console.log(`RSYNC:: ERROR: ${r.error}`);
+}).catch(fatalFail);
