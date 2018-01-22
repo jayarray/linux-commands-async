@@ -662,10 +662,10 @@ class Chmod {
       let newPermNumStr = Permissions.objToNumberString(obj);
       fs.chmodSync(path, newPermNumStr, (err) => {
         if (err) {
-          resolve({success: false, error: err});
+          resolve({ success: false, error: err });
           return;
         }
-        resolve({success: true, error: null});
+        resolve({ success: true, error: null });
       });
     });
   }
@@ -676,11 +676,18 @@ class Chmod {
 
 class Rename {
   static rename(currPath, newName) {
-    let parentDir = Path.parent_dir(currPath);
-    let updatedPath = path.join(parentDir, newName);
+    return new Promise(resolve => {
+      let parentDir = Path.parent_dir(currPath);
+      let updatedPath = path.join(parentDir, newName);
 
-    fs.renameSync(currPath, updatedPath);
-    return Path.exists(updatedPath);
+      fs.rename(currPath, updatedPath, (err) => {
+        if (err) {
+          resolve({ success: false, error: err });
+          return;
+        }
+        resolve({ success: true, error: null });
+      });
+    });
   }
 }
 
@@ -701,8 +708,18 @@ class File {
   }
 
   static create(path, text) {
-    fs.writeFileSync(path, text);
-    return Path.exists(path);
+    return new Promise(resolve => {
+      fs.writeFile(path, text, (err) => {
+        if (err) {
+          resolve({ success: false, error: err });
+        }
+        resolve({ success: true, error: null })
+      }).then(results => {
+        Path.exists(path).then(ex => {
+          resolve({ success: ex.exists, error: ex.error });
+        });
+      });
+    });
   }
 
   static move(src, dest) {
@@ -721,11 +738,27 @@ class File {
   }
 
   static read(path) {
-    return fs.readFileSync(path);
+    return new Promise(resolve => {
+      fs.readFile(path, (err, data) => {
+        if (err) {
+          resolve({content: null, error: err});
+          return;
+        }
+        resolve({content: data, error: null});
+      });
+    });
   }
 
   static read_lines(path) {
-    return fs.readFileSync(path).toString().split('\n');
+    return new Promise(resolve => {
+      File.read(path).then(values => {
+        if (values.error) {
+          resolve({lines: null, error: values.error});
+          return;
+        }
+        resolve({lines: values.content.toString().split('\n'), error: null});
+      });
+    });
   }
 }
 
