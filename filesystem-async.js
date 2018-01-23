@@ -1,3 +1,4 @@
+var os = require('os');
 var path = require('path');
 var fs = require('fs-extra');
 var mkdirp = require('mkdirp');
@@ -26,7 +27,6 @@ class SavedData {
 
 //-----------------------------------
 // EXECUTE
-
 class Execute {
   static local(cmd, args) {
     let child = childProcess.spawn(cmd, args);
@@ -50,7 +50,7 @@ class Execute {
       let child = childProcess.spawn('ssh', args);
       let errors = new SavedData(child.stderr);
       let outputs = new SavedData(child.stdout);
-  
+
       return new Promise(resolve => {
         child.on('close', exitCode => {
           resolve({
@@ -66,7 +66,6 @@ class Execute {
 
 //---------------------------------------
 // TIMESTAMP
-
 class Timestamp {
   static timestamp() {
     let d = new Date();
@@ -539,7 +538,6 @@ class Mkdir {
 
 //------------------------------------------------------
 // MOVE 
-
 class Move {
   static move(src, dest) {
     return new Promise(resolve => {
@@ -556,7 +554,6 @@ class Move {
 
 //------------------------------------------------------
 // LIST (ls)
-
 class List {
   static visible(path) {
     return new Promise(resolve => {
@@ -764,8 +761,114 @@ class Chmod {
 }
 
 //-----------------------------------------------
-// RENAME
+// CHOWN
+class Chown {
+  static chown(path, uid, gid) {
+    return new Promise(resolve => {
+      fs.chown(path, uid, gid, (err) => {
+        if (err) {
+          resolve({ success: false, error: err });
+          return;
+        }
+        resolve({ success: true, error: null });
+      });
+    });
+  }
+}
 
+//-----------------------------------------------
+// USER
+class UserInfo {
+  static me() {
+    let i = os.userInfo();
+    return { username: i.username, uid: i.uid, gid: i.gid };
+  }
+
+  static current() {
+    return new Promise(resolve => {
+      let username = os.userInfo().username;
+      Execute.local('id', [username]).then(output => {
+        if (output.stderr) {
+          resolve({ info: null, error: output.stderr });
+          return;
+        }
+
+        let outStr = output.stdout.trim();
+        let parts = outStr.split(' ');
+
+        // UID
+        let uidParts = parts[0].split('=')[1];
+        let uid = uidParts.split('(')[0];
+
+        // GID
+        let gidParts = parts[1].split('=')[1];
+        let gid = gidParts.split('(')[0];
+
+        // GROUPS
+        let groupsParts = parts[2].split('=')[1].split(',');
+
+        let groups = [];
+        groupsParts.forEach(gStr => {
+          let groupId = gStr.split('(')[0];
+          let groupName = gStr.split('(')[1].slice(0, -1);
+          groups.push({ gid: groupId, name: groupName });
+        });
+
+        resolve({
+          info: {
+            username: username,
+            uid: uid,
+            gid: gid,
+            groups: groups
+          },
+          error: null
+        });
+      }).catch(fatalFail);
+    });
+  }
+
+  static other(username) {
+    return new Promise(resolve => {
+      Execute.local('id', [username]).then(output => {
+        if (output.stderr) {
+          resolve({ info: null, error: output.stderr });
+          return;
+        }
+
+        let outStr = output.stdout.trim();
+        let parts = outStr.split(' ');
+
+        // UID
+        let uidParts = parts[0].split('=')[1];
+        let uid = uidParts.split('(')[0];
+
+        // GID
+        let gidParts = parts[1].split('=')[1];
+        let gid = gidParts.split('(')[0];
+
+        // GROUPS
+        let groupsParts = parts[2].split('=')[1].split(',');
+
+        let groups = [];
+        groupsParts.forEach(gStr => {
+          let groupId = gStr.split('(')[0];
+          let groupName = gStr.split('(')[1].slice(0, -1);
+          groups.push({ gid: groupId, name: groupName });
+        });
+
+        resolve({
+          username: username,
+          uid: uid,
+          gid: gid,
+          groups: groups
+        });
+      }).catch(fatalFail);
+    });
+  }
+}
+
+//-----------------------------------------------
+// RENAME
 class Rename {
   static rename(currPath, newName) {
     return new Promise(resolve => {
@@ -785,7 +888,6 @@ class Rename {
 
 //---------------------------------------------------
 // FILE
-
 class File {
   static exists(path) {
     return Path.exists(path);
@@ -939,6 +1041,150 @@ class BashScript {
 }
 
 //------------------------------------
+// FIND
+class Find {
+  static manual(path, options) {  // options = [ -option [value] ]
+    return new Promise(resolve => {
+      let argStr = `${path}`;
+      options.forEach(o => cmd += ` ${o}`);
+
+      Execute.local('find', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({ results: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ results: output.stdout, error: null });
+      });
+    });
+  }
+
+  static files_by_pattern(path, pattern, maxdepth) {
+    return new Promise(resolve => {
+      let argStr = `${path}`;
+      if (maxDepth && maxDepth > 0)
+        argStr += ` -maxdepth ${maxDepth}`;
+      argStr += ` -type f -name "${pattern}"`;
+
+      Execute.local('find', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({ filepaths: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ filepaths: lines, error: null });
+      });
+    });
+  }
+
+  static files_by_content(path, text, maxDepth) {
+    return new Promise(resolve => {
+      let argStr = `${path}`;
+      if (maxDepth && maxDepth > 0)
+        argStr += ` -maxdepth ${maxDepth}`;
+      argStr += ` -type f`;
+
+      Execute.local('find', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({ filepaths: null, error: output.stderr });
+          return;
+        }
+
+        let filepaths = [];
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+
+        lines.forEach(line => {
+          File.read(line.trim()).then(results => {
+            if (!results.error && results.content.includes(text))
+              filepaths.push(line.trim());
+          });
+        });
+        resolve({ filepaths: filepaths, error: null });
+      });
+    });
+  }
+
+  static files_by_user(path, user, maxDepth) {
+    return new Promise(resolve => {
+      let argStr = `${path}`;
+      if (maxDepth && maxDepth > 0)
+        argStr += ` -maxdepth ${maxDepth}`;
+      argStr += ` -type f -user`;
+
+      Execute.local('find', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({ filepaths: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ filepaths: lines, error: null });
+      });
+    });
+  }
+
+  static dir_by_pattern(path, pattern, maxDepth) {
+    return new Promise(resolve => {
+      let argStr = `${path}`;
+      if (maxDepth && maxDepth > 0)
+        argStr += ` -maxdepth ${maxDepth}`;
+      argStr += ` -type d -name "${pattern}"`;
+
+      Execute.local('find', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({ filepaths: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ filepaths: lines, error: null });
+      });
+    });
+  }
+
+  static empty_files(path, maxDepth) {
+    return new Promise(resolve => {
+      let argStr = `${path}`;
+      if (maxDepth && maxDepth > 0)
+        argStr += ` -maxdepth ${maxDepth}`;
+      argStr += ` -empty -type f`;
+
+      Execute.local('find', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({ filepaths: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ filepaths: lines, error: null });
+      });
+    });
+  }
+
+  static empty_dirs(path) {
+    return new Promise(resolve => {
+      let argStr = `${path}`;
+      if (maxDepth && maxDepth > 0)
+        argStr += ` -maxdepth ${maxDepth}`;
+      argStr += ` -empty -type d`;
+
+      Execute.local('find', argStr.split(' ')).then(output => {
+        if (output.stderr) {
+          resolve({ filepaths: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ filepaths: lines, error: null });
+      });
+    });
+  }
+}
+
+
+//------------------------------------
 // EXPORTS
 
 exports.Execute = Execute;
@@ -953,21 +1199,28 @@ exports.Move = Move;
 exports.List = List;
 exports.Rsync = Rsync;
 exports.Chmod = Chmod;
+exports.UserInfo = UserInfo;
+exports.Chown = Chown;
 exports.Rename = Rename;
 exports.File = File;
 exports.Directory = Directory;
 exports.BashScript = BashScript;
+exports.Find = Find;
 
 //-----------------------------------
 // TEST
 
-let user = 'pi';
-let host = 'mama';
-let src = '/home/isa/test_file.txt';
-let dest = '/home/pi/test_file.txt';
+let username = 'isa';
 
-Rsync.rsync(user, host, src, dest).then(r => {
-  console.log(`RSYNC:: SUCCESS: ${r.success}`);
-  if (r.stderr)
-    console.log(`RSYNC:: ERROR: ${r.error}`);
+UserInfo.other(username).then(i => {
+  if (i.error) {
+    console.log(`USERINFO_ERROR:: ${i.error}`);
+    return;
+  }
+
+  let info = i.info;
+  console.log(`Username: ${i.username}`);
+  console.log(`Uid: ${i.uid}`);
+  console.log(`Gid: ${i.gid}`);
+  console.log(`groups: ${i.groups.toString()}`);
 }).catch(fatalFail);
