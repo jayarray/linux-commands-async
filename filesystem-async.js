@@ -1,8 +1,8 @@
-var os = require('os');
-var path = require('path');
-var fs = require('fs-extra');
-var mkdirp = require('mkdirp');
-var childProcess = require('child_process');
+var OS = require('os'); //
+var PATH = require('path');
+var FS = require('fs-extra'); //
+var MKDIRP = require('mkdirp'); //
+var CHILD_PROCESS = require('child_process');
 
 //-----------------------------------
 // ERROR CATCHING
@@ -29,12 +29,12 @@ class SavedData {
 // EXECUTE
 class Execute {
   static local(cmd, args) {
-    let child = childProcess.spawn(cmd, args);
-    let errors = new SavedData(child.stderr);
-    let outputs = new SavedData(child.stdout);
+    let childProcess = CHILD_PROCESS.spawn(cmd, args);
+    let errors = new SavedData(childProcess.stderr);
+    let outputs = new SavedData(childProcess.stdout);
 
     return new Promise(resolve => {
-      child.on('close', exitCode => {
+      childProcess.on('close', exitCode => {
         resolve({
           stderr: errors.value,
           stdout: outputs.value,
@@ -47,12 +47,12 @@ class Execute {
   static remote(user, host, cmd) {
     return new Promise(resolve => {
       let args = `${user}@${host} '${cmd}'`;
-      let child = childProcess.spawn('ssh', args);
-      let errors = new SavedData(child.stderr);
-      let outputs = new SavedData(child.stdout);
+      let childProcess = CHILD_PROCESS.spawn('ssh', args);
+      let errors = new SavedData(childProcess.stderr);
+      let outputs = new SavedData(childProcess.stdout);
 
       return new Promise(resolve => {
-        child.on('close', exitCode => {
+        childProcess.on('close', exitCode => {
           resolve({
             stderr: errors.value,
             stdout: outputs.value,
@@ -224,7 +224,7 @@ class Stats {
         return;
       }
 
-      fs.lstat(path, (err, stats) => {
+      FS.lstat(path, (err, stats) => {
         if (err)
           resolve({ stats: null, error: err });
         else {
@@ -257,15 +257,15 @@ class Stats {
 //-------------------------------------------
 // PATH
 class Path {
-  static exists(p) {
+  static exists(path) {
     return new Promise(resolve => {
-      let error = Path.error(p);
+      let error = Path.error(path);
       if (error) {
         resolve({ exists: null, error: error });
         return;
       }
 
-      fs.access(p, fs.F_OK, (err) => {
+      FS.access(path, FS.F_OK, (err) => {
         if (err)
           resolve({ exists: false, error: null });
         else
@@ -274,15 +274,15 @@ class Path {
     });
   }
 
-  static is_file(p) {
+  static is_file(path) {
     return new Promise(resolve => {
-      let error = Path.error(p);
+      let error = Path.error(path);
       if (error) {
         resolve({ isFile: null, error: error });
         return;
       }
 
-      fs.lstat(p, (err, stats) => {
+      FS.lstat(path, (err, stats) => {
         if (err)
           resolve({ isFile: null, error: err });
         else
@@ -291,15 +291,15 @@ class Path {
     });
   }
 
-  static is_dir(p) {
+  static is_dir(path) {
     return new Promise(resolve => {
-      let error = Path.error(p);
+      let error = Path.error(path);
       if (error) {
         resolve({ isDir: null, error: error });
         return;
       }
 
-      fs.lstat(p, (err, stats) => {
+      FS.lstat(path, (err, stats) => {
         if (err)
           resolve({ isDir: null, error: err });
         else
@@ -308,72 +308,72 @@ class Path {
     });
   }
 
-  static filename(p) {
-    let error = Path.error(p);
+  static filename(path) {
+    let error = Path.error(path);
     if (error)
       return { name: null, error: error };
-    return { name: path.basename(p.trim()), error: null };
+    return { name: PATH.basename(path.trim()), error: null };
   }
 
-  static extension(p) {
-    let error = Path.error(p);
+  static extension(path) {
+    let error = Path.error(path);
     if (error)
       return { extension: null, error: error };
-    return { extension: path.extname(p.trim()), error: null };
+    return { extension: PATH.extname(p.trim()), error: null };
   }
 
-  static parent_dir_name(p) {
-    let error = Path.error(p);
+  static parent_dir_name(path) {
+    let error = Path.error(path);
     if (error)
       return { dir: null, error: error };
-    return { dir: path.dirname(p.trim()).split(path.sep).pop(), error: null };
+    return { dir: PATH.dirname(path.trim()).split(PATH.sep).pop(), error: null };
   }
 
-  static parent_dir(p) {
-    let error = Path.error(p);
+  static parent_dir(path) {
+    let error = Path.error(path);
     if (error)
       return { dir: null, error: error };
-    return { dir: path.dirname(p.trim()), error: null }; // Full path to parent dir
+    return { dir: PATH.dirname(p.trim()), error: null }; // Full path to parent dir
   }
 
-  static is_valid(p) {
-    return p != null && p != undefined && p != '' && p.trim() != '';
+  static is_valid(path) {
+    return path != null && path != undefined && path != '' && path.trim() != '';
   }
 
   static get_invalid_type(p) {
-    if (p == null)
+    if (path == null)
       return 'null';
-    else if (p == undefined)
+    else if (path == undefined)
       return 'undefined';
-    else if (p == '')
+    else if (path == '')
       return 'empty string';
-    else if (p.trim() == '')
+    else if (path.trim() == '')
       return 'whitespace';
     else
-      return typeof p;
+      return typeof path;
   }
 
-  static error(p) {
-    if (!Path.is_valid(p)) {
-      if (!p)
-        return `Path is ${Path.get_invalid_type(p)}`;
+  static error(path) {
+    if (!Path.is_valid(path)) {
+      if (!path)
+        return `Path is ${Path.get_invalid_type(path)}`;
 
-      let pTrimmed = p.trim();
+      let pTrimmed = path.trim();
       if (!Path.exists(pTrimmed))
         return 'No such file or directory';
     }
     return null;
   }
 
-  static escape(p) {
-    let error = Path.error(p);
+  static escape(path) {
+    let error = Path.error(path);
     if (error)
       return { string: null, error: error };
     return { string: escape(path), error: null };
   }
 
-  static containsWhiteSpace(p) {
-    let error = Path.error(p);
+  static containsWhiteSpace(path) {
+    let error = Path.error(path);
     if (error)
       return { hasWhitespace: null, error: error };
 
@@ -390,7 +390,7 @@ class Path {
 class Permissions {
   static permissions(path) {
     return new Promise(resolve => {
-      fs.lstat(path, (err, stats) => {
+      FS.lstat(path, (err, stats) => {
         if (err)
           resolve({ permissions: null, error: err });
         else {
@@ -469,7 +469,7 @@ class Permissions {
 class Copy {
   static copy(src, dest) {
     return new Promise(resolve => {
-      fs.copy(src, dest, (err) => {
+      FS.copy(src, dest, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -485,7 +485,7 @@ class Copy {
 class Remove {
   static file(path) {
     return new Promise(resolve => {
-      fs.unlink(path, (err) => {
+      FS.unlink(path, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -497,7 +497,7 @@ class Remove {
 
   static directory(path) {
     return new Promise(resolve => {
-      fs.rmdir(path, (err) => {
+      FS.rmdir(path, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -513,7 +513,7 @@ class Remove {
 class Mkdir {
   static mkdir(path) {
     return new Promise(resolve => {
-      fs.mkdir(path, (err) => {
+      FS.mkdir(path, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -525,7 +525,7 @@ class Mkdir {
 
   static mkdirp(path) {
     return new Promise(resolve => {
-      mkdirp(path, (err) => {
+      MKDIRP(path, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -541,7 +541,7 @@ class Mkdir {
 class Move {
   static move(src, dest) {
     return new Promise(resolve => {
-      fs.move(src, dest, (err) => {
+      FS.move(src, dest, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -557,7 +557,7 @@ class Move {
 class List {
   static visible(path) {
     return new Promise(resolve => {
-      fs.readdir(path, (err, files) => {
+      FS.readdir(path, (err, files) => {
         if (err) {
           resolve({ files: null, error: err });
           return;
@@ -569,7 +569,7 @@ class List {
 
   static hidden(path) {
     return new Promise(resolve => {
-      fs.readdir(path, (err, files) => {
+      FS.readdir(path, (err, files) => {
         if (err) {
           resolve({ files: null, error: err });
           return;
@@ -581,7 +581,7 @@ class List {
 
   static all(path) {
     return new Promise(resolve => {
-      fs.readdir(path, (err, files) => {
+      FS.readdir(path, (err, files) => {
         if (err) {
           resolve({ files: null, error: err });
           return;
@@ -749,7 +749,7 @@ class Chmod {
 
       let obj = { u: perms.owner, g: perms.group, o: perms.others };
       let newPermNumStr = Permissions.objToNumberString(obj);
-      fs.chmodSync(path, newPermNumStr, (err) => {
+      FS.chmodSync(path, newPermNumStr, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -765,7 +765,7 @@ class Chmod {
 class Chown {
   static chown(path, uid, gid) {
     return new Promise(resolve => {
-      fs.chown(path, uid, gid, (err) => {
+      FS.chown(path, uid, gid, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -780,13 +780,13 @@ class Chown {
 // USER
 class UserInfo {
   static me() {
-    let i = os.userInfo();
+    let i = OS.userInfo();
     return { username: i.username, uid: i.uid, gid: i.gid };
   }
 
   static current() {
     return new Promise(resolve => {
-      let username = os.userInfo().username;
+      let username = OS.userInfo().username;
       Execute.local('id', [username]).then(output => {
         if (output.stderr) {
           resolve({ info: null, error: output.stderr });
@@ -873,9 +873,9 @@ class Rename {
   static rename(currPath, newName) {
     return new Promise(resolve => {
       let parentDir = Path.parent_dir(currPath);
-      let updatedPath = path.join(parentDir, newName);
+      let updatedPath = PATH.join(parentDir, newName);
 
-      fs.rename(currPath, updatedPath, (err) => {
+      FS.rename(currPath, updatedPath, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
@@ -903,7 +903,7 @@ class File {
 
   static create(path, text) {
     return new Promise(resolve => {
-      fs.writeFile(path, text, (err) => {
+      FS.writeFile(path, text, (err) => {
         if (err) {
           resolve({ success: false, error: err });
         }
@@ -933,7 +933,7 @@ class File {
 
   static read(path) {
     return new Promise(resolve => {
-      fs.readFile(path, (err, data) => {
+      FS.readFile(path, (err, data) => {
         if (err) {
           resolve({ content: null, error: err });
           return;
@@ -1045,6 +1045,12 @@ class BashScript {
 class Find {
   static manual(path, options) {  // options = [ -option [value] ]
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ results: null, error: error });
+        return;
+      }
+
       let argStr = `${path}`;
       options.forEach(o => cmd += ` ${o}`);
 
@@ -1062,6 +1068,12 @@ class Find {
 
   static files_by_pattern(path, pattern, maxdepth) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
       let argStr = `${path}`;
       if (maxDepth && maxDepth > 0)
         argStr += ` -maxdepth ${maxDepth}`;
@@ -1081,6 +1093,12 @@ class Find {
 
   static files_by_content(path, text, maxDepth) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
       let argStr = `${path}`;
       if (maxDepth && maxDepth > 0)
         argStr += ` -maxdepth ${maxDepth}`;
@@ -1108,6 +1126,12 @@ class Find {
 
   static files_by_user(path, user, maxDepth) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
       let argStr = `${path}`;
       if (maxDepth && maxDepth > 0)
         argStr += ` -maxdepth ${maxDepth}`;
@@ -1127,6 +1151,12 @@ class Find {
 
   static dir_by_pattern(path, pattern, maxDepth) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
       let argStr = `${path}`;
       if (maxDepth && maxDepth > 0)
         argStr += ` -maxdepth ${maxDepth}`;
@@ -1146,6 +1176,12 @@ class Find {
 
   static empty_files(path, maxDepth) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
       let argStr = `${path}`;
       if (maxDepth && maxDepth > 0)
         argStr += ` -maxdepth ${maxDepth}`;
@@ -1165,6 +1201,12 @@ class Find {
 
   static empty_dirs(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
       let argStr = `${path}`;
       if (maxDepth && maxDepth > 0)
         argStr += ` -maxdepth ${maxDepth}`;
@@ -1210,17 +1252,15 @@ exports.Find = Find;
 //-----------------------------------
 // TEST
 
-let username = 'isa';
+let dirPath = '/home/isa';
+let text = 'Hai';
+let maxDepth = 1;
 
-UserInfo.other(username).then(i => {
+Find.files_by_content(path, text, maxDepth).then(i => {
   if (i.error) {
-    console.log(`USERINFO_ERROR:: ${i.error}`);
+    console.log(`FIND_ERROR:: ${i.error}`);
     return;
   }
+  console.log(`Filepaths: ${i.filepaths.toString()}`);
 
-  let info = i.info;
-  console.log(`Username: ${i.username}`);
-  console.log(`Uid: ${i.uid}`);
-  console.log(`Gid: ${i.gid}`);
-  console.log(`groups: ${i.groups.toString()}`);
 }).catch(fatalFail);
