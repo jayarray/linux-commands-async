@@ -390,6 +390,12 @@ class Path {
 class Permissions {
   static permissions(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ permissions: null, error: error });
+        return;
+      }
+
       FS.lstat(path, (err, stats) => {
         if (err)
           resolve({ permissions: null, error: err });
@@ -485,6 +491,12 @@ class Copy {
 class Remove {
   static file(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ success: false, error: error });
+        return;
+      }
+
       FS.unlink(path, (err) => {
         if (err) {
           resolve({ success: false, error: err });
@@ -497,6 +509,12 @@ class Remove {
 
   static directory(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ success: false, error: error });
+        return;
+      }
+
       FS.rmdir(path, (err) => {
         if (err) {
           resolve({ success: false, error: err });
@@ -513,6 +531,12 @@ class Remove {
 class Mkdir {
   static mkdir(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ success: false, error: error });
+        return;
+      }
+
       FS.mkdir(path, (err) => {
         if (err) {
           resolve({ success: false, error: err });
@@ -525,6 +549,12 @@ class Mkdir {
 
   static mkdirp(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ success: false, error: error });
+        return;
+      }
+
       MKDIRP(path, (err) => {
         if (err) {
           resolve({ success: false, error: err });
@@ -557,6 +587,12 @@ class Move {
 class List {
   static visible(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ files: null, error: error });
+        return;
+      }
+
       FS.readdir(path, (err, files) => {
         if (err) {
           resolve({ files: null, error: err });
@@ -569,6 +605,12 @@ class List {
 
   static hidden(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ files: null, error: error });
+        return;
+      }
+
       FS.readdir(path, (err, files) => {
         if (err) {
           resolve({ files: null, error: err });
@@ -581,6 +623,12 @@ class List {
 
   static all(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ files: null, error: error });
+        return;
+      }
+
       FS.readdir(path, (err, files) => {
         if (err) {
           resolve({ files: null, error: err });
@@ -722,40 +770,52 @@ class Rsync {
 class Chmod {
   static chmod(op, who, types, path) {    // op = (- | + | =)  who = [u, g, o]  types = [r, w, x]
     return new Promise(resolve => {
-      let perms = Permissions.permissions(path);
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
 
-      let whoMapping = { u: 'owner', g: 'group', o: 'others' };
-      who.forEach(w => {
-        let whoString = whoMapping[w];
-
-        if (op == '=') {
-          let typesList = ['r', 'w', 'x'];
-          typesList.forEach(t => {
-            if (types.includes(t))
-              perms[whoString][t] = t;
-            else
-              perms[whoString][t] = '-';
-          });
-        }
-        else {
-          types.forEach(t => {
-            if (op == '+')  // ADD
-              perms[whoString][t] = t;
-            else if (op == '-')  // REMOVE
-              perms[whoString][t] = '-';
-          });
-        }
-      });
-
-      let obj = { u: perms.owner, g: perms.group, o: perms.others };
-      let newPermNumStr = Permissions.objToNumberString(obj);
-      FS.chmodSync(path, newPermNumStr, (err) => {
-        if (err) {
-          resolve({ success: false, error: err });
+      Permissions.permissions(path).then(results => {
+        if (results.error) {
+          resolve({ success: false, error: results.error });
           return;
         }
-        resolve({ success: true, error: null });
-      });
+
+        let perms = results.permissions;
+        let whoMapping = { u: 'owner', g: 'group', o: 'others' };
+        who.forEach(w => {
+          let whoString = whoMapping[w];
+
+          if (op == '=') { // SET
+            let typesList = ['r', 'w', 'x'];
+            typesList.forEach(t => {
+              if (types.includes(t))
+                perms[whoString][t] = t;
+              else
+                perms[whoString][t] = '-';
+            });
+          }
+          else {
+            types.forEach(t => {
+              if (op == '+')  // ADD
+                perms[whoString][t] = t;
+              else if (op == '-')  // REMOVE
+                perms[whoString][t] = '-';
+            });
+          }
+        });
+
+        let obj = { u: perms.owner, g: perms.group, o: perms.others };
+        let newPermNumStr = Permissions.objToNumberString(obj);
+        FS.chmodSync(path, newPermNumStr, (err) => {
+          if (err) {
+            resolve({ success: false, error: err });
+            return;
+          }
+          resolve({ success: true, error: null });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
     });
   }
 }
@@ -765,13 +825,19 @@ class Chmod {
 class Chown {
   static chown(path, uid, gid) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ success: false, error: error });
+        return;
+      }
+
       FS.chown(path, uid, gid, (err) => {
         if (err) {
           resolve({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 }
@@ -872,6 +938,12 @@ class UserInfo {
 class Rename {
   static rename(currPath, newName) {
     return new Promise(resolve => {
+      let error = Path.error(currPath);
+      if (error) {
+        resolve({ success: false, error: error });
+        return;
+      }
+
       let parentDir = Path.parent_dir(currPath);
       let updatedPath = PATH.join(parentDir, newName);
 
@@ -881,7 +953,7 @@ class Rename {
           return;
         }
         resolve({ success: true, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 }
@@ -933,6 +1005,12 @@ class File {
 
   static read(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ content: null, error: error });
+        return;
+      }
+
       FS.readFile(path, (err, data) => {
         if (err) {
           resolve({ content: null, error: err });
@@ -945,6 +1023,12 @@ class File {
 
   static read_lines(path) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ lines: null, error: error });
+        return;
+      }
+
       File.read(path).then(values => {
         if (values.error) {
           resolve({ lines: null, error: values.error });
@@ -1015,6 +1099,12 @@ class BashScript {
 
   static execute(path, content) {
     return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ success: false, error: error });
+        return;
+      }
+
       BashScript.create(path, content).then(results => {
         if (results.error) {
           resolve({ success: false, error: results.error });
@@ -1034,7 +1124,7 @@ class BashScript {
 
           resolve({ success: true, error: null });
           File.remove(path).then(ret => { });
-        });
+        }).catch(fatalFail);
       });
     });
   }
@@ -1051,10 +1141,11 @@ class Find {
         return;
       }
 
-      let argStr = `${path}`;
-      options.forEach(o => cmd += ` ${o}`);
+      let args = `${path}`;
+      options.forEach(o => args += ` ${o}`);
+      args = args.split(' ');
 
-      Execute.local('find', argStr.split(' ')).then(output => {
+      Execute.local('find', args).then(output => {
         if (output.stderr) {
           resolve({ results: null, error: output.stderr });
           return;
@@ -1062,7 +1153,7 @@ class Find {
 
         let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
         resolve({ results: output.stdout, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 
@@ -1074,12 +1165,13 @@ class Find {
         return;
       }
 
-      let argStr = `${path}`;
+      let args = `${path}`;
       if (maxDepth && maxDepth > 0)
-        argStr += ` -maxdepth ${maxDepth}`;
-      argStr += ` -type f -name "${pattern}"`;
+        args += ` -maxdepth ${maxDepth}`;
+      args += ` -type f -name "${pattern}"`;
+      args = args.split(' ');
 
-      Execute.local('find', argStr.split(' ')).then(output => {
+      Execute.local('find', args).then(output => {
         if (output.stderr) {
           resolve({ filepaths: null, error: output.stderr });
           return;
@@ -1087,7 +1179,7 @@ class Find {
 
         let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
         resolve({ filepaths: lines, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 
@@ -1099,28 +1191,26 @@ class Find {
         return;
       }
 
-      let argStr = `${path}`;
+      let args = `${path}`;
       if (maxDepth && maxDepth > 0)
-        argStr += ` -maxdepth ${maxDepth}`;
-      argStr += ` -type f`;
+        args += ` -maxdepth ${maxDepth}`;
+      args += ` -type f -exec grep -l "${text}" "{}" \;`;
+      args = args.split(' ');
 
-      Execute.local('find', argStr.split(' ')).then(output => {
+      Execute.local('find', args).then(output => {
         if (output.stderr) {
           resolve({ filepaths: null, error: output.stderr });
           return;
         }
 
+        let lines = output.stdout.trim().split('\n').filter(line => line && line.trim() != '' && line != path);
         let filepaths = [];
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
 
         lines.forEach(line => {
-          File.read(line.trim()).then(results => {
-            if (!results.error && results.content.includes(text))
-              filepaths.push(line.trim());
-          });
+          filepaths.push(PATH.filename(line.trim()));
         });
         resolve({ filepaths: filepaths, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 
@@ -1132,12 +1222,13 @@ class Find {
         return;
       }
 
-      let argStr = `${path}`;
+      let args = `${path}`;
       if (maxDepth && maxDepth > 0)
-        argStr += ` -maxdepth ${maxDepth}`;
-      argStr += ` -type f -user`;
+        args += ` -maxdepth ${maxDepth}`;
+      args += ` -type f -user ${user}`;
+      args = args.split(' ');
 
-      Execute.local('find', argStr.split(' ')).then(output => {
+      Execute.local('find', args).then(output => {
         if (output.stderr) {
           resolve({ filepaths: null, error: output.stderr });
           return;
@@ -1145,7 +1236,7 @@ class Find {
 
         let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
         resolve({ filepaths: lines, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 
@@ -1157,12 +1248,13 @@ class Find {
         return;
       }
 
-      let argStr = `${path}`;
+      let args = `${path}`;
       if (maxDepth && maxDepth > 0)
-        argStr += ` -maxdepth ${maxDepth}`;
-      argStr += ` -type d -name "${pattern}"`;
+        args += ` -maxdepth ${maxDepth}`;
+      args += ` -type d -name "${pattern}"`;
+      args = args.split(' ');
 
-      Execute.local('find', argStr.split(' ')).then(output => {
+      Execute.local('find', args).then(output => {
         if (output.stderr) {
           resolve({ filepaths: null, error: output.stderr });
           return;
@@ -1170,7 +1262,7 @@ class Find {
 
         let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
         resolve({ filepaths: lines, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 
@@ -1182,12 +1274,13 @@ class Find {
         return;
       }
 
-      let argStr = `${path}`;
+      let args = `${path}`;
       if (maxDepth && maxDepth > 0)
-        argStr += ` -maxdepth ${maxDepth}`;
-      argStr += ` -empty -type f`;
+        args += ` -maxdepth ${maxDepth}`;
+      args += ` -empty -type f`;
+      args = args.split(' ');
 
-      Execute.local('find', argStr.split(' ')).then(output => {
+      Execute.local('find', args).then(output => {
         if (output.stderr) {
           resolve({ filepaths: null, error: output.stderr });
           return;
@@ -1195,7 +1288,7 @@ class Find {
 
         let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
         resolve({ filepaths: lines, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 
@@ -1207,12 +1300,12 @@ class Find {
         return;
       }
 
-      let argStr = `${path}`;
+      let args = `${path}`;
       if (maxDepth && maxDepth > 0)
-        argStr += ` -maxdepth ${maxDepth}`;
-      argStr += ` -empty -type d`;
+        args += ` -maxdepth ${maxDepth}`;
+      args += ` -empty -type d`;
 
-      Execute.local('find', argStr.split(' ')).then(output => {
+      Execute.local('find', args).then(output => {
         if (output.stderr) {
           resolve({ filepaths: null, error: output.stderr });
           return;
@@ -1220,7 +1313,7 @@ class Find {
 
         let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
         resolve({ filepaths: lines, error: null });
-      });
+      }).catch(fatalFail);
     });
   }
 }
@@ -1248,19 +1341,3 @@ exports.File = File;
 exports.Directory = Directory;
 exports.BashScript = BashScript;
 exports.Find = Find;
-
-//-----------------------------------
-// TEST
-
-let dirPath = '/home/isa';
-let text = 'Hai';
-let maxDepth = 1;
-
-Find.files_by_content(path, text, maxDepth).then(i => {
-  if (i.error) {
-    console.log(`FIND_ERROR:: ${i.error}`);
-    return;
-  }
-  console.log(`Filepaths: ${i.filepaths.toString()}`);
-
-}).catch(fatalFail);
