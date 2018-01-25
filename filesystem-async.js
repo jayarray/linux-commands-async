@@ -1199,13 +1199,13 @@ class Find {
       options.forEach(o => cmd += ` ${o}`);
 
       let tempFilepath = PATH.join(path, 'temp_manual.sh');
-      BashScript.execute(tempFilepath, cmd).then(output => {
-        if (output.stderr) {
-          resolve({ results: null, error: output.stderr });
+      BashScript.execute(tempFilepath, cmd).then(results => {
+        if (results.error) {
+          resolve({ results: null, error: results.error });
           return;
         }
 
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
 
         // Clean up temp file
@@ -1229,13 +1229,13 @@ class Find {
       cmd += ` -type f -name "${pattern}"`;
 
       let tempFilepath = PATH.join(path, 'temp_files_by_pattern.sh');
-      BashScript.execute(tempFilepath, cmd).then(output => {
-        if (output.stderr) {
-          resolve({ results: null, error: output.stderr });
+      BashScript.execute(tempFilepath, cmd).then(results => {
+        if (results.error) {
+          resolve({ results: null, error: results.error });
           return;
         }
 
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
 
         // Clean up temp file
@@ -1256,16 +1256,16 @@ class Find {
       let cmd = `find ${path}`;
       if (maxDepth && maxDepth > 0)
         cmd += ` -maxdepth ${maxDepth}`;
-      cmd += ` -type f -exec grep -l "${text}" "{}" \;`;
+      cmd += ` -type f -exec grep -l "${text}" "{}" \\;`;
 
       let tempFilepath = PATH.join(path, 'temp_files_by_content.sh');
-      BashScript.execute(tempFilepath, cmd).then(output => {
-        if (output.stderr) {
-          resolve({ results: null, error: output.stderr });
+      BashScript.execute(tempFilepath, cmd).then(results => {
+        if (results.error) {
+          resolve({ results: null, error: results.error });
           return;
         }
 
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
 
         // Clean up temp file
@@ -1289,13 +1289,13 @@ class Find {
       cmd += ` -type f -user ${user}`;
 
       let tempFilepath = PATH.join(path, 'temp_files_by_user.sh');
-      BashScript.execute(tempFilepath, cmd).then(output => {
-        if (output.stderr) {
-          resolve({ results: null, error: output.stderr });
+      BashScript.execute(tempFilepath, cmd).then(results => {
+        if (results.error) {
+          resolve({ results: null, error: results.error });
           return;
         }
 
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
 
         // Clean up temp file
@@ -1319,13 +1319,13 @@ class Find {
       cmd += ` -type d -name "${pattern}"`;
 
       let tempFilepath = PATH.join(path, 'temp_dir_by_pattern.sh');
-      BashScript.execute(tempFilepath, cmd).then(output => {
-        if (output.stderr) {
-          resolve({ results: null, error: output.stderr });
+      BashScript.execute(tempFilepath, cmd).then(results => {
+        if (results.error) {
+          resolve({ results: null, error: results.error });
           return;
         }
 
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
 
         // Clean up temp file
@@ -1349,13 +1349,13 @@ class Find {
       cmd += ` -empty -type f`;
 
       let tempFilepath = PATH.join(path, 'temp_empty_files.sh');
-      BashScript.execute(tempFilepath, cmd).then(output => {
-        if (output.stderr) {
-          resolve({ results: null, error: output.stderr });
+      BashScript.execute(tempFilepath, cmd).then(results => {
+        if (results.error) {
+          resolve({ results: null, error: results.error });
           return;
         }
 
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
 
         // Clean up temp file
@@ -1379,13 +1379,13 @@ class Find {
       cmd += ` -empty -type d`;
 
       let tempFilepath = PATH.join(path, 'temp_empty_dirs.sh');
-      BashScript.execute(tempFilepath, cmd).then(output => {
-        if (output.stderr) {
-          resolve({ results: null, error: output.stderr });
+      BashScript.execute(tempFilepath, cmd).then(results => {
+        if (results.error) {
+          resolve({ results: null, error: results.error });
           return;
         }
 
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
 
         // Clean up temp file
