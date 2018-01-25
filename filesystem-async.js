@@ -215,16 +215,16 @@ class Timestamp {
 // STATS
 class Stats {
   static stats(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ stats: null, error: error });
+        reject({ stats: null, error: error });
         return;
       }
 
       FS.lstat(path, (err, stats) => {
         if (err)
-          resolve({ stats: null, error: err });
+          reject({ stats: null, error: err });
         else {
           resolve({
             stats: {
@@ -256,16 +256,16 @@ class Stats {
 // PATH
 class Path {
   static exists(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ exists: null, error: error });
+        reject({ exists: null, error: error });
         return;
       }
 
       FS.access(path, FS.F_OK, (err) => {
         if (err)
-          resolve({ exists: false, error: null });
+          reject({ exists: false, error: null });
         else
           resolve({ exists: true, error: null });
       });
@@ -273,16 +273,16 @@ class Path {
   }
 
   static is_file(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ isFile: null, error: error });
+        reject({ isFile: null, error: error });
         return;
       }
 
       FS.lstat(path, (err, stats) => {
         if (err)
-          resolve({ isFile: null, error: err });
+          reject({ isFile: null, error: err });
         else
           resolve({ isFile: stats.isFile() && !stats.isDirectory(), error: null });
       });
@@ -290,16 +290,16 @@ class Path {
   }
 
   static is_dir(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ isDir: null, error: error });
+        reject({ isDir: null, error: error });
         return;
       }
 
       FS.lstat(path, (err, stats) => {
         if (err)
-          resolve({ isDir: null, error: err });
+          reject({ isDir: null, error: err });
         else
           resolve({ isDir: stats.isDirectory(), error: null });
       });
@@ -387,16 +387,16 @@ class Path {
 // PERMISSIONS
 class Permissions {
   static permissions(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ permissions: null, error: error });
+        reject({ permissions: null, error: error });
         return;
       }
 
       FS.lstat(path, (err, stats) => {
         if (err)
-          resolve({ permissions: null, error: err });
+          reject({ permissions: null, error: err });
         else {
           let others = {
             x: stats.mode & 1 ? 'x' : '-',
@@ -472,10 +472,10 @@ class Permissions {
 // COPY (cp)
 class Copy {
   static copy(src, dest) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       FS.copy(src, dest, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
@@ -488,16 +488,16 @@ class Copy {
 // REMOVE (rm)
 class Remove {
   static file(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ success: false, error: error });
+        reject({ success: false, error: error });
         return;
       }
 
       FS.unlink(path, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
@@ -506,16 +506,16 @@ class Remove {
   }
 
   static directory(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ success: false, error: error });
+        reject({ success: false, error: error });
         return;
       }
 
       FS.rmdir(path, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
@@ -528,16 +528,16 @@ class Remove {
 // MKDIR (mkdir)
 class Mkdir {
   static mkdir(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ success: false, error: error });
+        reject({ success: false, error: error });
         return;
       }
 
       FS.mkdir(path, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
@@ -546,16 +546,16 @@ class Mkdir {
   }
 
   static mkdirp(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ success: false, error: error });
+        reject({ success: false, error: error });
         return;
       }
 
       MKDIRP(path, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
@@ -568,16 +568,16 @@ class Mkdir {
 // MOVE 
 class Move {
   static move(src, dest) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        resolve({ success: false, error: error });
+        reject({ success: false, error: error });
         return;
       }
 
       FS.move(src, dest, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
@@ -590,16 +590,16 @@ class Move {
 // LIST (ls)
 class List {
   static visible(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ files: null, error: error });
+        reject({ files: null, error: error });
         return;
       }
 
       FS.readdir(path, (err, files) => {
         if (err) {
-          resolve({ files: null, error: err });
+          reject({ files: null, error: err });
           return;
         }
         resolve({ files: files.filter(x => !x.startsWith('.')), error: null });
@@ -608,16 +608,16 @@ class List {
   }
 
   static hidden(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ files: null, error: error });
+        reject({ files: null, error: error });
         return;
       }
 
       FS.readdir(path, (err, files) => {
         if (err) {
-          resolve({ files: null, error: err });
+          reject({ files: null, error: err });
           return;
         }
         resolve({ files: files.filter(x => x.startsWith('.')), error: null });
@@ -626,16 +626,16 @@ class List {
   }
 
   static all(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ files: null, error: error });
+        reject({ files: null, error: error });
         return;
       }
 
       FS.readdir(path, (err, files) => {
         if (err) {
-          resolve({ files: null, error: err });
+          reject({ files: null, error: err });
           return;
         }
         resolve({ files: files, error: null });
@@ -648,10 +648,10 @@ class List {
 // RSYNC
 class Rsync {
   static rsync(user, host, src, dest) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        resolve({
+        reject({
           success: false,
           stdout: null,
           stderr: null,
@@ -663,7 +663,7 @@ class Rsync {
       let args = `-a ${src} ${user}@${host}:${dest}`.split(' ');
       Execute.local('rsync', args).then(output => {
         if (output.stderr) {
-          resolve({
+          reject({
             success: false,
             stdout: output.stdout,
             stderr: output.stderr,
@@ -682,10 +682,10 @@ class Rsync {
   }
 
   static update(user, host, src, dest) { // Update dest if src was updated
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        resolve({
+        reject({
           success: false,
           stdout: null,
           stderr: null,
@@ -697,7 +697,7 @@ class Rsync {
       let args = `-a --update ${src} ${user}@${host}:${dest}`.split(' ');
       Execute.local('rsync', args).then(output => {
         if (output.stderr) {
-          resolve({
+          reject({
             success: false,
             stdout: output.stdout,
             stderr: output.stderr,
@@ -716,10 +716,10 @@ class Rsync {
   }
 
   static match(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        resolve({
+        reject({
           success: false,
           stdout: null,
           stderr: null,
@@ -731,7 +731,7 @@ class Rsync {
       let args = `-a --delete-after ${src} ${user}@${host}:${dest}`.split(' ');
       Execute.local('rsync', args).then(output => {
         if (output.stderr) {
-          resolve({
+          reject({
             success: false,
             stdout: output.stdout,
             stderr: output.stderr,
@@ -750,10 +750,10 @@ class Rsync {
   }
 
   static manual(user, host, src, dest, flags, options) {  // flags: [chars], options: [strings]
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        resolve({
+        reject({
           success: false,
           stdout: null,
           stderr: null,
@@ -768,7 +768,7 @@ class Rsync {
       let args = `${flagStr} ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
       Execute.local('rsync', args).then(output => {
         if (output.stderr) {
-          resolve({
+          reject({
             success: false,
             stdout: output.stdout,
             stderr: output.stderr,
@@ -787,10 +787,10 @@ class Rsync {
   }
 
   static dry_run(user, host, src, dest, flags, options) { // Will execute without making changes (for testing command)
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        resolve({
+        reject({
           success: false,
           stdout: null,
           stderr: null,
@@ -805,7 +805,7 @@ class Rsync {
       let args = `${flagStr} --dry-run ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
       Execute.local('rsync', args).then(output => {
         if (output.stderr) {
-          resolve({
+          reject({
             success: false,
             stdout: output.stdout,
             stderr: output.stderr,
@@ -828,16 +828,16 @@ class Rsync {
 // CHMOD
 class Chmod {
   static chmod(op, who, types, path) {    // op = (- | + | =)  who = [u, g, o]  types = [r, w, x]
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ filepaths: null, error: error });
+        reject({ filepaths: null, error: error });
         return;
       }
 
       Permissions.permissions(path).then(results => {
         if (results.error) {
-          resolve({ success: false, error: results.error });
+          reject({ success: false, error: results.error });
           return;
         }
 
@@ -869,7 +869,7 @@ class Chmod {
         let newPermNumStr = Permissions.objToNumberString(obj);
         FS.chmod(path, newPermNumStr, (err) => {
           if (err) {
-            resolve({ success: false, error: err });
+            reject({ success: false, error: err });
             return;
           }
           resolve({ success: true, error: null });
@@ -883,16 +883,16 @@ class Chmod {
 // CHOWN
 class Chown {
   static chown(path, uid, gid) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ success: false, error: error });
+        reject({ success: false, error: error });
         return;
       }
 
       FS.chown(path, uid, gid, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
@@ -910,11 +910,11 @@ class UserInfo {
   }
 
   static current() {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let username = OS.userInfo().username;
       Execute.local('id', [username]).then(output => {
         if (output.stderr) {
-          resolve({ info: null, error: output.stderr });
+          reject({ info: null, error: output.stderr });
           return;
         }
 
@@ -953,10 +953,10 @@ class UserInfo {
   }
 
   static other(username) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       Execute.local('id', [username]).then(output => {
         if (output.stderr) {
-          resolve({ info: null, error: output.stderr });
+          reject({ info: null, error: output.stderr });
           return;
         }
 
@@ -996,10 +996,10 @@ class UserInfo {
 // RENAME
 class Rename {
   static rename(currPath, newName) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(currPath);
       if (error) {
-        resolve({ success: false, error: error });
+        reject({ success: false, error: error });
         return;
       }
 
@@ -1008,7 +1008,7 @@ class Rename {
 
       FS.rename(currPath, updatedPath, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
           return;
         }
         resolve({ success: true, error: null });
@@ -1033,10 +1033,10 @@ class File {
   }
 
   static create(path, text) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       FS.writeFile(path, text, (err) => {
         if (err) {
-          resolve({ success: false, error: err });
+          reject({ success: false, error: err });
         }
         resolve({ success: true, error: null })
       });
@@ -1059,16 +1059,16 @@ class File {
   }
 
   static read(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ content: null, error: error });
+        reject({ content: null, error: error });
         return;
       }
 
       FS.readFile(path, (err, data) => {
         if (err) {
-          resolve({ content: null, error: err });
+          reject({ content: null, error: err });
           return;
         }
         resolve({ content: data, error: null });
@@ -1077,16 +1077,16 @@ class File {
   }
 
   static read_lines(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ lines: null, error: error });
+        reject({ lines: null, error: error });
         return;
       }
 
       File.read(path).then(values => {
         if (values.error) {
-          resolve({ lines: null, error: values.error });
+          reject({ lines: null, error: values.error });
           return;
         }
         resolve({ lines: values.content.toString().split('\n'), error: null });
@@ -1151,27 +1151,27 @@ class BashScript {
   }
 
   static execute(path, content) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ success: false, output: null, error: error });
+        reject({ success: false, output: null, error: error });
         return;
       }
 
       BashScript.create(path, content).then(results => {
         if (results.error) {
-          resolve({ success: false, output: null, error: results.error });
+          reject({ success: false, output: null, error: results.error });
           return;
         }
 
         if (!results.success) {
-          resolve({ success: false, output: null, error: null });
+          reject({ success: false, output: null, error: null });
           return;
         }
 
         Execute.local(path).then(values => {
           if (values.stderr) {
-            resolve({ success: false, output: null, error: values.stderr });
+            reject({ success: false, output: null, error: values.stderr });
             return;
           }
           resolve({ success: true, output: values.stdout, error: null });
@@ -1188,10 +1188,10 @@ class BashScript {
 
 class Find {
   static manual(path, options) {  // options = [ -option [value] ]
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ results: null, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1201,7 +1201,7 @@ class Find {
       let tempFilepath = PATH.join(path, 'temp_manual.sh');
       BashScript.execute(tempFilepath, cmd).then(results => {
         if (results.error) {
-          resolve({ results: null, error: results.error });
+          reject({ results: null, error: results.error });
           return;
         }
 
@@ -1216,10 +1216,10 @@ class Find {
   }
 
   static files_by_pattern(path, pattern, maxdepth) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ filepaths: null, error: error });
+        reject({ filepaths: null, error: error });
         return;
       }
 
@@ -1231,7 +1231,7 @@ class Find {
       let tempFilepath = PATH.join(path, 'temp_files_by_pattern.sh');
       BashScript.execute(tempFilepath, cmd).then(results => {
         if (results.error) {
-          resolve({ results: null, error: results.error });
+          reject({ results: null, error: results.error });
           return;
         }
 
@@ -1246,10 +1246,10 @@ class Find {
   }
 
   static files_by_content(path, text, maxDepth) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ filepaths: null, error: error });
+        reject({ filepaths: null, error: error });
         return;
       }
 
@@ -1261,7 +1261,7 @@ class Find {
       let tempFilepath = PATH.join(path, 'temp_files_by_content.sh');
       BashScript.execute(tempFilepath, cmd).then(results => {
         if (results.error) {
-          resolve({ results: null, error: results.error });
+          reject({ results: null, error: results.error });
           return;
         }
 
@@ -1276,10 +1276,10 @@ class Find {
   }
 
   static files_by_user(path, user, maxDepth) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ filepaths: null, error: error });
+        reject({ filepaths: null, error: error });
         return;
       }
 
@@ -1291,7 +1291,7 @@ class Find {
       let tempFilepath = PATH.join(path, 'temp_files_by_user.sh');
       BashScript.execute(tempFilepath, cmd).then(results => {
         if (results.error) {
-          resolve({ results: null, error: results.error });
+          reject({ results: null, error: results.error });
           return;
         }
 
@@ -1306,10 +1306,10 @@ class Find {
   }
 
   static dir_by_pattern(path, pattern, maxDepth) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ filepaths: null, error: error });
+        reject({ filepaths: null, error: error });
         return;
       }
 
@@ -1321,7 +1321,7 @@ class Find {
       let tempFilepath = PATH.join(path, 'temp_dir_by_pattern.sh');
       BashScript.execute(tempFilepath, cmd).then(results => {
         if (results.error) {
-          resolve({ results: null, error: results.error });
+          reject({ results: null, error: results.error });
           return;
         }
 
@@ -1336,10 +1336,10 @@ class Find {
   }
 
   static empty_files(path, maxDepth) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ filepaths: null, error: error });
+        reject({ filepaths: null, error: error });
         return;
       }
 
@@ -1351,7 +1351,7 @@ class Find {
       let tempFilepath = PATH.join(path, 'temp_empty_files.sh');
       BashScript.execute(tempFilepath, cmd).then(results => {
         if (results.error) {
-          resolve({ results: null, error: results.error });
+          reject({ results: null, error: results.error });
           return;
         }
 
@@ -1366,10 +1366,10 @@ class Find {
   }
 
   static empty_dirs(path) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        resolve({ filepaths: null, error: error });
+        reject({ filepaths: null, error: error });
         return;
       }
 
@@ -1381,7 +1381,7 @@ class Find {
       let tempFilepath = PATH.join(path, 'temp_empty_dirs.sh');
       BashScript.execute(tempFilepath, cmd).then(results => {
         if (results.error) {
-          resolve({ results: null, error: results.error });
+          reject({ results: null, error: results.error });
           return;
         }
 
