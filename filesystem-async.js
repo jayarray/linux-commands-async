@@ -867,13 +867,13 @@ class Chmod {
 
         let obj = { u: perms.owner, g: perms.group, o: perms.others };
         let newPermNumStr = Permissions.objToNumberString(obj);
-        FS.chmodSync(path, newPermNumStr, (err) => {
+        FS.chmod(path, newPermNumStr, (err) => {
           if (err) {
             resolve({ success: false, error: err });
             return;
           }
           resolve({ success: true, error: null });
-        }).catch(fatalFail);
+        });
       }).catch(fatalFail);
     });
   }
@@ -896,7 +896,7 @@ class Chown {
           return;
         }
         resolve({ success: true, error: null });
-      }).catch(fatalFail);
+      });
     });
   }
 }
@@ -1012,7 +1012,7 @@ class Rename {
           return;
         }
         resolve({ success: true, error: null });
-      }).catch(fatalFail);
+      });
     });
   }
 }
@@ -1039,10 +1039,6 @@ class File {
           resolve({ success: false, error: err });
         }
         resolve({ success: true, error: null })
-      }).then(results => {
-        Path.exists(path).then(ex => {
-          resolve({ success: ex.exists, error: ex.error });
-        });
       });
     });
   }
@@ -1131,26 +1127,26 @@ class Directory {
 // BASH SCRIPT
 class BashScript {
   static create(path, content) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
       File.create(path, `#!/bin/bash\n${content}`).then(results => {
         if (results.err) {
-          resolve({ success: false, error: results.err });
+          reject({ success: false, error: results.err });
           return;
         }
 
         if (!results.success) {
-          resolve({ success: false, error: null });
+          reject({ success: false, error: null });
           return;
         }
 
-        Chmod.chmod(op, who, types, path).then(values => {
+        File.make_executable(path).then(values => {
           if (values.error) {
-            resolve({ success: false, error: values.error });
+            reject({ success: false, error: values.error });
             return;
           }
           resolve({ success: values.success, error: null });
-        });
-      });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
     });
   }
 
@@ -1158,31 +1154,244 @@ class BashScript {
     return new Promise(resolve => {
       let error = Path.error(path);
       if (error) {
-        resolve({ success: false, error: error });
+        resolve({ success: false, output: null, error: error });
         return;
       }
 
       BashScript.create(path, content).then(results => {
         if (results.error) {
-          resolve({ success: false, error: results.error });
+          resolve({ success: false, output: null, error: results.error });
           return;
         }
 
         if (!results.success) {
-          resolve({ success: false, error: null });
+          resolve({ success: false, output: null, error: null });
           return;
         }
 
         Execute.local(path).then(values => {
           if (values.stderr) {
-            resolve({ success: false, error: values.stderr });
+            resolve({ success: false, output: null, error: values.stderr });
             return;
           }
-
-          resolve({ success: true, error: null });
-          File.remove(path).then(ret => { });
+          resolve({ success: true, output: values.stdout, error: null });
+          Remove.file(path).then(ret => {
+          }).catch(fatalFail);
         }).catch(fatalFail);
-      });
+      }).catch(fatalFail);
+    });
+  }
+}
+
+//------------------------------------
+// FIND
+
+class Find {
+  static manual(path, options) {  // options = [ -option [value] ]
+    return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ results: null, error: error });
+        return;
+      }
+
+      let cmd = `find ${path}`;
+      options.forEach(o => cmd += ` ${o}`);
+
+      let tempFilepath = PATH.join(path, 'temp_manual.sh');
+      BashScript.execute(tempFilepath, cmd).then(output => {
+        if (output.stderr) {
+          resolve({ results: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ results: lines, error: null });
+
+        // Clean up temp file
+        Remove.file(tempFilepath).then(results => {
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static files_by_pattern(path, pattern, maxdepth) {
+    return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
+      let cmd = `find ${path}`;
+      if (maxDepth && maxDepth > 0)
+        cmd += ` -maxdepth ${maxDepth}`;
+      cmd += ` -type f -name "${pattern}"`;
+
+      let tempFilepath = PATH.join(path, 'temp_files_by_pattern.sh');
+      BashScript.execute(tempFilepath, cmd).then(output => {
+        if (output.stderr) {
+          resolve({ results: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ results: lines, error: null });
+
+        // Clean up temp file
+        Remove.file(tempFilepath).then(results => {
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static files_by_content(path, text, maxDepth) {
+    return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
+      let cmd = `find ${path}`;
+      if (maxDepth && maxDepth > 0)
+        cmd += ` -maxdepth ${maxDepth}`;
+      cmd += ` -type f -exec grep -l "${text}" "{}" \;`;
+
+      let tempFilepath = PATH.join(path, 'temp_files_by_content.sh');
+      BashScript.execute(tempFilepath, cmd).then(output => {
+        if (output.stderr) {
+          resolve({ results: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ results: lines, error: null });
+
+        // Clean up temp file
+        Remove.file(tempFilepath).then(results => {
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static files_by_user(path, user, maxDepth) {
+    return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
+      let cmd = `find ${path}`;
+      if (maxDepth && maxDepth > 0)
+        cmd += ` -maxdepth ${maxDepth}`;
+      cmd += ` -type f -user ${user}`;
+
+      let tempFilepath = PATH.join(path, 'temp_files_by_user.sh');
+      BashScript.execute(tempFilepath, cmd).then(output => {
+        if (output.stderr) {
+          resolve({ results: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ results: lines, error: null });
+
+        // Clean up temp file
+        Remove.file(tempFilepath).then(results => {
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static dir_by_pattern(path, pattern, maxDepth) {
+    return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
+      let cmd = `find ${path}`;
+      if (maxDepth && maxDepth > 0)
+        cmd += ` -maxdepth ${maxDepth}`;
+      cmd += ` -type d -name "${pattern}"`;
+
+      let tempFilepath = PATH.join(path, 'temp_dir_by_pattern.sh');
+      BashScript.execute(tempFilepath, cmd).then(output => {
+        if (output.stderr) {
+          resolve({ results: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ results: lines, error: null });
+
+        // Clean up temp file
+        Remove.file(tempFilepath).then(results => {
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static empty_files(path, maxDepth) {
+    return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
+      let cmd = `find ${path}`;
+      if (maxDepth && maxDepth > 0)
+        cmd += ` -maxdepth ${maxDepth}`;
+      cmd += ` -empty -type f`;
+
+      let tempFilepath = PATH.join(path, 'temp_empty_files.sh');
+      BashScript.execute(tempFilepath, cmd).then(output => {
+        if (output.stderr) {
+          resolve({ results: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ results: lines, error: null });
+
+        // Clean up temp file
+        Remove.file(tempFilepath).then(results => {
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static empty_dirs(path) {
+    return new Promise(resolve => {
+      let error = Path.error(path);
+      if (error) {
+        resolve({ filepaths: null, error: error });
+        return;
+      }
+
+      let cmd = `find ${path}`;
+      if (maxDepth && maxDepth > 0)
+        cmd += ` -maxdepth ${maxDepth}`;
+      cmd += ` -empty -type d`;
+
+      let tempFilepath = PATH.join(path, 'temp_empty_dirs.sh');
+      BashScript.execute(tempFilepath, cmd).then(output => {
+        if (output.stderr) {
+          resolve({ results: null, error: output.stderr });
+          return;
+        }
+
+        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve({ results: lines, error: null });
+
+        // Clean up temp file
+        Remove.file(tempFilepath).then(results => {
+        }).catch(fatalFail);
+      }).catch(fatalFail);
     });
   }
 }
@@ -1208,3 +1417,4 @@ exports.Rename = Rename;
 exports.File = File;
 exports.Directory = Directory;
 exports.BashScript = BashScript;
+exports.Find = Find;
