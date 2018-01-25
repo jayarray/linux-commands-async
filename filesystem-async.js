@@ -45,19 +45,17 @@ class Execute {
   }
 
   static remote(user, host, cmd) {
-    return new Promise(resolve => {
-      let args = `${user}@${host} '${cmd}'`;
-      let childProcess = CHILD_PROCESS.spawn('ssh', args);
-      let errors = new SavedData(childProcess.stderr);
-      let outputs = new SavedData(childProcess.stdout);
+    let args = [`${user}@${host}`, `${cmd}`];
+    let childProcess = CHILD_PROCESS.spawn('ssh', args);
+    let errors = new SavedData(childProcess.stderr);
+    let outputs = new SavedData(childProcess.stdout);
 
-      return new Promise(resolve => {
-        childProcess.on('close', exitCode => {
-          resolve({
-            stderr: errors.value,
-            stdout: outputs.value,
-            exitCode: exitCode
-          });
+    return new Promise(resolve => {
+      childProcess.on('close', exitCode => {
+        resolve({
+          stderr: errors.value,
+          stdout: outputs.value,
+          exitCode: exitCode
         });
       });
     });
@@ -333,7 +331,7 @@ class Path {
     let error = Path.error(path);
     if (error)
       return { dir: null, error: error };
-    return { dir: PATH.dirname(p.trim()), error: null }; // Full path to parent dir
+    return { dir: PATH.dirname(path.trim()), error: null }; // Full path to parent dir
   }
 
   static is_valid(path) {
@@ -571,6 +569,12 @@ class Mkdir {
 class Move {
   static move(src, dest) {
     return new Promise(resolve => {
+      let error = Path.error(src);
+      if (error) {
+        resolve({ success: false, error: error });
+        return;
+      }
+
       FS.move(src, dest, (err) => {
         if (err) {
           resolve({ success: false, error: err });
@@ -645,8 +649,19 @@ class List {
 class Rsync {
   static rsync(user, host, src, dest) {
     return new Promise(resolve => {
-      let argStr = `-a ${src} ${user}@${host}:${dest}`;
-      Execute.local('rsync', argStr.split(' ')).then(output => {
+      let error = Path.error(src);
+      if (error) {
+        resolve({
+          success: false,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      let args = `-a ${src} ${user}@${host}:${dest}`.split(' ');
+      Execute.local('rsync', args).then(output => {
         if (output.stderr) {
           resolve({
             success: false,
@@ -668,8 +683,19 @@ class Rsync {
 
   static update(user, host, src, dest) { // Update dest if src was updated
     return new Promise(resolve => {
-      let argStr = `-a --update ${src} ${user}@${host}:${dest}`;
-      Execute.local('rsync', argStr.split(' ')).then(output => {
+      let error = Path.error(src);
+      if (error) {
+        resolve({
+          success: false,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      let args = `-a --update ${src} ${user}@${host}:${dest}`.split(' ');
+      Execute.local('rsync', args).then(output => {
         if (output.stderr) {
           resolve({
             success: false,
@@ -691,8 +717,19 @@ class Rsync {
 
   static match(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
     return new Promise(resolve => {
-      let argStr = `-a --delete-after ${src} ${user}@${host}:${dest}`;
-      Execute.local('rsync', argStr.split(' ')).then(output => {
+      let error = Path.error(src);
+      if (error) {
+        resolve({
+          success: false,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      let args = `-a --delete-after ${src} ${user}@${host}:${dest}`.split(' ');
+      Execute.local('rsync', args).then(output => {
         if (output.stderr) {
           resolve({
             success: false,
@@ -714,11 +751,22 @@ class Rsync {
 
   static manual(user, host, src, dest, flags, options) {  // flags: [chars], options: [strings]
     return new Promise(resolve => {
+      let error = Path.error(src);
+      if (error) {
+        resolve({
+          success: false,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
       let flagStr = `-${flags.join('')}`; // Ex.: -av
       let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
 
-      let argStr = `${flagStr} ${optionStr} ${src} ${user}@${host}:${dest}`;
-      Execute.local('rsync', argStr.split(' ')).then(output => {
+      let args = `${flagStr} ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
+      Execute.local('rsync', args).then(output => {
         if (output.stderr) {
           resolve({
             success: false,
@@ -740,11 +788,22 @@ class Rsync {
 
   static dry_run(user, host, src, dest, flags, options) { // Will execute without making changes (for testing command)
     return new Promise(resolve => {
+      let error = Path.error(src);
+      if (error) {
+        resolve({
+          success: false,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
       let flagStr = `-${flags.join('')}`; // Ex.: -av
       let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
 
-      let argStr = `${flagStr} --dry-run ${optionStr} ${src} ${user}@${host}:${dest}`;
-      Execute.local('rsync', argStr.split(' ')).then(output => {
+      let args = `${flagStr} --dry-run ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
+      Execute.local('rsync', args).then(output => {
         if (output.stderr) {
           resolve({
             success: false,
@@ -1042,7 +1101,6 @@ class File {
 
 //-----------------------------------------
 // DIRECTORY
-
 class Directory {
   static exists(path) {
     return Path.exists(path);
@@ -1071,7 +1129,6 @@ class Directory {
 
 //----------------------------------------
 // BASH SCRIPT
-
 class BashScript {
   static create(path, content) {
     return new Promise(resolve => {
@@ -1131,194 +1188,6 @@ class BashScript {
 }
 
 //------------------------------------
-// FIND
-class Find {
-  static manual(path, options) {  // options = [ -option [value] ]
-    return new Promise(resolve => {
-      let error = Path.error(path);
-      if (error) {
-        resolve({ results: null, error: error });
-        return;
-      }
-
-      let args = `${path}`;
-      options.forEach(o => args += ` ${o}`);
-      args = args.split(' ');
-
-      Execute.local('find', args).then(output => {
-        if (output.stderr) {
-          resolve({ results: null, error: output.stderr });
-          return;
-        }
-
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve({ results: output.stdout, error: null });
-      }).catch(fatalFail);
-    });
-  }
-
-  static files_by_pattern(path, pattern, maxdepth) {
-    return new Promise(resolve => {
-      let error = Path.error(path);
-      if (error) {
-        resolve({ filepaths: null, error: error });
-        return;
-      }
-
-      let args = `${path}`;
-      if (maxDepth && maxDepth > 0)
-        args += ` -maxdepth ${maxDepth}`;
-      args += ` -type f -name "${pattern}"`;
-      args = args.split(' ');
-
-      Execute.local('find', args).then(output => {
-        if (output.stderr) {
-          resolve({ filepaths: null, error: output.stderr });
-          return;
-        }
-
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve({ filepaths: lines, error: null });
-      }).catch(fatalFail);
-    });
-  }
-
-  static files_by_content(path, text, maxDepth) {
-    return new Promise(resolve => {
-      let error = Path.error(path);
-      if (error) {
-        resolve({ filepaths: null, error: error });
-        return;
-      }
-
-      let args = `${path}`;
-      if (maxDepth && maxDepth > 0)
-        args += ` -maxdepth ${maxDepth}`;
-      args += ` -type f -exec grep -l "${text}" "{}" \;`;
-      args = args.split(' ');
-
-      Execute.local('find', args).then(output => {
-        if (output.stderr) {
-          resolve({ filepaths: null, error: output.stderr });
-          return;
-        }
-
-        let lines = output.stdout.trim().split('\n').filter(line => line && line.trim() != '' && line != path);
-        let filepaths = [];
-
-        lines.forEach(line => {
-          filepaths.push(PATH.filename(line.trim()));
-        });
-        resolve({ filepaths: filepaths, error: null });
-      }).catch(fatalFail);
-    });
-  }
-
-  static files_by_user(path, user, maxDepth) {
-    return new Promise(resolve => {
-      let error = Path.error(path);
-      if (error) {
-        resolve({ filepaths: null, error: error });
-        return;
-      }
-
-      let args = `${path}`;
-      if (maxDepth && maxDepth > 0)
-        args += ` -maxdepth ${maxDepth}`;
-      args += ` -type f -user ${user}`;
-      args = args.split(' ');
-
-      Execute.local('find', args).then(output => {
-        if (output.stderr) {
-          resolve({ filepaths: null, error: output.stderr });
-          return;
-        }
-
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve({ filepaths: lines, error: null });
-      }).catch(fatalFail);
-    });
-  }
-
-  static dir_by_pattern(path, pattern, maxDepth) {
-    return new Promise(resolve => {
-      let error = Path.error(path);
-      if (error) {
-        resolve({ filepaths: null, error: error });
-        return;
-      }
-
-      let args = `${path}`;
-      if (maxDepth && maxDepth > 0)
-        args += ` -maxdepth ${maxDepth}`;
-      args += ` -type d -name "${pattern}"`;
-      args = args.split(' ');
-
-      Execute.local('find', args).then(output => {
-        if (output.stderr) {
-          resolve({ filepaths: null, error: output.stderr });
-          return;
-        }
-
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve({ filepaths: lines, error: null });
-      }).catch(fatalFail);
-    });
-  }
-
-  static empty_files(path, maxDepth) {
-    return new Promise(resolve => {
-      let error = Path.error(path);
-      if (error) {
-        resolve({ filepaths: null, error: error });
-        return;
-      }
-
-      let args = `${path}`;
-      if (maxDepth && maxDepth > 0)
-        args += ` -maxdepth ${maxDepth}`;
-      args += ` -empty -type f`;
-      args = args.split(' ');
-
-      Execute.local('find', args).then(output => {
-        if (output.stderr) {
-          resolve({ filepaths: null, error: output.stderr });
-          return;
-        }
-
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve({ filepaths: lines, error: null });
-      }).catch(fatalFail);
-    });
-  }
-
-  static empty_dirs(path) {
-    return new Promise(resolve => {
-      let error = Path.error(path);
-      if (error) {
-        resolve({ filepaths: null, error: error });
-        return;
-      }
-
-      let args = `${path}`;
-      if (maxDepth && maxDepth > 0)
-        args += ` -maxdepth ${maxDepth}`;
-      args += ` -empty -type d`;
-
-      Execute.local('find', args).then(output => {
-        if (output.stderr) {
-          resolve({ filepaths: null, error: output.stderr });
-          return;
-        }
-
-        let lines = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve({ filepaths: lines, error: null });
-      }).catch(fatalFail);
-    });
-  }
-}
-
-//------------------------------------
 // EXPORTS
 
 exports.Execute = Execute;
@@ -1339,4 +1208,3 @@ exports.Rename = Rename;
 exports.File = File;
 exports.Directory = Directory;
 exports.BashScript = BashScript;
-exports.Find = Find;
