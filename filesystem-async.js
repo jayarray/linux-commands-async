@@ -1170,7 +1170,7 @@ class BashScript {
         }
 
         Execute.local(path).then(values => {
-          if (values.stderr) {
+          if (values.stderr && !values.stdout) {
             reject({ success: false, output: null, error: values.stderr });
             return;
           }
@@ -1185,7 +1185,6 @@ class BashScript {
 
 //------------------------------------
 // FIND
-
 class Find {
   static manual(path, options) {  // options = [ -option [value] ]
     return new Promise((resolve, reject) => {
@@ -1207,10 +1206,6 @@ class Find {
 
         let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
-
-        // Clean up temp file
-        Remove.file(tempFilepath).then(results => {
-        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
@@ -1219,7 +1214,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ filepaths: null, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1237,10 +1232,6 @@ class Find {
 
         let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
-
-        // Clean up temp file
-        Remove.file(tempFilepath).then(results => {
-        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
@@ -1249,7 +1240,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ filepaths: null, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1267,10 +1258,6 @@ class Find {
 
         let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
-
-        // Clean up temp file
-        Remove.file(tempFilepath).then(results => {
-        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
@@ -1279,7 +1266,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ filepaths: null, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1297,10 +1284,6 @@ class Find {
 
         let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
-
-        // Clean up temp file
-        Remove.file(tempFilepath).then(results => {
-        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
@@ -1309,7 +1292,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ filepaths: null, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1327,10 +1310,6 @@ class Find {
 
         let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
-
-        // Clean up temp file
-        Remove.file(tempFilepath).then(results => {
-        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
@@ -1339,7 +1318,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ filepaths: null, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1357,10 +1336,6 @@ class Find {
 
         let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
-
-        // Clean up temp file
-        Remove.file(tempFilepath).then(results => {
-        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
@@ -1369,7 +1344,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ filepaths: null, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1387,10 +1362,6 @@ class Find {
 
         let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
         resolve({ results: lines, error: null });
-
-        // Clean up temp file
-        Remove.file(tempFilepath).then(results => {
-        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
