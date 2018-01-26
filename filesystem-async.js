@@ -257,84 +257,144 @@ class Stats {
 class Path {
   static exists(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ exists: null, error: error });
-        return;
-      }
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ exists: null, error: results.error });
+          return;
+        }
 
-      FS.access(path, FS.F_OK, (err) => {
-        if (err)
-          reject({ exists: false, error: null });
-        else
-          resolve({ exists: true, error: null });
-      });
+        if (results.string) {
+          reject({ exists: null, error: results.string });
+          return;
+        }
+
+        FS.access(path, FS.F_OK, (err) => {
+          if (err)
+            reject({ exists: false, error: null });
+          else
+            resolve({ exists: true, error: null });
+        });
+      }).catch(fatalFail);
     });
   }
 
   static is_file(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ isFile: null, error: error });
-        return;
-      }
+      Path.error(path).then(results => {
+        if (result.error) {
+          reject({ isFile: null, error: results.error });
+          return;
+        }
 
-      FS.lstat(path, (err, stats) => {
-        if (err)
-          reject({ isFile: null, error: err });
-        else
-          resolve({ isFile: stats.isFile() && !stats.isDirectory(), error: null });
-      });
+        if (results.string) {
+          reject({ isFile: null, error: results.string });
+          return;
+        }
+
+        FS.lstat(path, (err, stats) => {
+          if (err)
+            reject({ isFile: null, error: err });
+          else
+            resolve({ isFile: stats.isFile() && !stats.isDirectory(), error: null });
+        });
+      }).catch(fatalFail);
     });
   }
 
   static is_dir(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ isDir: null, error: error });
-        return;
-      }
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ isDir: null, error: results.error });
+          return;
+        }
 
-      FS.lstat(path, (err, stats) => {
-        if (err)
-          reject({ isDir: null, error: err });
-        else
-          resolve({ isDir: stats.isDirectory(), error: null });
-      });
+        if (results.string) {
+          reject({ isDir: null, error: results.string });
+          return;
+        }
+
+        FS.lstat(path, (err, stats) => {
+          if (err)
+            reject({ isDir: null, error: err });
+          else
+            resolve({ isDir: stats.isDirectory(), error: null });
+        });
+      }).catch(fatalFail);
     });
   }
 
   static filename(path) {
-    let error = Path.error(path);
-    if (error)
-      return { name: null, error: error };
-    return { name: PATH.basename(path.trim()), error: null };
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ name: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ name: null, error: results.string });
+          return;
+        }
+
+        resolve({ name: PATH.basename(path.trim()), error: results.error });
+      }).catch(fatalFail);
+    });
   }
 
   static extension(path) {
-    let error = Path.error(path);
-    if (error)
-      return { extension: null, error: error };
-    return { extension: PATH.extname(p.trim()), error: null };
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ extension: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ extension: null, error: results.string });
+          return;
+        }
+        resolve({ extension: PATH.extname(p.trim()), error: results.error });
+      }).catch(fatalFail);
+    });
   }
 
   static parent_dir_name(path) {
-    let error = Path.error(path);
-    if (error)
-      return { dir: null, error: error };
-    return { dir: PATH.dirname(path.trim()).split(PATH.sep).pop(), error: null };
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ name: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ name: null, error: results.string });
+          return;
+        }
+
+        resolve({ name: PATH.dirname(path.trim()).split(PATH.sep).pop(), error: results.error });
+      }).catch(fatalFail);
+    });
   }
 
   static parent_dir(path) {
-    let error = Path.error(path);
-    if (error)
-      return { dir: null, error: error };
-    return { dir: PATH.dirname(path.trim()), error: null }; // Full path to parent dir
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ dir: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ dir: null, error: results.string });
+          return;
+        }
+        resolve({ dir: PATH.dirname(path.trim()), error: null }); // Full path to parent dir
+      }).catch(fatalFail);
+    });
   }
 
-  static is_valid(path) {
+  static is_valid_type(path) {
     return path != null && path != undefined && path != '' && path.trim() != '';
   }
 
@@ -352,34 +412,44 @@ class Path {
   }
 
   static error(path) {
-    if (!Path.is_valid(path)) {
-      if (!path)
-        return `Path is ${Path.get_invalid_type(path)}`;
+    return new Promise((resolve, reject) => {
+      if (!Path.is_valid_type(path)) {
+        resolve({ string: `Path is ${Path.get_invalid_type(path)}`, error: null });
+        return;
+      }
 
       let pTrimmed = path.trim();
-      if (!Path.exists(pTrimmed))
-        return 'No such file or directory';
-    }
-    return null;
+      Path.exists(pTrimmed).then(results => {
+        if (results.error) {
+          reject({ string: null, error: results.error });
+          return;
+        }
+
+        if (!results.exists) {
+          resolve({ string: 'No such file or directory', error: null });
+          return;
+        }
+        reject({ string: null, error: null });
+      }).catch(fatalFail);
+    });
   }
 
   static escape(path) {
-    let error = Path.error(path);
-    if (error)
-      return { string: null, error: error };
-    return { string: escape(path), error: null };
+    if (path == undefined)
+      return { string: null, error: `Path is undefined` };
+    if (path == null)
+      return { string: null, error: `Path is null` };
+
+    let pTrimmed = path.trim();
+    return { string: escape(pTrimmed), error: null };
   }
 
   static containsWhiteSpace(path) {
-    let error = Path.error(path);
-    if (error)
-      return { hasWhitespace: null, error: error };
-
-    path.forEach(char => {
-      if (char.trim() == '')
-        return { hasWhitespace: true, error: null };
-    });
-    return { hasWhitespace: false, error: null };
+    if (path == undefined)
+      return { hasWhitespace: null, error: `Path is undefined` };
+    if (path == null)
+      return { hasWhitespace: null, error: `Path is null` };
+    return { hasWhitespace: path.includes(' '), error: null };
   }
 }
 
@@ -388,50 +458,56 @@ class Path {
 class Permissions {
   static permissions(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ permissions: null, error: error });
-        return;
-      }
-
-      FS.lstat(path, (err, stats) => {
-        if (err)
-          reject({ permissions: null, error: err });
-        else {
-          let others = {
-            x: stats.mode & 1 ? 'x' : '-',
-            w: stats.mode & 2 ? 'w' : '-',
-            r: stats.mode & 4 ? 'r' : '-',
-          };
-          let others_string = `${others.r}${others.w}${others.x}`;
-
-          let group = {
-            x: stats.mode & 8 ? 'x' : '-',
-            w: stats.mode & 16 ? 'w' : '-',
-            r: stats.mode & 32 ? 'r' : '-',
-          };
-          let group_string = `${group.r}${group.w}${group.x}`;
-
-          let owner = {
-            x: stats.mode & 64 ? 'x' : '-',
-            w: stats.mode & 128 ? 'w' : '-',
-            r: stats.mode & 256 ? 'r' : '-',
-          };
-          let owner_string = `${owner.r}${owner.w}${owner.x}`;
-
-          resolve({
-            permissions: {
-              others: others,
-              others_string: others_string,
-              group: group,
-              group_string: group_string,
-              owner: owner,
-              owner_string: owner_string
-            },
-            error: null
-          });
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ permissions: null, error: results.error });
+          return;
         }
-      });
+
+        if (results.string) {
+          reject({ permissions: null, error: results.string });
+          return;
+        }
+
+        FS.lstat(path, (err, stats) => {
+          if (err)
+            reject({ permissions: null, error: err });
+          else {
+            let others = {
+              x: stats.mode & 1 ? 'x' : '-',
+              w: stats.mode & 2 ? 'w' : '-',
+              r: stats.mode & 4 ? 'r' : '-',
+            };
+            let others_string = `${others.r}${others.w}${others.x}`;
+
+            let group = {
+              x: stats.mode & 8 ? 'x' : '-',
+              w: stats.mode & 16 ? 'w' : '-',
+              r: stats.mode & 32 ? 'r' : '-',
+            };
+            let group_string = `${group.r}${group.w}${group.x}`;
+
+            let owner = {
+              x: stats.mode & 64 ? 'x' : '-',
+              w: stats.mode & 128 ? 'w' : '-',
+              r: stats.mode & 256 ? 'r' : '-',
+            };
+            let owner_string = `${owner.r}${owner.w}${owner.x}`;
+
+            resolve({
+              permissions: {
+                others: others,
+                others_string: others_string,
+                group: group,
+                group_string: group_string,
+                owner: owner,
+                owner_string: owner_string
+              },
+              error: null
+            });
+          }
+        });
+      }).catch(fatalFail);
     });
   }
 
@@ -447,7 +523,7 @@ class Permissions {
       p1.others.x == p2.others.x;
   }
 
-  static objToNumberString(obj) {
+  static objToNumberString(obj) {  // Example:  {u:{...}, g:{...}, o:{...}} --> 777 
     let values = { r: 4, w: 2, x: 1, '-': 0 };
     let leftNum = values[obj.u.r] + values[obj.u.w] + values[obj.u.x];
     let middleNum = values[obj.g.r] + values[obj.g.w] + values[obj.g.x];
@@ -455,7 +531,7 @@ class Permissions {
     return `${leftNum}${middleNum}${rightNum}`;
   }
 
-  static permStringToNumberString(permString) {
+  static permStringToNumberString(permString) {  // Example: rwxrwxrwx  --> 777
     let adjustedString = permString;
     if (permString.length > 9)
       adjustedString = permString.slice(1);
@@ -473,401 +549,18 @@ class Permissions {
 class Copy {
   static copy(src, dest) {
     return new Promise((resolve, reject) => {
-      FS.copy(src, dest, (err) => {
-        if (err) {
-          reject({ success: false, error: err });
-          return;
-        }
-        resolve({ success: true, error: null });
-      });
-    });
-  }
-}
-
-//-------------------------------------------------
-// REMOVE (rm)
-class Remove {
-  static file(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ success: false, error: error });
-        return;
-      }
-
-      FS.unlink(path, (err) => {
-        if (err) {
-          reject({ success: false, error: err });
-          return;
-        }
-        resolve({ success: true, error: null });
-      });
-    });
-  }
-
-  static directory(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ success: false, error: error });
-        return;
-      }
-
-      FS.rmdir(path, (err) => {
-        if (err) {
-          reject({ success: false, error: err });
-          return;
-        }
-        resolve({ success: true, error: null });
-      });
-    });
-  }
-}
-
-//------------------------------------------------------
-// MKDIR (mkdir)
-class Mkdir {
-  static mkdir(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ success: false, error: error });
-        return;
-      }
-
-      FS.mkdir(path, (err) => {
-        if (err) {
-          reject({ success: false, error: err });
-          return;
-        }
-        resolve({ success: true, error: null });
-      });
-    });
-  }
-
-  static mkdirp(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ success: false, error: error });
-        return;
-      }
-
-      MKDIRP(path, (err) => {
-        if (err) {
-          reject({ success: false, error: err });
-          return;
-        }
-        resolve({ success: true, error: null });
-      });
-    });
-  }
-}
-
-//------------------------------------------------------
-// MOVE 
-class Move {
-  static move(src, dest) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(src);
-      if (error) {
-        reject({ success: false, error: error });
-        return;
-      }
-
-      FS.move(src, dest, (err) => {
-        if (err) {
-          reject({ success: false, error: err });
-          return;
-        }
-        resolve({ success: true, error: null });
-      });
-    });
-  }
-}
-
-//------------------------------------------------------
-// LIST (ls)
-class List {
-  static visible(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ files: null, error: error });
-        return;
-      }
-
-      FS.readdir(path, (err, files) => {
-        if (err) {
-          reject({ files: null, error: err });
-          return;
-        }
-        resolve({ files: files.filter(x => !x.startsWith('.')), error: null });
-      });
-    });
-  }
-
-  static hidden(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ files: null, error: error });
-        return;
-      }
-
-      FS.readdir(path, (err, files) => {
-        if (err) {
-          reject({ files: null, error: err });
-          return;
-        }
-        resolve({ files: files.filter(x => x.startsWith('.')), error: null });
-      });
-    });
-  }
-
-  static all(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ files: null, error: error });
-        return;
-      }
-
-      FS.readdir(path, (err, files) => {
-        if (err) {
-          reject({ files: null, error: err });
-          return;
-        }
-        resolve({ files: files, error: null });
-      });
-    });
-  }
-}
-
-//------------------------------------------------
-// RSYNC
-class Rsync {
-  static rsync(user, host, src, dest) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(src);
-      if (error) {
-        reject({
-          success: false,
-          stdout: null,
-          stderr: null,
-          exitCode: null
-        });
-        return;
-      }
-
-      let args = `-a ${src} ${user}@${host}:${dest}`.split(' ');
-      Execute.local('rsync', args).then(output => {
-        if (output.stderr) {
-          reject({
-            success: false,
-            stdout: output.stdout,
-            stderr: output.stderr,
-            exitCode: output.exitCode
-          });
-          return;
-        }
-        resolve({
-          success: true,
-          stdout: output.stdout,
-          stderr: output.stderr,
-          exitCode: output.exitCode
-        });
-      });
-    });
-  }
-
-  static update(user, host, src, dest) { // Update dest if src was updated
-    return new Promise((resolve, reject) => {
-      let error = Path.error(src);
-      if (error) {
-        reject({
-          success: false,
-          stdout: null,
-          stderr: null,
-          exitCode: null
-        });
-        return;
-      }
-
-      let args = `-a --update ${src} ${user}@${host}:${dest}`.split(' ');
-      Execute.local('rsync', args).then(output => {
-        if (output.stderr) {
-          reject({
-            success: false,
-            stdout: output.stdout,
-            stderr: output.stderr,
-            exitCode: output.exitCode
-          });
-          return;
-        }
-        resolve({
-          success: true,
-          stdout: output.stdout,
-          stderr: output.stderr,
-          exitCode: output.exitCode
-        });
-      });
-    });
-  }
-
-  static match(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
-    return new Promise((resolve, reject) => {
-      let error = Path.error(src);
-      if (error) {
-        reject({
-          success: false,
-          stdout: null,
-          stderr: null,
-          exitCode: null
-        });
-        return;
-      }
-
-      let args = `-a --delete-after ${src} ${user}@${host}:${dest}`.split(' ');
-      Execute.local('rsync', args).then(output => {
-        if (output.stderr) {
-          reject({
-            success: false,
-            stdout: output.stdout,
-            stderr: output.stderr,
-            exitCode: output.exitCode
-          });
-          return;
-        }
-        resolve({
-          success: true,
-          stdout: output.stdout,
-          stderr: output.stderr,
-          exitCode: output.exitCode
-        });
-      });
-    });
-  }
-
-  static manual(user, host, src, dest, flags, options) {  // flags: [chars], options: [strings]
-    return new Promise((resolve, reject) => {
-      let error = Path.error(src);
-      if (error) {
-        reject({
-          success: false,
-          stdout: null,
-          stderr: null,
-          exitCode: null
-        });
-        return;
-      }
-
-      let flagStr = `-${flags.join('')}`; // Ex.: -av
-      let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
-
-      let args = `${flagStr} ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
-      Execute.local('rsync', args).then(output => {
-        if (output.stderr) {
-          reject({
-            success: false,
-            stdout: output.stdout,
-            stderr: output.stderr,
-            exitCode: output.exitCode
-          });
-          return;
-        }
-        resolve({
-          success: true,
-          stdout: output.stdout,
-          stderr: output.stderr,
-          exitCode: output.exitCode
-        });
-      });
-    });
-  }
-
-  static dry_run(user, host, src, dest, flags, options) { // Will execute without making changes (for testing command)
-    return new Promise((resolve, reject) => {
-      let error = Path.error(src);
-      if (error) {
-        reject({
-          success: false,
-          stdout: null,
-          stderr: null,
-          exitCode: null
-        });
-        return;
-      }
-
-      let flagStr = `-${flags.join('')}`; // Ex.: -av
-      let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
-
-      let args = `${flagStr} --dry-run ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
-      Execute.local('rsync', args).then(output => {
-        if (output.stderr) {
-          reject({
-            success: false,
-            stdout: output.stdout,
-            stderr: output.stderr,
-            exitCode: output.exitCode
-          });
-          return;
-        }
-        resolve({
-          success: true,
-          stdout: output.stdout,
-          stderr: output.stderr,
-          exitCode: output.exitCode
-        });
-      });
-    });
-  }
-}
-
-//-----------------------------------------
-// CHMOD
-class Chmod {
-  static chmod(op, who, types, path) {    // op = (- | + | =)  who = [u, g, o]  types = [r, w, x]
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ filepaths: null, error: error });
-        return;
-      }
-
-      Permissions.permissions(path).then(results => {
+      Path.error(src).then(results => {
         if (results.error) {
-          reject({ success: false, error: results.error });
+          reject({ success: null, error: results.error });
           return;
         }
 
-        let perms = results.permissions;
-        let whoMapping = { u: 'owner', g: 'group', o: 'others' };
-        who.forEach(w => {
-          let whoString = whoMapping[w];
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
 
-          if (op == '=') { // SET
-            let typesList = ['r', 'w', 'x'];
-            typesList.forEach(t => {
-              if (types.includes(t))
-                perms[whoString][t] = t;
-              else
-                perms[whoString][t] = '-';
-            });
-          }
-          else {
-            types.forEach(t => {
-              if (op == '+')  // ADD
-                perms[whoString][t] = t;
-              else if (op == '-')  // REMOVE
-                perms[whoString][t] = '-';
-            });
-          }
-        });
-
-        let obj = { u: perms.owner, g: perms.group, o: perms.others };
-        let newPermNumStr = Permissions.objToNumberString(obj);
-        FS.chmod(path, newPermNumStr, (err) => {
+        FS.copy(src, dest, (err) => {
           if (err) {
             reject({ success: false, error: err });
             return;
@@ -879,24 +572,578 @@ class Chmod {
   }
 }
 
+//-------------------------------------------------
+// REMOVE (rm)
+class Remove {
+  static file(path) {
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        Path.is_file(path).then(results => {
+          if (results.error) {
+            resolve({ success: false, error: results.error });
+            return;
+          }
+
+          if (!results.isFile) {
+            resolve({ success: false, error: 'Path is not a file' });
+            return;
+          }
+
+          FS.unlink(path, (err) => {
+            if (err) {
+              reject({ success: false, error: err });
+              return;
+            }
+            resolve({ success: true, error: null });
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static directory(path) {
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ successa: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        Path.is_dir(path).then(results => {
+          if (results.error) {
+            resolve({ success: false, error: results.error });
+            return;
+          }
+
+          if (!results.isDir) {
+            resolve({ success: false, error: 'Path is not a directory' });
+            return;
+          }
+
+          FS.rmdir(path, (err) => {
+            if (err) {
+              reject({ success: false, error: err });
+              return;
+            }
+            resolve({ success: true, error: null });
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+}
+
+//------------------------------------------------------
+// MKDIR (mkdir)
+class Mkdir {
+  static mkdir(path) {
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        FS.mkdir(path, (err) => {
+          if (err) {
+            reject({ success: false, error: err });
+            return;
+          }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
+
+  static mkdirp(path) {
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        MKDIRP(path, (err) => {
+          if (err) {
+            reject({ success: false, error: err });
+            return;
+          }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
+}
+
+//------------------------------------------------------
+// MOVE 
+class Move {
+  static move(src, dest) {
+    return new Promise((resolve, reject) => {
+      Path.error(src).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        FS.move(src, dest, (err) => {
+          if (err) {
+            reject({ success: false, error: err });
+            return;
+          }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
+}
+
+//------------------------------------------------------
+// LIST (ls)
+class List {
+  static visible(path) {
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        FS.readdir(path, (err, files) => {
+          if (err) {
+            reject({ files: null, error: err });
+            return;
+          }
+          resolve({ files: files.filter(x => !x.startsWith('.')), error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
+
+  static hidden(path) {
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        FS.readdir(path, (err, files) => {
+          if (err) {
+            reject({ files: null, error: err });
+            return;
+          }
+          resolve({ files: files.filter(x => x.startsWith('.')), error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
+
+  static all(path) {
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        FS.readdir(path, (err, files) => {
+          if (err) {
+            reject({ files: null, error: err });
+            return;
+          }
+          resolve({ files: files, error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
+}
+
+//------------------------------------------------
+// RSYNC
+class Rsync {
+  static rsync(user, host, src, dest) {
+    return new Promise((resolve, reject) => {
+      Path.error(src).then(results => {
+        if (results.error) {
+          reject({
+            success: false,
+            error: results.error,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        if (results.string) {
+          reject({
+            success: false,
+            error: results.string,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        let args = `-a ${src} ${user}@${host}:${dest}`.split(' ');
+        Execute.local('rsync', args).then(output => {
+          if (output.stderr) {
+            reject({
+              success: false,
+              error: null,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+          resolve({
+            success: true,
+            error: null,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);;
+    });
+  }
+
+  static update(user, host, src, dest) { // Update dest if src was updated
+    return new Promise((resolve, reject) => {
+      Path.error(src).then(results => {
+        if (results.error) {
+          reject({
+            success: false,
+            error: results.error,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        if (results.string) {
+          reject({
+            success: false,
+            error: results.string,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        let args = `-a --update ${src} ${user}@${host}:${dest}`.split(' ');
+        Execute.local('rsync', args).then(output => {
+          if (output.stderr) {
+            reject({
+              success: false,
+              error: null,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+          resolve({
+            success: true,
+            error: null,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static match(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
+    return new Promise((resolve, reject) => {
+      Path.error(src).then(results => {
+        if (results.error) {
+          reject({
+            success: false,
+            error: results.error,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        if (results.string) {
+          reject({
+            success: false,
+            error: results.string,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        let args = `-a --delete-after ${src} ${user}@${host}:${dest}`.split(' ');
+        Execute.local('rsync', args).then(output => {
+          if (output.stderr) {
+            reject({
+              success: false,
+              error: null,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+          resolve({
+            success: true,
+            error: null,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static manual(user, host, src, dest, flags, options) {  // flags: [chars], options: [strings]
+    return new Promise((resolve, reject) => {
+      Path.error(src).then(results => {
+        if (results.error) {
+          reject({
+            success: false,
+            error: results.error,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        if (results.string) {
+          reject({
+            success: false,
+            error: results.string,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        let flagStr = `-${flags.join('')}`; // Ex.: -av
+        let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
+
+        let args = `${flagStr} ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
+        Execute.local('rsync', args).then(output => {
+          if (output.stderr) {
+            reject({
+              success: false,
+              error: null,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+          resolve({
+            success: true,
+            error: null,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static dry_run(user, host, src, dest, flags, options) { // Will execute without making changes (for testing command)
+    return new Promise((resolve, reject) => {
+      Path.error(src).then(results => {
+        if (results.error) {
+          reject({
+            success: false,
+            error: results.error,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        if (results.string) {
+          reject({
+            success: false,
+            error: results.string,
+            stdout: null,
+            stderr: null,
+            exitCode: null
+          });
+          return;
+        }
+
+        let flagStr = `-${flags.join('')}`; // Ex.: -av
+        let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
+
+        let args = `${flagStr} --dry-run ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
+        Execute.local('rsync', args).then(output => {
+          if (output.stderr) {
+            reject({
+              success: false,
+              error: null,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+          resolve({
+            success: true,
+            error: null,
+            stdout: output.stdout,
+            stderr: output.stderr,
+            exitCode: output.exitCode
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+}
+
+//-----------------------------------------
+// CHMOD
+class Chmod {
+  static chmod(op, who, types, path) {    // op = (- | + | =)  who = [u, g, o]  types = [r, w, x]
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        Permissions.permissions(path).then(values => {
+          if (values.error) {
+            reject({ success: false, error: values.error });
+            return;
+          }
+
+          let perms = values.permissions;
+          let whoMapping = { u: 'owner', g: 'group', o: 'others' };
+          who.forEach(w => {
+            let whoString = whoMapping[w];
+
+            if (op == '=') { // SET
+              let typesList = ['r', 'w', 'x'];
+              typesList.forEach(t => {
+                if (types.includes(t))
+                  perms[whoString][t] = t;
+                else
+                  perms[whoString][t] = '-';
+              });
+            }
+            else {
+              types.forEach(t => {
+                if (op == '+')  // ADD
+                  perms[whoString][t] = t;
+                else if (op == '-')  // REMOVE
+                  perms[whoString][t] = '-';
+              });
+            }
+          });
+
+          let obj = { u: perms.owner, g: perms.group, o: perms.others };
+          let newPermNumStr = Permissions.objToNumberString(obj);
+          FS.chmod(path, newPermNumStr, (err) => {
+            if (err) {
+              reject({ success: false, error: err });
+              return;
+            }
+            resolve({ success: true, error: null });
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+}
+
 //-----------------------------------------------
 // CHOWN
 class Chown {
   static chown(path, uid, gid) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ success: false, error: error });
-        return;
-      }
-
-      FS.chown(path, uid, gid, (err) => {
-        if (err) {
-          reject({ success: false, error: err });
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
           return;
         }
-        resolve({ success: true, error: null });
-      });
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        FS.chown(path, uid, gid, (err) => {
+          if (err) {
+            reject({ success: false, error: err });
+            return;
+          }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
     });
   }
 }
@@ -997,22 +1244,28 @@ class UserInfo {
 class Rename {
   static rename(currPath, newName) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(currPath);
-      if (error) {
-        reject({ success: false, error: error });
-        return;
-      }
-
-      let parentDir = Path.parent_dir(currPath);
-      let updatedPath = PATH.join(parentDir, newName);
-
-      FS.rename(currPath, updatedPath, (err) => {
-        if (err) {
-          reject({ success: false, error: err });
+      Path.error(currPath).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
           return;
         }
-        resolve({ success: true, error: null });
-      });
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        let parentDir = Path.parent_dir(currPath);
+        let updatedPath = PATH.join(parentDir, newName);
+
+        FS.rename(currPath, updatedPath, (err) => {
+          if (err) {
+            reject({ success: false, error: err });
+            return;
+          }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
     });
   }
 }
@@ -1020,21 +1273,33 @@ class Rename {
 //---------------------------------------------------
 // FILE
 class File {
-  static exists(path) {
-    return Path.exists(path);
-  }
-
-  static copy(src, dest) {
-    return Copy.file(src, dest);
-  }
-
   static remove(path) {
     return Remove.file(path);
   }
 
   static create(path, text) {
     return new Promise((resolve, reject) => {
-      FS.writeFile(path, text, (err) => {
+      if (path == undefined) {
+        reject({ success: false, error: 'Path is undefined' });
+        return;
+      }
+
+      if (path == null) {
+        reject({ success: false, error: 'Path is null' });
+        return;
+      }
+
+      if (path == '') {
+        reject({ success: false, error: 'Path is empty' });
+        return;
+      }
+
+      if (path.trim() == '') {
+        reject({ success: false, error: 'Path is witespace' });
+        return;
+      }
+
+      FS.writeFile(path.trim(), text, (err) => {
         if (err) {
           reject({ success: false, error: err });
         }
@@ -1043,53 +1308,89 @@ class File {
     });
   }
 
-  static move(src, dest) {
-    return Move.file(src, dest);
-  }
-
-  static rename(path, newName) {
-    return Rename.rename(path, newName);
-  }
-
   static make_executable(path) {
-    let op = '+';
-    let who = ['u', 'g', 'o'];
-    let types = ['x'];
-    return Chmod.chmod(op, who, types, path);
+    return new Promise((resolve, reject) => {
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ success: null, error: results.error });
+          return;
+        }
+
+        if (results.string) {
+          reject({ success: null, error: results.string });
+          return;
+        }
+
+        Path.is_file(path).then(values => {
+          if (values.error) {
+            reject({ success: false, error: values.error });
+            return;
+          }
+
+          if (!values.isFile) {
+            reject({ success: false, error: 'Path is not a file' });
+            return;
+          }
+
+          let op = '+';
+          let who = ['u', 'g', 'o'];
+          let types = ['x'];
+          Chmod.chmod(op, who, types, path).then(vals => {
+            if (vals.error) {
+              reject({ success: false, error: vals.error });
+              return;
+            }
+            resolve({ success: true, error: null });
+          }).catch(fatalFail);
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
   }
 
   static read(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ content: null, error: error });
-        return;
-      }
-
-      FS.readFile(path, (err, data) => {
-        if (err) {
-          reject({ content: null, error: err });
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ content: null, error: results.error });
           return;
         }
-        resolve({ content: data, error: null });
-      });
+
+        if (results.string) {
+          reject({ content: null, error: results.string });
+          return;
+        }
+
+        Path.is_file(path).then(values => {
+          if (values.error) {
+            reject({ content: null, error: values.error });
+            return;
+          }
+
+          if (!values.isFile) {
+            reject({ content: null, error: 'Path is not a file' });
+            return;
+          }
+
+          FS.readFile(path, (err, data) => {
+            if (err) {
+              reject({ content: null, error: err });
+              return;
+            }
+            resolve({ content: data, error: null });
+          });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
     });
   }
 
   static read_lines(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ lines: null, error: error });
-        return;
-      }
-
-      File.read(path).then(values => {
-        if (values.error) {
-          reject({ lines: null, error: values.error });
+      File.read(path).then(results => {
+        if (results.error) {
+          reject({ lines: null, error: results.error });
           return;
         }
-        resolve({ lines: values.content.toString().split('\n'), error: null });
+        resolve({ lines: results.content.toString().split('\n'), error: null });
       });
     });
   }
@@ -1098,28 +1399,40 @@ class File {
 //-----------------------------------------
 // DIRECTORY
 class Directory {
-  static exists(path) {
-    return Path.exists(path);
-  }
-
-  static copy(src, dest) {
-    return Copy.copy(src, dest);
-  }
-
   static remove(path) {
     return Remove.directory(path);
   }
 
   static create(path) {
-    return Mkdir.mkdirp(path);
-  }
+    return new Promise((resolve, reject) => {
+      if (path == undefined) {
+        reject({ success: false, error: 'Path is undefined' });
+        return;
+      }
 
-  static move(src, dest) {
-    return Move.move(src, dest);
-  }
+      if (path == null) {
+        reject({ success: false, error: 'Path is null' });
+        return;
+      }
 
-  static rename(path, newName) {
-    return Rename.rename(path, newName);
+      if (path == '') {
+        reject({ success: false, error: 'Path is empty' });
+        return;
+      }
+
+      if (path.trim() == '') {
+        reject({ success: false, error: 'Path is witespace' });
+        return;
+      }
+
+      Mkdir.mkdirp(path).then(results => {
+        if (results.error) {
+          reject({ success: false, error: results.error });
+          return;
+        }
+        resolve({ success: true, error: null });
+      }).catch(fatalFail);
+    });
   }
 }
 
@@ -1152,12 +1465,6 @@ class BashScript {
 
   static execute(path, content) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ success: false, output: null, error: error });
-        return;
-      }
-
       BashScript.create(path, content).then(results => {
         if (results.error) {
           reject({ success: false, output: null, error: results.error });
