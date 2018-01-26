@@ -216,38 +216,44 @@ class Timestamp {
 class Stats {
   static stats(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ stats: null, error: error });
-        return;
-      }
-
-      FS.lstat(path, (err, stats) => {
-        if (err)
-          reject({ stats: null, error: err });
-        else {
-          resolve({
-            stats: {
-              size: stats.size,  // bytes
-              mode: stats.mode,
-              uid: stats.uid,
-              gid: stats.gid,
-              others_x: stats.mode & 1 ? 'x' : '-',
-              others_w: stats.mode & 2 ? 'w' : '-',
-              others_r: stats.mode & 4 ? 'r' : '-',
-              group_x: stats.mode & 8 ? 'x' : '-',
-              group_w: stats.mode & 16 ? 'w' : '-',
-              group_r: stats.mode & 32 ? 'r' : '-',
-              owner_x: stats.mode & 64 ? 'x' : '-',
-              owner_w: stats.mode & 128 ? 'w' : '-',
-              owner_r: stats.mode & 256 ? 'r' : '-',
-              is_dir: stats.isDirectory(),
-              is_symlink: stats.isSymbolicLink()
-            },
-            error: null
-          });
+      Path.error(path).then(results => {
+        if (results.error) {
+          reject({ stats: null, error: results.error });
+          return;
         }
-      });
+
+        if (results.string) {
+          reject({ stats: null, error: results.string });
+          return;
+        }
+
+        FS.lstat(path, (err, stats) => {
+          if (err)
+            reject({ stats: null, error: err });
+          else {
+            resolve({
+              stats: {
+                size: stats.size,  // bytes
+                mode: stats.mode,
+                uid: stats.uid,
+                gid: stats.gid,
+                others_x: stats.mode & 1 ? 'x' : '-',
+                others_w: stats.mode & 2 ? 'w' : '-',
+                others_r: stats.mode & 4 ? 'r' : '-',
+                group_x: stats.mode & 8 ? 'x' : '-',
+                group_w: stats.mode & 16 ? 'w' : '-',
+                group_r: stats.mode & 32 ? 'r' : '-',
+                owner_x: stats.mode & 64 ? 'x' : '-',
+                owner_w: stats.mode & 128 ? 'w' : '-',
+                owner_r: stats.mode & 256 ? 'r' : '-',
+                is_dir: stats.isDirectory(),
+                is_symlink: stats.isSymbolicLink()
+              },
+              error: null
+            });
+          }
+        });
+      }).catch(fatalFail);
     });
   }
 }
@@ -735,12 +741,12 @@ class List {
     return new Promise((resolve, reject) => {
       Path.error(path).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ files: null, error: results.error });
           return;
         }
 
         if (results.string) {
-          reject({ success: null, error: results.string });
+          reject({ files: null, error: results.string });
           return;
         }
 
@@ -759,12 +765,12 @@ class List {
     return new Promise((resolve, reject) => {
       Path.error(path).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ files: null, error: results.error });
           return;
         }
 
         if (results.string) {
-          reject({ success: null, error: results.string });
+          reject({ files: null, error: results.string });
           return;
         }
 
@@ -783,12 +789,12 @@ class List {
     return new Promise((resolve, reject) => {
       Path.error(path).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ files: null, error: results.error });
           return;
         }
 
         if (results.string) {
-          reject({ success: null, error: results.string });
+          reject({ files: null, error: results.string });
           return;
         }
 
@@ -1312,12 +1318,12 @@ class File {
     return new Promise((resolve, reject) => {
       Path.error(path).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ success: false, error: results.error });
           return;
         }
 
         if (results.string) {
-          reject({ success: null, error: results.string });
+          reject({ success: false, error: results.string });
           return;
         }
 
@@ -1442,13 +1448,8 @@ class BashScript {
   static create(path, content) {
     return new Promise((resolve, reject) => {
       File.create(path, `#!/bin/bash\n${content}`).then(results => {
-        if (results.err) {
-          reject({ success: false, error: results.err });
-          return;
-        }
-
-        if (!results.success) {
-          reject({ success: false, error: null });
+        if (results.error) {
+          reject({ success: false, error: results.error });
           return;
         }
 
@@ -1457,7 +1458,7 @@ class BashScript {
             reject({ success: false, error: values.error });
             return;
           }
-          resolve({ success: values.success, error: null });
+          resolve({ success: true, error: null });
         }).catch(fatalFail);
       }).catch(fatalFail);
     });
@@ -1471,13 +1472,8 @@ class BashScript {
           return;
         }
 
-        if (!results.success) {
-          reject({ success: false, output: null, error: null });
-          return;
-        }
-
         Execute.local(path).then(values => {
-          if (values.stderr && !values.stdout) {
+          if (values.stderr) {
             reject({ success: false, output: null, error: values.stderr });
             return;
           }
@@ -1495,180 +1491,222 @@ class BashScript {
 class Find {
   static manual(path, options) {  // options = [ -option [value] ]
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ results: null, error: error });
-        return;
-      }
-
-      let cmd = `find ${path}`;
-      options.forEach(o => cmd += ` ${o}`);
-
-      let tempFilepath = PATH.join(path, 'temp_manual.sh');
-      BashScript.execute(tempFilepath, cmd).then(results => {
+      Path.error(path).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-        resolve({ results: lines, error: null });
+        if (results.string) {
+          reject({ results: null, error: results.string });
+          return;
+        }
+
+        let cmd = `find ${path}`;
+        options.forEach(o => cmd += ` ${o}`);
+
+        let tempFilepath = PATH.join(path, 'temp_manual.sh');
+        BashScript.execute(tempFilepath, cmd).then(values => {
+          if (values.error) {
+            reject({ results: null, error: values.error });
+            return;
+          }
+
+          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
+          resolve({ results: lines, error: null });
+        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
 
   static files_by_pattern(path, pattern, maxdepth) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ results: null, error: error });
-        return;
-      }
-
-      let cmd = `find ${path}`;
-      if (maxDepth && maxDepth > 0)
-        cmd += ` -maxdepth ${maxDepth}`;
-      cmd += ` -type f -name "${pattern}"`;
-
-      let tempFilepath = PATH.join(path, 'temp_files_by_pattern.sh');
-      BashScript.execute(tempFilepath, cmd).then(results => {
+      Path.error(path).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-        resolve({ results: lines, error: null });
+        if (results.string) {
+          reject({ results: null, error: results.string });
+          return;
+        }
+
+        let cmd = `find ${path}`;
+        if (maxDepth && maxDepth > 0)
+          cmd += ` -maxdepth ${maxDepth}`;
+        cmd += ` -type f -name "${pattern}"`;
+
+        let tempFilepath = PATH.join(path, 'temp_files_by_pattern.sh');
+        BashScript.execute(tempFilepath, cmd).then(values => {
+          if (values.error) {
+            reject({ results: null, error: values.error });
+            return;
+          }
+
+          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
+          resolve({ results: lines, error: null });
+        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
 
   static files_by_content(path, text, maxDepth) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ results: null, error: error });
-        return;
-      }
-
-      let cmd = `find ${path}`;
-      if (maxDepth && maxDepth > 0)
-        cmd += ` -maxdepth ${maxDepth}`;
-      cmd += ` -type f -exec grep -l "${text}" "{}" \\;`;
-
-      let tempFilepath = PATH.join(path, 'temp_files_by_content.sh');
-      BashScript.execute(tempFilepath, cmd).then(results => {
+      Path.error(path).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-        resolve({ results: lines, error: null });
+        if (results.string) {
+          reject({ results: null, error: results.string });
+          return;
+        }
+
+        let cmd = `find ${path}`;
+        if (maxDepth && maxDepth > 0)
+          cmd += ` -maxdepth ${maxDepth}`;
+        cmd += ` -type f -exec grep -l "${text}" "{}" \\;`;
+
+        let tempFilepath = PATH.join(path, 'temp_files_by_content.sh');
+        BashScript.execute(tempFilepath, cmd).then(values => {
+          if (values.error) {
+            reject({ results: null, error: values.error });
+            return;
+          }
+
+          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
+          resolve({ results: lines, error: null });
+        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
 
   static files_by_user(path, user, maxDepth) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ results: null, error: error });
-        return;
-      }
-
-      let cmd = `find ${path}`;
-      if (maxDepth && maxDepth > 0)
-        cmd += ` -maxdepth ${maxDepth}`;
-      cmd += ` -type f -user ${user}`;
-
-      let tempFilepath = PATH.join(path, 'temp_files_by_user.sh');
-      BashScript.execute(tempFilepath, cmd).then(results => {
+      Path.error(path).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-        resolve({ results: lines, error: null });
+        if (results.string) {
+          reject({ results: null, error: results.string });
+          return;
+        }
+
+        let cmd = `find ${path}`;
+        if (maxDepth && maxDepth > 0)
+          cmd += ` -maxdepth ${maxDepth}`;
+        cmd += ` -type f -user ${user}`;
+
+        let tempFilepath = PATH.join(path, 'temp_files_by_user.sh');
+        BashScript.execute(tempFilepath, cmd).then(values => {
+          if (values.error) {
+            reject({ results: null, error: values.error });
+            return;
+          }
+
+          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
+          resolve({ results: lines, error: null });
+        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
 
   static dir_by_pattern(path, pattern, maxDepth) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ results: null, error: error });
-        return;
-      }
-
-      let cmd = `find ${path}`;
-      if (maxDepth && maxDepth > 0)
-        cmd += ` -maxdepth ${maxDepth}`;
-      cmd += ` -type d -name "${pattern}"`;
-
-      let tempFilepath = PATH.join(path, 'temp_dir_by_pattern.sh');
-      BashScript.execute(tempFilepath, cmd).then(results => {
+      Path.error(path).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-        resolve({ results: lines, error: null });
+        if (results.string) {
+          reject({ results: null, error: results.string });
+          return;
+        }
+
+        let cmd = `find ${path}`;
+        if (maxDepth && maxDepth > 0)
+          cmd += ` -maxdepth ${maxDepth}`;
+        cmd += ` -type d -name "${pattern}"`;
+
+        let tempFilepath = PATH.join(path, 'temp_dir_by_pattern.sh');
+        BashScript.execute(tempFilepath, cmd).then(values => {
+          if (values.error) {
+            reject({ results: null, error: values.error });
+            return;
+          }
+
+          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
+          resolve({ results: lines, error: null });
+        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
 
   static empty_files(path, maxDepth) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ results: null, error: error });
-        return;
-      }
-
-      let cmd = `find ${path}`;
-      if (maxDepth && maxDepth > 0)
-        cmd += ` -maxdepth ${maxDepth}`;
-      cmd += ` -empty -type f`;
-
-      let tempFilepath = PATH.join(path, 'temp_empty_files.sh');
-      BashScript.execute(tempFilepath, cmd).then(results => {
+      Path.error(path).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-        resolve({ results: lines, error: null });
+        if (results.string) {
+          reject({ results: null, error: results.string });
+          return;
+        }
+
+        let cmd = `find ${path}`;
+        if (maxDepth && maxDepth > 0)
+          cmd += ` -maxdepth ${maxDepth}`;
+        cmd += ` -empty -type f`;
+
+        let tempFilepath = PATH.join(path, 'temp_empty_files.sh');
+        BashScript.execute(tempFilepath, cmd).then(values => {
+          if (values.error) {
+            reject({ results: null, error: values.error });
+            return;
+          }
+
+          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
+          resolve({ results: lines, error: null });
+        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
 
   static empty_dirs(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ results: null, error: error });
-        return;
-      }
-
-      let cmd = `find ${path}`;
-      if (maxDepth && maxDepth > 0)
-        cmd += ` -maxdepth ${maxDepth}`;
-      cmd += ` -empty -type d`;
-
-      let tempFilepath = PATH.join(path, 'temp_empty_dirs.sh');
-      BashScript.execute(tempFilepath, cmd).then(results => {
+      Path.error(path).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        let lines = results.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-        resolve({ results: lines, error: null });
+        if (results.string) {
+          reject({ results: null, error: results.string });
+          return;
+        }
+
+        let cmd = `find ${path}`;
+        if (maxDepth && maxDepth > 0)
+          cmd += ` -maxdepth ${maxDepth}`;
+        cmd += ` -empty -type d`;
+
+        let tempFilepath = PATH.join(path, 'temp_empty_dirs.sh');
+        BashScript.execute(tempFilepath, cmd).then(values => {
+          if (values.error) {
+            reject({ results: null, error: values.error });
+            return;
+          }
+
+          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
+          resolve({ results: lines, error: null });
+        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
