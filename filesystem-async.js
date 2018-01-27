@@ -682,12 +682,12 @@ class Move {
       let sTrimmed = src.trim();
       Path.exists(sTrimmed).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ success: false, error: results.error });
           return;
         }
 
         if (!results.exists) {
-          reject({ success: null, error: 'Path does not exist' });
+          reject({ success: false, error: 'Path does not exist' });
           return;
         }
 
@@ -710,7 +710,7 @@ class List {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ files: false, error: error });
+        reject({ files: null, error: error });
         return;
       }
 
@@ -741,7 +741,7 @@ class List {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ files: null, error: error });
         return;
       }
 
@@ -772,7 +772,7 @@ class List {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ files: null, error: error });
         return;
       }
 
@@ -807,12 +807,13 @@ class Rsync {
     return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        reject({ 
-          success: false, 
+        reject({
+          success: false,
           error: error,
           stdout: null,
           stderr: null,
-          exitCode: null });
+          exitCode: null
+        });
         return;
       }
 
@@ -868,7 +869,13 @@ class Rsync {
     return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        reject({ success: false, error: error });
+        reject({
+          success: false,
+          error: error,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
         return;
       }
 
@@ -924,7 +931,13 @@ class Rsync {
     return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        reject({ success: false, error: error });
+        reject({
+          success: false,
+          error: error,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
         return;
       }
 
@@ -980,7 +993,13 @@ class Rsync {
     return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        reject({ success: false, error: error });
+        reject({
+          success: false,
+          error: error,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
         return;
       }
 
@@ -1039,7 +1058,13 @@ class Rsync {
     return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        reject({ success: false, error: error });
+        reject({
+          success: false,
+          error: error,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
         return;
       }
 
@@ -1109,12 +1134,12 @@ class Chmod {
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ success: false, error: results.error });
           return;
         }
 
         if (!results.exists) {
-          reject({ success: null, error: 'Path does not exist' });
+          reject({ success: false, error: 'Path does not exist' });
           return;
         }
 
@@ -1177,12 +1202,12 @@ class Chown {
       let pTrimmed = path.trim();
       Path.error(pTrimmed).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ success: false, error: results.error });
           return;
         }
 
         if (!results.exists) {
-          reject({ success: null, error: 'Path does not exist' });
+          reject({ success: false, error: 'Path does not exist' });
           return;
         }
 
@@ -1253,7 +1278,10 @@ class UserInfo {
     return new Promise((resolve, reject) => {
       Execute.local('id', [username]).then(output => {
         if (output.stderr) {
-          reject({ info: null, error: output.stderr });
+          if (output.stderr.toLowerCase().includes('no such user'))
+            reject({ info: null, error: `No such user: ${username}` });
+          else
+            reject({ info: null, error: output.stderr });
           return;
         }
 
@@ -1279,10 +1307,13 @@ class UserInfo {
         });
 
         resolve({
-          username: username,
-          uid: uid,
-          gid: gid,
-          groups: groups
+          info: {
+            username: username,
+            uid: uid,
+            gid: gid,
+            groups: groups
+          },
+          error: null
         });
       }).catch(fatalFail);
     });
@@ -1300,19 +1331,19 @@ class Rename {
         return;
       }
 
-      let cTrimmed = path.trim();
+      let cTrimmed = currPath.trim();
       Path.exists(cTrimmed).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ success: false, error: results.error });
           return;
         }
 
         if (!results.exists) {
-          reject({ success: null, error: 'Path does not exist' });
+          reject({ success: false, error: 'Path does not exist' });
           return;
         }
 
-        let parentDir = Path.parent_dir(currPath);
+        let parentDir = Path.parent_dir(currPath).dir;
         let updatedPath = PATH.join(parentDir, newName);
 
         FS.rename(cTrimmed, updatedPath, (err) => {
@@ -1401,7 +1432,7 @@ class File {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ content: null, error: error });
         return;
       }
 
@@ -1530,7 +1561,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1567,7 +1598,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1606,7 +1637,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1645,7 +1676,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1684,7 +1715,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1723,7 +1754,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
@@ -1735,7 +1766,7 @@ class Find {
         }
 
         if (!results.exists) {
-          reject({ results: null, error: 'Path does not exist'});
+          reject({ results: null, error: 'Path does not exist' });
           return;
         }
 
@@ -1762,7 +1793,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ results: null, error: error });
         return;
       }
 
