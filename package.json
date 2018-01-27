@@ -1,8 +1,8 @@
 {
   "name": "filesystem-async",
   "version": "1.0.0",
-  "description": "A more complete collection of filesystem commands",
-  "main": "test.js",
+  "description": "A collection of filesystem commands",
+  "main": "filesystem-async.js",
   "dependencies": {
     "fs-extra": "^5.0.0",
     "mkdirp": "^0.5.1",
@@ -11,6 +11,6 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Jesus Isaias Arevalo",
+  "author": "Jesus Arevalo <isa90201@gmail.com>",
   "license": "ISC"
 }
