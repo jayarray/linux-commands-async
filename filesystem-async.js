@@ -223,18 +223,19 @@ class Stats {
         return;
       }
 
-      Path.exists(path).then(results => {
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ stats: null, error: results.error });
           return;
         }
 
         if (!results.exists) {
-          reject({ stats: null, error: 'Path does not exists' });
+          reject({ stats: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
-        FS.lstat(path, (err, stats) => {
+        FS.lstat(pTrimmed, (err, stats) => {
           if (err)
             reject({ stats: null, error: err });
           else {
@@ -301,7 +302,7 @@ class Path {
         }
 
         if (!results.exists) {
-          reject({ isFile: null, error: 'Path does not exist' });
+          reject({ isFile: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -331,7 +332,7 @@ class Path {
         }
 
         if (!results.exists) {
-          reject({ isDir: null, error: 'Path does not exist' });
+          reject({ isDir: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -424,7 +425,7 @@ class Permissions {
         }
 
         if (!results.exists) {
-          reject({ permissions: null, error: 'Path does not exist' });
+          reject({ permissions: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -522,7 +523,7 @@ class Copy {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: 'Path does not exist' });
+          reject({ success: false, error: `Path does not exist: ${sTrimmed}` });
           return;
         }
 
@@ -557,7 +558,7 @@ class Remove {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: 'Path does not exist' });
+          reject({ success: false, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -600,7 +601,7 @@ class Remove {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: 'Path does not exist' });
+          reject({ success: false, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -611,7 +612,7 @@ class Remove {
           }
 
           if (!results.isDir) {
-            resolve({ success: false, error: 'Path is not a directory' });
+            resolve({ success: false, error: `Path is not a directory: ${pTrimmed}` });
             return;
           }
 
@@ -687,7 +688,7 @@ class Move {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: 'Path does not exist' });
+          reject({ success: false, error: `Path does not exist: ${sTrimmed}` });
           return;
         }
 
@@ -722,7 +723,7 @@ class List {
         }
 
         if (!results.exists) {
-          reject({ files: null, error: 'Path does not exist' });
+          reject({ files: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -753,7 +754,7 @@ class List {
         }
 
         if (!results.exists) {
-          reject({ files: null, error: 'Path does not exist' });
+          reject({ files: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -784,7 +785,7 @@ class List {
         }
 
         if (!results.exists) {
-          reject({ files: null, error: 'Path does not exist' });
+          reject({ files: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -833,7 +834,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: 'Path does not exist',
+            error: `Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -895,7 +896,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: 'Path does not exist',
+            error: `Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -957,7 +958,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: 'Path does not exist',
+            error: `Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1019,7 +1020,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: 'Path does not exist',
+            error: `Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1084,7 +1085,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: 'Path does not exist',
+            error: `Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1139,7 +1140,7 @@ class Chmod {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: 'Path does not exist' });
+          reject({ success: false, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1207,7 +1208,7 @@ class Chown {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: 'Path does not exist' });
+          reject({ success: false, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1339,7 +1340,7 @@ class Rename {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: 'Path does not exist' });
+          reject({ success: false, error: `Path does not exist: ${cTrimmed}` });
           return;
         }
 
@@ -1398,7 +1399,7 @@ class File {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: 'Path does not exist' });
+          reject({ success: false, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1409,7 +1410,7 @@ class File {
           }
 
           if (!values.isFile) {
-            reject({ success: false, error: 'Path is not a file' });
+            reject({ success: false, error: `Path is not a file: ${pTrimmed}` });
             return;
           }
 
@@ -1444,7 +1445,7 @@ class File {
         }
 
         if (!results.exists) {
-          reject({ content: null, error: 'Path does not exist' });
+          reject({ content: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1455,7 +1456,7 @@ class File {
           }
 
           if (!values.isFile) {
-            reject({ content: null, error: 'Path is not a file' });
+            reject({ content: null, error: `Path is not a file: ${pTrimmed}` });
             return;
           }
 
@@ -1573,7 +1574,7 @@ class Find {
         }
 
         if (!results.exists) {
-          reject({ results: null, error: 'Path does not exist' });
+          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1610,7 +1611,7 @@ class Find {
         }
 
         if (!results.exists) {
-          reject({ results: null, error: 'Path does not exists' });
+          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1649,7 +1650,7 @@ class Find {
         }
 
         if (!results.exists) {
-          reject({ results: null, error: 'Path does not exist' });
+          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1688,7 +1689,7 @@ class Find {
         }
 
         if (!results.string) {
-          reject({ results: null, error: 'Path does not exist' });
+          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1727,7 +1728,7 @@ class Find {
         }
 
         if (!results.exists) {
-          reject({ results: null, error: 'Path does not exist' });
+          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1766,7 +1767,7 @@ class Find {
         }
 
         if (!results.exists) {
-          reject({ results: null, error: 'Path does not exist' });
+          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1789,7 +1790,7 @@ class Find {
     });
   }
 
-  static empty_dirs(path) {
+  static empty_dirs(path, maxDepth) {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
@@ -1798,14 +1799,14 @@ class Find {
       }
 
       let pTrimmed = path.trim();
-      Path.error(pTrimmed).then(results => {
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
         if (!results.exists) {
-          reject({ results: null, error: 'Path does not exist' });
+          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
           return;
         }
 
