@@ -710,7 +710,7 @@ class List {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ files: false, error: error });
         return;
       }
 
@@ -746,7 +746,7 @@ class List {
       }
 
       let pTrimmed = path.trim();
-      Path.error(pTrimmed).then(results => {
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ files: null, error: results.error });
           return;
@@ -777,7 +777,7 @@ class List {
       }
 
       let pTrimmed = path.trim();
-      Path.error(pTrimmed).then(results => {
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ files: null, error: results.error });
           return;
@@ -807,7 +807,12 @@ class Rsync {
     return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ 
+          success: false, 
+          error: error,
+          stdout: null,
+          stderr: null,
+          exitCode: null });
         return;
       }
 
