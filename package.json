@@ -12,5 +12,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jesus Arevalo <isa90201@gmail.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {}
 }
