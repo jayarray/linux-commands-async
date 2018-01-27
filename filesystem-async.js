@@ -1,7 +1,8 @@
-var OS = require('os'); //
+var OS = require('os');
 var PATH = require('path');
-var FS = require('fs-extra'); //
-var MKDIRP = require('mkdirp'); //
+var FS = require('fs-extra');
+var RIMRAF = require('rimraf');
+var MKDIRP = require('mkdirp');
 var CHILD_PROCESS = require('child_process');
 
 //-----------------------------------
@@ -88,18 +89,18 @@ class Timestamp {
     let secondsStr = `00${seconds}`;
     secondsStr = secondsStr.slice(-2);
 
-    let adjustHours = null;
+    let adjustedHours = null;
     let timeStr = '';
     if (hours == 0) {
-      adjustHours = 12;
+      adjustedHours = 12;
       timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} AM`;
     }
     else if (hours == 12) {
-      adjustHours = 12;
+      adjustedHours = 12;
       timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} PM`;
     }
     else if (hours > 12) {
-      adjustHours = hours % 12;
+      adjustedHours = hours % 12;
       timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} PM`;
     }
     else {
@@ -108,7 +109,7 @@ class Timestamp {
     }
 
     let meridiemTime = {  // 12-hour format (AM | PM)
-      hours: adjustHours,
+      hours: adjustedHours,
       minutes: minutes,
       seconds: seconds,
       milliseconds: milliseconds,
@@ -123,7 +124,7 @@ class Timestamp {
     let monthName = monthNames[monthNumber];
     let dayOfMonth = d.getDate(); // 1-31
 
-    let weekDayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    let weekDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     let dayOfWeekNumber = d.getDay();  // 0-6
     let dayOfWeekName = weekDayNames[dayOfWeekNumber];
 
@@ -212,18 +213,24 @@ class Timestamp {
 }
 
 //-------------------------------------------
-// STATS
+// STATS 
 class Stats {
   static stats(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ isDir: null, error: error });
+        return;
+      }
+
+      Path.exists(path).then(results => {
         if (results.error) {
           reject({ stats: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ stats: null, error: results.string });
+        if (!results.exists) {
+          reject({ stats: null, error: 'Path does not exists' });
           return;
         }
 
@@ -263,41 +270,42 @@ class Stats {
 class Path {
   static exists(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
-        if (results.error) {
-          reject({ exists: null, error: results.error });
-          return;
-        }
+      let error = Path.error(path);
+      if (error) {
+        reject({ exists: null, error: error });
+        return;
+      }
 
-        if (results.string) {
-          reject({ exists: null, error: results.string });
-          return;
-        }
-
-        FS.access(path, FS.F_OK, (err) => {
-          if (err)
-            reject({ exists: false, error: null });
-          else
-            resolve({ exists: true, error: null });
-        });
-      }).catch(fatalFail);
+      FS.access(path.trim(), FS.F_OK, (err) => {
+        if (err)
+          resolve({ exists: false, error: null });
+        else
+          resolve({ exists: true, error: null });
+      });
     });
   }
 
   static is_file(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
-        if (result.error) {
+      let error = Path.error(path);
+      if (error) {
+        reject({ exists: null, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
+        if (results.error) {
           reject({ isFile: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ isFile: null, error: results.string });
+        if (!results.exists) {
+          reject({ isFile: null, error: 'Path does not exist' });
           return;
         }
 
-        FS.lstat(path, (err, stats) => {
+        FS.lstat(pTrimmed, (err, stats) => {
           if (err)
             reject({ isFile: null, error: err });
           else
@@ -309,18 +317,25 @@ class Path {
 
   static is_dir(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ isDir: null, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ isDir: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ isDir: null, error: results.string });
+        if (!results.exists) {
+          reject({ isDir: null, error: 'Path does not exist' });
           return;
         }
 
-        FS.lstat(path, (err, stats) => {
+        FS.lstat(pTrimmed, (err, stats) => {
           if (err)
             reject({ isDir: null, error: err });
           else
@@ -331,128 +346,59 @@ class Path {
   }
 
   static filename(path) {
-    return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
-        if (results.error) {
-          reject({ name: null, error: results.error });
-          return;
-        }
-
-        if (results.string) {
-          reject({ name: null, error: results.string });
-          return;
-        }
-
-        resolve({ name: PATH.basename(path.trim()), error: results.error });
-      }).catch(fatalFail);
-    });
+    let error = Path.error(path);
+    if (error)
+      return { name: null, error: error };
+    return { name: PATH.basename(path.trim()), error: null };
   }
 
   static extension(path) {
-    return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
-        if (results.error) {
-          reject({ extension: null, error: results.error });
-          return;
-        }
-
-        if (results.string) {
-          reject({ extension: null, error: results.string });
-          return;
-        }
-        resolve({ extension: PATH.extname(p.trim()), error: results.error });
-      }).catch(fatalFail);
-    });
+    let error = Path.error(path);
+    if (error)
+      return { extension: null, error: error };
+    return { extension: PATH.extname(path.trim()), error: null };
   }
 
   static parent_dir_name(path) {
-    return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
-        if (results.error) {
-          reject({ name: null, error: results.error });
-          return;
-        }
-
-        if (results.string) {
-          reject({ name: null, error: results.string });
-          return;
-        }
-
-        resolve({ name: PATH.dirname(path.trim()).split(PATH.sep).pop(), error: results.error });
-      }).catch(fatalFail);
-    });
+    let error = Path.error(path);
+    if (error)
+      return { name: null, error: error };
+    return { name: PATH.dirname(path.trim()).split(PATH.sep).pop(), error: null };
   }
 
   static parent_dir(path) {
-    return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
-        if (results.error) {
-          reject({ dir: null, error: results.error });
-          return;
-        }
-
-        if (results.string) {
-          reject({ dir: null, error: results.string });
-          return;
-        }
-        resolve({ dir: PATH.dirname(path.trim()), error: null }); // Full path to parent dir
-      }).catch(fatalFail);
-    });
-  }
-
-  static is_valid_type(path) {
-    return path != null && path != undefined && path != '' && path.trim() != '';
-  }
-
-  static get_invalid_type(p) {
-    if (path == null)
-      return 'null';
-    else if (path == undefined)
-      return 'undefined';
-    else if (path == '')
-      return 'empty string';
-    else if (path.trim() == '')
-      return 'whitespace';
-    else
-      return typeof path;
+    let error = Path.error(path);
+    if (error)
+      return { dir: null, error: error };
+    return { dir: PATH.dirname(path.trim()), error: null }; // Full path to parent dir
   }
 
   static error(path) {
-    return new Promise((resolve, reject) => {
-      if (!Path.is_valid_type(path)) {
-        resolve({ string: `Path is ${Path.get_invalid_type(path)}`, error: null });
-        return;
-      }
-
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ string: null, error: results.error });
-          return;
-        }
-
-        if (!results.exists) {
-          resolve({ string: 'No such file or directory', error: null });
-          return;
-        }
-        reject({ string: null, error: null });
-      }).catch(fatalFail);
-    });
+    if (path === undefined)
+      return 'Path is undefined';
+    else if (path == null)
+      return 'Path is null';
+    else if (path == '')
+      return 'Path is empty';
+    else if (path.trim() == '')
+      return 'Path is whitespace';
+    else
+      return null;
   }
 
   static escape(path) {
-    if (path == undefined)
+    if (path === undefined)
       return { string: null, error: `Path is undefined` };
+
     if (path == null)
       return { string: null, error: `Path is null` };
-
-    let pTrimmed = path.trim();
-    return { string: escape(pTrimmed), error: null };
+    return { string: escape(path.trim()), error: null };
   }
 
   static containsWhiteSpace(path) {
-    if (path == undefined)
+    if (path === undefined)
       return { hasWhitespace: null, error: `Path is undefined` };
+
     if (path == null)
       return { hasWhitespace: null, error: `Path is null` };
     return { hasWhitespace: path.includes(' '), error: null };
@@ -464,18 +410,25 @@ class Path {
 class Permissions {
   static permissions(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ permissions: null, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ permissions: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ permissions: null, error: results.string });
+        if (!results.exists) {
+          reject({ permissions: null, error: 'Path does not exist' });
           return;
         }
 
-        FS.lstat(path, (err, stats) => {
+        FS.lstat(pTrimmed, (err, stats) => {
           if (err)
             reject({ permissions: null, error: err });
           else {
@@ -555,18 +508,25 @@ class Permissions {
 class Copy {
   static copy(src, dest) {
     return new Promise((resolve, reject) => {
-      Path.error(src).then(results => {
+      let error = Path.error(src);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let sTrimmed = src.trim();
+      Path.exists(sTrimmed).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ success: false, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ success: null, error: results.string });
+        if (!results.exists) {
+          reject({ success: false, error: 'Path does not exist' });
           return;
         }
 
-        FS.copy(src, dest, (err) => {
+        FS.copy(sTrimmed, dest, (err) => {
           if (err) {
             reject({ success: false, error: err });
             return;
@@ -583,18 +543,25 @@ class Copy {
 class Remove {
   static file(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
-          reject({ success: null, error: results.error });
+          reject({ success: false, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ success: null, error: results.string });
+        if (!results.exists) {
+          reject({ success: false, error: 'Path does not exist' });
           return;
         }
 
-        Path.is_file(path).then(results => {
+        Path.is_file(pTrimmed).then(results => {
           if (results.error) {
             resolve({ success: false, error: results.error });
             return;
@@ -605,7 +572,7 @@ class Remove {
             return;
           }
 
-          FS.unlink(path, (err) => {
+          FS.unlink(pTrimmed, (err) => {
             if (err) {
               reject({ success: false, error: err });
               return;
@@ -619,18 +586,25 @@ class Remove {
 
   static directory(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
-          reject({ successa: null, error: results.error });
+          reject({ successa: false, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ success: null, error: results.string });
+        if (!results.exists) {
+          reject({ success: false, error: 'Path does not exist' });
           return;
         }
 
-        Path.is_dir(path).then(results => {
+        Path.is_dir(pTrimmed).then(results => {
           if (results.error) {
             resolve({ success: false, error: results.error });
             return;
@@ -641,7 +615,7 @@ class Remove {
             return;
           }
 
-          FS.rmdir(path, (err) => {
+          RIMRAF(pTrimmed, (err) => {
             if (err) {
               reject({ success: false, error: err });
               return;
@@ -659,49 +633,37 @@ class Remove {
 class Mkdir {
   static mkdir(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
-        if (results.error) {
-          reject({ success: null, error: results.error });
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      FS.mkdir(path.trim(), (err) => {
+        if (err) {
+          reject({ success: false, error: err });
           return;
         }
-
-        if (results.string) {
-          reject({ success: null, error: results.string });
-          return;
-        }
-
-        FS.mkdir(path, (err) => {
-          if (err) {
-            reject({ success: false, error: err });
-            return;
-          }
-          resolve({ success: true, error: null });
-        });
-      }).catch(fatalFail);
+        resolve({ success: true, error: null });
+      });
     });
   }
 
   static mkdirp(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
-        if (results.error) {
-          reject({ success: null, error: results.error });
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      MKDIRP(path.trim(), (err) => {
+        if (err) {
+          reject({ success: false, error: err });
           return;
         }
-
-        if (results.string) {
-          reject({ success: null, error: results.string });
-          return;
-        }
-
-        MKDIRP(path, (err) => {
-          if (err) {
-            reject({ success: false, error: err });
-            return;
-          }
-          resolve({ success: true, error: null });
-        });
-      }).catch(fatalFail);
+        resolve({ success: true, error: null });
+      });
     });
   }
 }
@@ -711,18 +673,25 @@ class Mkdir {
 class Move {
   static move(src, dest) {
     return new Promise((resolve, reject) => {
-      Path.error(src).then(results => {
+      let error = Path.error(src);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let sTrimmed = src.trim();
+      Path.exists(sTrimmed).then(results => {
         if (results.error) {
           reject({ success: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ success: null, error: results.string });
+        if (!results.exists) {
+          reject({ success: null, error: 'Path does not exist' });
           return;
         }
 
-        FS.move(src, dest, (err) => {
+        FS.move(sTrimmed, dest, (err) => {
           if (err) {
             reject({ success: false, error: err });
             return;
@@ -739,18 +708,25 @@ class Move {
 class List {
   static visible(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ files: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ files: null, error: results.string });
+        if (!results.exists) {
+          reject({ files: null, error: 'Path does not exist' });
           return;
         }
 
-        FS.readdir(path, (err, files) => {
+        FS.readdir(pTrimmed, (err, files) => {
           if (err) {
             reject({ files: null, error: err });
             return;
@@ -763,18 +739,25 @@ class List {
 
   static hidden(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.error(pTrimmed).then(results => {
         if (results.error) {
           reject({ files: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ files: null, error: results.string });
+        if (!results.exists) {
+          reject({ files: null, error: 'Path does not exist' });
           return;
         }
 
-        FS.readdir(path, (err, files) => {
+        FS.readdir(pTrimmed, (err, files) => {
           if (err) {
             reject({ files: null, error: err });
             return;
@@ -787,18 +770,25 @@ class List {
 
   static all(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.error(pTrimmed).then(results => {
         if (results.error) {
           reject({ files: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ files: null, error: results.string });
+        if (!results.exists) {
+          reject({ files: null, error: 'Path does not exist' });
           return;
         }
 
-        FS.readdir(path, (err, files) => {
+        FS.readdir(pTrimmed, (err, files) => {
           if (err) {
             reject({ files: null, error: err });
             return;
@@ -815,7 +805,14 @@ class List {
 class Rsync {
   static rsync(user, host, src, dest) {
     return new Promise((resolve, reject) => {
-      Path.error(src).then(results => {
+      let error = Path.error(src);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let sTrimmed = src.trim();
+      Path.exists(sTrimmed).then(results => {
         if (results.error) {
           reject({
             success: false,
@@ -827,10 +824,10 @@ class Rsync {
           return;
         }
 
-        if (results.string) {
+        if (!results.exists) {
           reject({
             success: false,
-            error: results.string,
+            error: 'Path does not exist',
             stdout: null,
             stderr: null,
             exitCode: null
@@ -838,7 +835,7 @@ class Rsync {
           return;
         }
 
-        let args = `-a ${src} ${user}@${host}:${dest}`.split(' ');
+        let args = `-a ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
             reject({
@@ -864,7 +861,14 @@ class Rsync {
 
   static update(user, host, src, dest) { // Update dest if src was updated
     return new Promise((resolve, reject) => {
-      Path.error(src).then(results => {
+      let error = Path.error(src);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let sTrimmed = src.trim();
+      Path.exists(sTrimmed).then(results => {
         if (results.error) {
           reject({
             success: false,
@@ -876,10 +880,10 @@ class Rsync {
           return;
         }
 
-        if (results.string) {
+        if (!results.exists) {
           reject({
             success: false,
-            error: results.string,
+            error: 'Path does not exist',
             stdout: null,
             stderr: null,
             exitCode: null
@@ -887,7 +891,7 @@ class Rsync {
           return;
         }
 
-        let args = `-a --update ${src} ${user}@${host}:${dest}`.split(' ');
+        let args = `-a --update ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
             reject({
@@ -913,7 +917,14 @@ class Rsync {
 
   static match(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
     return new Promise((resolve, reject) => {
-      Path.error(src).then(results => {
+      let error = Path.error(src);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let sTrimmed = src.trim();
+      Path.exists(sTrimmed).then(results => {
         if (results.error) {
           reject({
             success: false,
@@ -925,10 +936,10 @@ class Rsync {
           return;
         }
 
-        if (results.string) {
+        if (!results.exists) {
           reject({
             success: false,
-            error: results.string,
+            error: 'Path does not exist',
             stdout: null,
             stderr: null,
             exitCode: null
@@ -936,7 +947,7 @@ class Rsync {
           return;
         }
 
-        let args = `-a --delete-after ${src} ${user}@${host}:${dest}`.split(' ');
+        let args = `-a --delete-after ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
             reject({
@@ -962,7 +973,14 @@ class Rsync {
 
   static manual(user, host, src, dest, flags, options) {  // flags: [chars], options: [strings]
     return new Promise((resolve, reject) => {
-      Path.error(src).then(results => {
+      let error = Path.error(src);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let sTrimmed = src.trim();
+      Path.exists(sTrimmed).then(results => {
         if (results.error) {
           reject({
             success: false,
@@ -974,10 +992,10 @@ class Rsync {
           return;
         }
 
-        if (results.string) {
+        if (!results.exists) {
           reject({
             success: false,
-            error: results.string,
+            error: 'Path does not exist',
             stdout: null,
             stderr: null,
             exitCode: null
@@ -988,7 +1006,7 @@ class Rsync {
         let flagStr = `-${flags.join('')}`; // Ex.: -av
         let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
 
-        let args = `${flagStr} ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
+        let args = `${flagStr} ${optionStr} ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
             reject({
@@ -1014,7 +1032,14 @@ class Rsync {
 
   static dry_run(user, host, src, dest, flags, options) { // Will execute without making changes (for testing command)
     return new Promise((resolve, reject) => {
-      Path.error(src).then(results => {
+      let error = Path.error(src);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let sTrimmed = src.trim();
+      Path.exists(sTrimmed).then(results => {
         if (results.error) {
           reject({
             success: false,
@@ -1026,10 +1051,10 @@ class Rsync {
           return;
         }
 
-        if (results.string) {
+        if (!results.exists) {
           reject({
             success: false,
-            error: results.string,
+            error: 'Path does not exist',
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1040,7 +1065,7 @@ class Rsync {
         let flagStr = `-${flags.join('')}`; // Ex.: -av
         let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
 
-        let args = `${flagStr} --dry-run ${optionStr} ${src} ${user}@${host}:${dest}`.split(' ');
+        let args = `${flagStr} --dry-run ${optionStr} ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
             reject({
@@ -1070,18 +1095,25 @@ class Rsync {
 class Chmod {
   static chmod(op, who, types, path) {    // op = (- | + | =)  who = [u, g, o]  types = [r, w, x]
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ success: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ success: null, error: results.string });
+        if (!results.exists) {
+          reject({ success: null, error: 'Path does not exist' });
           return;
         }
 
-        Permissions.permissions(path).then(values => {
+        Permissions.permissions(pTrimmed).then(values => {
           if (values.error) {
             reject({ success: false, error: values.error });
             return;
@@ -1113,7 +1145,7 @@ class Chmod {
 
           let obj = { u: perms.owner, g: perms.group, o: perms.others };
           let newPermNumStr = Permissions.objToNumberString(obj);
-          FS.chmod(path, newPermNumStr, (err) => {
+          FS.chmod(pTrimmed, newPermNumStr, (err) => {
             if (err) {
               reject({ success: false, error: err });
               return;
@@ -1131,18 +1163,25 @@ class Chmod {
 class Chown {
   static chown(path, uid, gid) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.error(pTrimmed).then(results => {
         if (results.error) {
           reject({ success: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ success: null, error: results.string });
+        if (!results.exists) {
+          reject({ success: null, error: 'Path does not exist' });
           return;
         }
 
-        FS.chown(path, uid, gid, (err) => {
+        FS.chown(pTrimmed, uid, gid, (err) => {
           if (err) {
             reject({ success: false, error: err });
             return;
@@ -1250,21 +1289,28 @@ class UserInfo {
 class Rename {
   static rename(currPath, newName) {
     return new Promise((resolve, reject) => {
-      Path.error(currPath).then(results => {
+      let error = Path.error(currPath);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let cTrimmed = path.trim();
+      Path.exists(cTrimmed).then(results => {
         if (results.error) {
           reject({ success: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ success: null, error: results.string });
+        if (!results.exists) {
+          reject({ success: null, error: 'Path does not exist' });
           return;
         }
 
         let parentDir = Path.parent_dir(currPath);
         let updatedPath = PATH.join(parentDir, newName);
 
-        FS.rename(currPath, updatedPath, (err) => {
+        FS.rename(cTrimmed, updatedPath, (err) => {
           if (err) {
             reject({ success: false, error: err });
             return;
@@ -1285,23 +1331,9 @@ class File {
 
   static create(path, text) {
     return new Promise((resolve, reject) => {
-      if (path == undefined) {
-        reject({ success: false, error: 'Path is undefined' });
-        return;
-      }
-
-      if (path == null) {
-        reject({ success: false, error: 'Path is null' });
-        return;
-      }
-
-      if (path == '') {
-        reject({ success: false, error: 'Path is empty' });
-        return;
-      }
-
-      if (path.trim() == '') {
-        reject({ success: false, error: 'Path is witespace' });
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
         return;
       }
 
@@ -1316,18 +1348,25 @@ class File {
 
   static make_executable(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ success: false, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ success: false, error: results.string });
+        if (!results.exists) {
+          reject({ success: false, error: 'Path does not exist' });
           return;
         }
 
-        Path.is_file(path).then(values => {
+        Path.is_file(pTrimmed).then(values => {
           if (values.error) {
             reject({ success: false, error: values.error });
             return;
@@ -1341,7 +1380,7 @@ class File {
           let op = '+';
           let who = ['u', 'g', 'o'];
           let types = ['x'];
-          Chmod.chmod(op, who, types, path).then(vals => {
+          Chmod.chmod(op, who, types, pTrimmed).then(vals => {
             if (vals.error) {
               reject({ success: false, error: vals.error });
               return;
@@ -1355,18 +1394,25 @@ class File {
 
   static read(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ content: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ content: null, error: results.string });
+        if (!results.exists) {
+          reject({ content: null, error: 'Path does not exist' });
           return;
         }
 
-        Path.is_file(path).then(values => {
+        Path.is_file(pTrimmed).then(values => {
           if (values.error) {
             reject({ content: null, error: values.error });
             return;
@@ -1377,7 +1423,7 @@ class File {
             return;
           }
 
-          FS.readFile(path, (err, data) => {
+          FS.readFile(pTrimmed, (err, data) => {
             if (err) {
               reject({ content: null, error: err });
               return;
@@ -1411,27 +1457,13 @@ class Directory {
 
   static create(path) {
     return new Promise((resolve, reject) => {
-      if (path == undefined) {
-        reject({ success: false, error: 'Path is undefined' });
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
         return;
       }
 
-      if (path == null) {
-        reject({ success: false, error: 'Path is null' });
-        return;
-      }
-
-      if (path == '') {
-        reject({ success: false, error: 'Path is empty' });
-        return;
-      }
-
-      if (path.trim() == '') {
-        reject({ success: false, error: 'Path is witespace' });
-        return;
-      }
-
-      Mkdir.mkdirp(path).then(results => {
+      Mkdir.mkdirp(path.trim()).then(results => {
         if (results.error) {
           reject({ success: false, error: results.error });
           return;
@@ -1489,23 +1521,30 @@ class BashScript {
 //------------------------------------
 // FIND
 class Find {
-  static manual(path, options) {  // options = [ -option [value] ]
+  static manual(path, options) {  // options = [ "-option [value]" ]
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ results: null, error: results.string });
+        if (!results.exists) {
+          reject({ results: null, error: 'Path does not exist' });
           return;
         }
 
-        let cmd = `find ${path}`;
+        let cmd = `find ${pTrimmed}`;
         options.forEach(o => cmd += ` ${o}`);
 
-        let tempFilepath = PATH.join(path, 'temp_manual.sh');
+        let tempFilepath = PATH.join(pTrimmed, 'temp_manual.sh');
         BashScript.execute(tempFilepath, cmd).then(values => {
           if (values.error) {
             reject({ results: null, error: values.error });
@@ -1521,23 +1560,30 @@ class Find {
 
   static files_by_pattern(path, pattern, maxdepth) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ results: null, error: results.string });
+        if (!results.exists) {
+          reject({ results: null, error: 'Path does not exists' });
           return;
         }
 
-        let cmd = `find ${path}`;
+        let cmd = `find ${pTrimmed}`;
         if (maxDepth && maxDepth > 0)
           cmd += ` -maxdepth ${maxDepth}`;
         cmd += ` -type f -name "${pattern}"`;
 
-        let tempFilepath = PATH.join(path, 'temp_files_by_pattern.sh');
+        let tempFilepath = PATH.join(pTrimmed, 'temp_files_by_pattern.sh');
         BashScript.execute(tempFilepath, cmd).then(values => {
           if (values.error) {
             reject({ results: null, error: values.error });
@@ -1553,23 +1599,30 @@ class Find {
 
   static files_by_content(path, text, maxDepth) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ results: null, error: results.string });
+        if (!results.exists) {
+          reject({ results: null, error: 'Path does not exist' });
           return;
         }
 
-        let cmd = `find ${path}`;
+        let cmd = `find ${pTrimmed}`;
         if (maxDepth && maxDepth > 0)
           cmd += ` -maxdepth ${maxDepth}`;
         cmd += ` -type f -exec grep -l "${text}" "{}" \\;`;
 
-        let tempFilepath = PATH.join(path, 'temp_files_by_content.sh');
+        let tempFilepath = PATH.join(pTrimmed, 'temp_files_by_content.sh');
         BashScript.execute(tempFilepath, cmd).then(values => {
           if (values.error) {
             reject({ results: null, error: values.error });
@@ -1585,23 +1638,30 @@ class Find {
 
   static files_by_user(path, user, maxDepth) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ results: null, error: results.string });
+        if (!results.string) {
+          reject({ results: null, error: 'Path does not exist' });
           return;
         }
 
-        let cmd = `find ${path}`;
+        let cmd = `find ${pTrimmed}`;
         if (maxDepth && maxDepth > 0)
           cmd += ` -maxdepth ${maxDepth}`;
         cmd += ` -type f -user ${user}`;
 
-        let tempFilepath = PATH.join(path, 'temp_files_by_user.sh');
+        let tempFilepath = PATH.join(pTrimmed, 'temp_files_by_user.sh');
         BashScript.execute(tempFilepath, cmd).then(values => {
           if (values.error) {
             reject({ results: null, error: values.error });
@@ -1617,23 +1677,30 @@ class Find {
 
   static dir_by_pattern(path, pattern, maxDepth) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ results: null, error: results.string });
+        if (!results.exists) {
+          reject({ results: null, error: 'Path does not exist' });
           return;
         }
 
-        let cmd = `find ${path}`;
+        let cmd = `find ${pTrimmed}`;
         if (maxDepth && maxDepth > 0)
           cmd += ` -maxdepth ${maxDepth}`;
         cmd += ` -type d -name "${pattern}"`;
 
-        let tempFilepath = PATH.join(path, 'temp_dir_by_pattern.sh');
+        let tempFilepath = PATH.join(pTrimmed, 'temp_dir_by_pattern.sh');
         BashScript.execute(tempFilepath, cmd).then(values => {
           if (values.error) {
             reject({ results: null, error: values.error });
@@ -1649,23 +1716,30 @@ class Find {
 
   static empty_files(path, maxDepth) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.exists(pTrimmed).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ results: null, error: results.string });
+        if (!results.exists) {
+          reject({ results: null, error: 'Path does not exist'});
           return;
         }
 
-        let cmd = `find ${path}`;
+        let cmd = `find ${pTrimmed}`;
         if (maxDepth && maxDepth > 0)
           cmd += ` -maxdepth ${maxDepth}`;
         cmd += ` -empty -type f`;
 
-        let tempFilepath = PATH.join(path, 'temp_empty_files.sh');
+        let tempFilepath = PATH.join(pTrimmed, 'temp_empty_files.sh');
         BashScript.execute(tempFilepath, cmd).then(values => {
           if (values.error) {
             reject({ results: null, error: values.error });
@@ -1681,23 +1755,30 @@ class Find {
 
   static empty_dirs(path) {
     return new Promise((resolve, reject) => {
-      Path.error(path).then(results => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.error(pTrimmed).then(results => {
         if (results.error) {
           reject({ results: null, error: results.error });
           return;
         }
 
-        if (results.string) {
-          reject({ results: null, error: results.string });
+        if (!results.exists) {
+          reject({ results: null, error: 'Path does not exist' });
           return;
         }
 
-        let cmd = `find ${path}`;
+        let cmd = `find ${pTrimmed}`;
         if (maxDepth && maxDepth > 0)
           cmd += ` -maxdepth ${maxDepth}`;
         cmd += ` -empty -type d`;
 
-        let tempFilepath = PATH.join(path, 'temp_empty_dirs.sh');
+        let tempFilepath = PATH.join(pTrimmed, 'temp_empty_dirs.sh');
         BashScript.execute(tempFilepath, cmd).then(values => {
           if (values.error) {
             reject({ results: null, error: values.error });
