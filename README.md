@@ -9,7 +9,7 @@ npm install filesystem-async
 
 # Classes
 
-### <u>BashScript</u>
+## BashScript
 * **create(path, content)**
 	* path: ```string```
 	* content: ```string```
@@ -25,9 +25,9 @@ npm install filesystem-async
 		* error: ```string```
 		* output: ```string```
 
-<i>NOTE: Do not include " #!/bin/bash " in content as it is already set up to be the first line in script. </i>
+NOTE: Do not include " #!/bin/bash " in content as it is already set up to be the first line in script. 
 
-### <u>Chmod</u>
+## Chmod
 * **chmod(op, who, types, path)**
 	* op: ```string ('+' | '-' | '=')```
 	* who: ```array```
@@ -37,16 +37,16 @@ npm install filesystem-async
 		* success: ```boolean```
 		* error: ```string```
 
-**Examples:** </br>
-Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
+**Example:** 
+Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')
 
-<i>NOTES: 
-* u is for user/owner, g is for group, o is for others.
-* r is for read, w is for write, x is for executable.
-* '+' adds permissions, '-' removes permissions, '=' sets permissions (like saying 'chmod u=rx /path/to/fileOrDir').</i>
+NOTES: 
+* 'u' is for user/owner, 'g' is for group, 'o' is for others.
+* 'r' is for read, 'w' is for write, 'x' is for executable.
+* '+' adds permissions, '-' removes permissions, '=' sets permissions (like saying 'chmod u=rx /path/to/fileOrDir').
 
 
-### <u>Chown</u>
+## Chown
 * **chown(path, uid, gid)**
 	* path: ```string```
 	* uid: ```int```
@@ -56,7 +56,7 @@ Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 		* error: ```string```
 
 
-### <u>Copy</u>
+## Copy
 * **copy(src, dest)**
 	* src: ```string```
 	* dest: ```string```
@@ -65,7 +65,7 @@ Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 		* error: ```string```
 
 
-### <u>Directory</u>
+## Directory
 * **remove(path)**
 	* path: ```string```
 	* returns: ```Promise```
@@ -78,7 +78,7 @@ Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 		* success: ```boolean```
 		* error: ```string```
 
-### <u>Execute</u>
+## Execute
 * **local(cmd, args)**
 	* cmd: ```string```
 	* args: ```array```
@@ -97,10 +97,10 @@ Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 		* exitCode: ```int```
 
 **Examples:**
-Execute.local('mkdir', ['-p', '/path/to/dir'])
-Execute.remote('you', 'laptop', 'mkdir -p')
+* Execute.local('mkdir', ['-p', '/path/to/dir'])
+* Execute.remote('you', 'laptop', 'mkdir -p')
 
-### <u>File</u>
+## File
 * **remove(path)**
 	* path: ```string```
 	* returns: ```Promise```
@@ -132,7 +132,7 @@ Execute.remote('you', 'laptop', 'mkdir -p')
 		* lines: ```array```
 		* error: ```string```
 
-### <u>Find</u>
+## Find
 * **manual(path, options)**
 	* path: ```string```
 	* options: ```array```
@@ -140,7 +140,7 @@ Execute.remote('you', 'laptop', 'mkdir -p')
 		* results: ```array```
 		* error: ```string```
 
-<i>NOTE: Keep option and associated value together as one string (i.e. '-maxdepth 1 ') </i>
+NOTE: Keep option and associated value together as one string (i.e. '-maxdepth 1 ') 
 (See linux [find](https://www.lifewire.com/uses-of-linux-command-find-2201100) command for available options).
 
 * **files_by_pattern(path, pattern, maxDepth)**
@@ -159,7 +159,7 @@ Execute.remote('you', 'laptop', 'mkdir -p')
 		* results: ```array```
 		* error: ```string```
 
-<i>NOTE: This will return files containing the specified text.</i>
+NOTE: This will return files containing the specified text.
 
 * **files_by_user(path, user, maxDepth)**
 	* path: ```string```
@@ -192,13 +192,13 @@ Execute.remote('you', 'laptop', 'mkdir -p')
 		* error: ```string```
 
 **Examples:** 
-Find.manual('/path/to/dir', ['-maxdepth 1', '-type f', '-name "*.txt"'])
-Find.files_by_pattern('/path/to/dir', '\*2017\*', 1)
-Find.files_by_content('/path/to/dir', 'Finances 2017', 2)
-Find.files_by_user('/path/to/dir', 'john', null)
-<i>NOTE: Omiting maxDepth results in a full depth search. </i>
+* Find.manual('/path/to/dir', ['-maxdepth 1', '-type f', '-name "*.txt"'])
+* Find.files_by_pattern('/path/to/dir', '\*2017\*', 1)
+* Find.files_by_content('/path/to/dir', 'Finances 2017', 2)
+* Find.files_by_user('/path/to/dir', 'john', null)
+NOTE: Omiting maxDepth results in a full depth search. 
 
-### <u>List</u>
+## List
 * **visible(path)**
 	* path: ```string```
 	* returns: ```Promise```
@@ -217,7 +217,7 @@ Find.files_by_user('/path/to/dir', 'john', null)
 		* files: ```array```
 		* error: ```string```
 
-### <u>Mkdir</u>
+## Mkdir
 * **mkdir(path)**
 	* path: ```string```
 	* returns: ```Promise```
@@ -230,7 +230,7 @@ Find.files_by_user('/path/to/dir', 'john', null)
 		* success: ```boolean```
 		* error: ```string```
 
-### <u>Move</u>
+## Move
 * **move(src, dest)**
 	* src: ```string```
 	* dest: ```string```
@@ -238,7 +238,7 @@ Find.files_by_user('/path/to/dir', 'john', null)
 		* success: ```boolean```
 		* error: ```string```
 
-### <u>Path</u>
+## Path
 * **exists(path)**
 	* returns: ```Promise```
 		* exists: ```boolean```
@@ -287,7 +287,7 @@ Find.files_by_user('/path/to/dir', 'john', null)
 		* hasWhitespace: ```boolean```
 		* error: ```string```
 
-### <u>Permissions</u>
+## Permissions
 * **permissions(path)**
 	* path: ```string```
 	* returns: ```Promise```
@@ -322,7 +322,7 @@ Find.files_by_user('/path/to/dir', 'john', null)
 **Example:**
 Permissions.perm_string_to_number_string('rw--r--x')
 
-### <u>Remove</u>
+## Remove
 * **file(path)**
 	* path: ```string```
 	* returns: ```Promise```
@@ -335,7 +335,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* success: ```boolean```
 		* error: ```string```
 
-### <u>Rename</u>
+## Rename
 * **rename(currPath, newName)**
 	* currPath: ```string```
 	* newName: ```string```
@@ -344,7 +344,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* error: ```string```
 
 
-### <u>Rsync</u>
+## Rsync
 * **rsync(user, host, src, dest)**
 	* user: ```string```
 	* host: ```string```
@@ -357,7 +357,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* stderr: ```string```
 		* exitCode: ```int```
 	
-<i>NOTE: This will execute a normal rsync without any special flags or options enabled.</i>
+NOTE: This will execute a normal rsync without any special flags or options enabled.
 
 * **update(user, host, src, dest)**
 	* user: ```string```
@@ -371,7 +371,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* stderr: ```string```
 		* exitCode: ```int```
 		* 
-<i>NOTE: This will only update any items in dest if any changes were made in src.</i>
+NOTE: This will only update any items in dest if any changes were made in src.
 
 * **match(user, host, src, dest)**
 	* user: ```string```
@@ -385,7 +385,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* stderr: ```string```
 		* exitCode: ```int```
 
-<i>NOTE: This will force all content in dest match the content in src. Items will deleted from dest if not present src and vice versa.</i>
+NOTE: This will force all content in dest to match the content in src. Items will deleted from dest if not present src and vice versa.
 
 * **manual(user, host, src, dest, flags, options)**
 	* user: ```string```
@@ -401,8 +401,8 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* stderr: ```string```
 		* exitCode: ```int```
 
-<i>NOTE: This will let you execute rsync with any flags and options you wish to provide.
-(See linux [rsync](https://www.computerhope.com/unix/rsync.htm) command for available options).</i>
+NOTE: This will let you execute rsync with any flags and options you wish to provide. Flags are one character only (i.e. 'a', 'v', etc).
+(See linux [rsync](https://www.computerhope.com/unix/rsync.htm) command for available options).
 
 * **dry_run(user, host, src, dest, flags, options)**
 	* user: ```string```
@@ -418,13 +418,13 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* stderr: ```string```
 		* exitCode: ```int```
 
-<i>NOTE: This will execute your rsync command without actually modifying anything. (For testing) 
-(See linux [rsync](https://www.computerhope.com/unix/rsync.htm) command for available options)..</i>
+NOTE: This will execute your rsync command without actually modifying anything (for testing). Flags are one character only (i.e. 'a', 'v', etc). 
+(See linux [rsync](https://www.computerhope.com/unix/rsync.htm) command for available options)..
 
-**Example:** </br>
+**Example:** 
 Rsync.manual('you', 'laptop', 'path/to/src', '/path/to/dest', ['a', 'v'], ['--ignore times', '--size-only'])
 
-### <u>Stats</u>
+## Stats
 * **stats(path)**
 	* path: ```string```
 	* returns: ```Promise```
@@ -446,7 +446,7 @@ Rsync.manual('you', 'laptop', 'path/to/src', '/path/to/dest', ['a', 'v'], ['--ig
 			* is_symlink: ```boolean```
 		* error: ```string```
 
-### <u>Timestamp</u>
+## Timestamp
 * **timestamp( )**
 	* returns: ```object```
 		* hours: ```int (0-23)```
@@ -492,10 +492,10 @@ Rsync.manual('you', 'laptop', 'path/to/src', '/path/to/dest', ['a', 'v'], ['--ig
 	* returns: ```int (seconds)```
 
 **Examples:**
-Timestamp.military_to_meridiem_time('22:15:00')
-Timestamp.meridiem_to_military_time('1:15:00 PM')
+* Timestamp.military_to_meridiem_time('22:15:00')
+* Timestamp.meridiem_to_military_time('1:15:00 PM')
 
-### <u>UserInfo</u>
+## UserInfo
 * **current()**
 	* returns: ```Promise```
 		* info: ```object```
