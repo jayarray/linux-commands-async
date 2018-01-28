@@ -178,7 +178,7 @@ class Timestamp {
   }
 
   static meridiem_to_military_time(meridiemTime) {
-    let parts = militaryTime.split(':');
+    let parts = meridiemTime.split(':');
 
     let hoursStr = parts[0];
     let hoursVal = parseInt(hoursStr);
@@ -189,22 +189,22 @@ class Timestamp {
     let secondsStr = parts[2];
     let secondsVal = parseInt(secondsStr);
 
-    let adjustedhours = null;
+    let adjustedHours = null;
     if (meridiemTime.includes('AM') && hoursVal == 12) {
       adjustedhours = 0;
     }
     else if (meridiemTime.includes('PM') && hoursVal < 12) {
-      adjustedhours = hoursVal + 12;
+      adjustedHours = hoursVal + 12;
     }
     else {
-      adjustedhours = hours;
+      adjustedHours = hoursVal;
     }
     return `${adjustedHours}:${minutesStr}:${secondsStr}`;
   }
 
   static difference(d1, d2) {
-    let date1 = new Date(d1.year, d1.month_number, d1.day_of_month, 0, 0, 0, 0);
-    let date2 = new Date(d2.year, d2.month_number, d2.day_of_month, 0, 0, 0, 0);
+    let date1 = new Date(d1.year, d1.month_number, d1.day_of_month, d1.hours, d1.minutes, d1.seconds, d1.milliseconds);
+    let date2 = new Date(d2.year, d2.month_number, d2.day_of_month, d2.hours, d2.minutes, d2.seconds, d2.milliseconds);
     let diff = t1.getTime() - t2.getTime();
 
     let secondsFromD1ToD2 = diff / 1000;
@@ -396,7 +396,7 @@ class Path {
     return { string: escape(path.trim()), error: null };
   }
 
-  static containsWhiteSpace(path) {
+  static contains_whitespace(path) {
     if (path === undefined)
       return { hasWhitespace: null, error: `Path is undefined` };
 
@@ -483,7 +483,7 @@ class Permissions {
       p1.others.x == p2.others.x;
   }
 
-  static objToNumberString(obj) {  // Example:  {u:{...}, g:{...}, o:{...}} --> 777 
+  static obj_to_number_string(obj) {  // Example:  {u:{...}, g:{...}, o:{...}} --> 777 
     let values = { r: 4, w: 2, x: 1, '-': 0 };
     let leftNum = values[obj.u.r] + values[obj.u.w] + values[obj.u.x];
     let middleNum = values[obj.g.r] + values[obj.g.w] + values[obj.g.x];
@@ -491,7 +491,7 @@ class Permissions {
     return `${leftNum}${middleNum}${rightNum}`;
   }
 
-  static permStringToNumberString(permString) {  // Example: rwxrwxrwx  --> 777
+  static perm_string_to_number_string(permString) {  // Example: rwxrwxrwx  --> 777
     let adjustedString = permString;
     if (permString.length > 9)
       adjustedString = permString.slice(1);
@@ -500,7 +500,7 @@ class Permissions {
     let g = { r: adjustedString[3], w: adjustedString[4], x: adjustedString[5] };
     let u = { r: adjustedString[6], w: adjustedString[7], x: adjustedString[8] };
     let obj = { u: u, g: g, o: o };
-    return Permissions.objToNumberString(obj);
+    return Permissions.obj_to_number_string(obj);
   }
 }
 
@@ -1175,7 +1175,7 @@ class Chmod {
           });
 
           let obj = { u: perms.owner, g: perms.group, o: perms.others };
-          let newPermNumStr = Permissions.objToNumberString(obj);
+          let newPermNumStr = Permissions.obj_to_number_string(obj);
           FS.chmod(pTrimmed, newPermNumStr, (err) => {
             if (err) {
               reject({ success: false, error: err });
@@ -1595,7 +1595,7 @@ class Find {
     });
   }
 
-  static files_by_pattern(path, pattern, maxdepth) {
+  static files_by_pattern(path, pattern, maxDepth) {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
@@ -1835,8 +1835,8 @@ class Find {
 
 exports.Execute = Execute;
 exports.Timestamp = Timestamp;
-exports.Path = Path;
 exports.Stats = Stats;
+exports.Path = Path;
 exports.Permissions = Permissions;
 exports.Copy = Copy;
 exports.Remove = Remove;
@@ -1845,8 +1845,8 @@ exports.Move = Move;
 exports.List = List;
 exports.Rsync = Rsync;
 exports.Chmod = Chmod;
-exports.UserInfo = UserInfo;
 exports.Chown = Chown;
+exports.UserInfo = UserInfo;
 exports.Rename = Rename;
 exports.File = File;
 exports.Directory = Directory;
