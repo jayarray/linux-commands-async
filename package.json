@@ -1,6 +1,6 @@
 {
   "name": "filesystem-async",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A collection of filesystem commands",
   "main": "filesystem-async.js",
   "dependencies": {
