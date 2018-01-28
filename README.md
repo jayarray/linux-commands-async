@@ -1,5 +1,5 @@
 # Description
-A collection of asynchronous filesystem commands.</br>
+A collection of asynchronous filesystem commands.
 All functions are static.
 
 # Install
@@ -9,7 +9,6 @@ npm install filesystem-async
 
 # Classes
 
-</br>
 ### <u>BashScript</u>
 * **create(path, content)**
 	* path: ```string```
@@ -28,7 +27,6 @@ npm install filesystem-async
 
 <i>NOTE: Do not include " #!/bin/bash " in content as it is already set up to be the first line in script. </i>
 
-</br>
 ### <u>Chmod</u>
 * **chmod(op, who, types, path)**
 	* op: ```string ('+' | '-' | '=')```
@@ -42,12 +40,12 @@ npm install filesystem-async
 **Examples:** </br>
 Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 
-<i>NOTES:</br> 
-* u is for user/owner, g is for group, o is for others.</br>
-* r is for read, w is for write, x is for executable. </br>
+<i>NOTES: 
+* u is for user/owner, g is for group, o is for others.
+* r is for read, w is for write, x is for executable.
 * '+' adds permissions, '-' removes permissions, '=' sets permissions (like saying 'chmod u=rx /path/to/fileOrDir').</i>
 
-</br>
+
 ### <u>Chown</u>
 * **chown(path, uid, gid)**
 	* path: ```string```
@@ -57,7 +55,7 @@ Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 		* success: ```boolean```
 		* error: ```string```
 
-</br>
+
 ### <u>Copy</u>
 * **copy(src, dest)**
 	* src: ```string```
@@ -66,7 +64,7 @@ Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 		* success: ```boolean```
 		* error: ```string```
 
-</br>
+
 ### <u>Directory</u>
 * **remove(path)**
 	* path: ```string```
@@ -80,7 +78,6 @@ Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 		* success: ```boolean```
 		* error: ```string```
 
-</br>
 ### <u>Execute</u>
 * **local(cmd, args)**
 	* cmd: ```string```
@@ -99,11 +96,10 @@ Chmod.chmod('+', ['u', 'g', 'o'], ['r', 'w'], '/path/to/fileOrDir')</br>
 		* stdout: ```string```
 		* exitCode: ```int```
 
-**Examples:** </br>
-Execute.local('mkdir', ['-p', '/path/to/dir'])</br>
+**Examples:**
+Execute.local('mkdir', ['-p', '/path/to/dir'])
 Execute.remote('you', 'laptop', 'mkdir -p')
 
-</br>
 ### <u>File</u>
 * **remove(path)**
 	* path: ```string```
@@ -136,7 +132,6 @@ Execute.remote('you', 'laptop', 'mkdir -p')
 		* lines: ```array```
 		* error: ```string```
 
-</br>
 ### <u>Find</u>
 * **manual(path, options)**
 	* path: ```string```
@@ -146,7 +141,7 @@ Execute.remote('you', 'laptop', 'mkdir -p')
 		* error: ```string```
 
 <i>NOTE: Keep option and associated value together as one string (i.e. '-maxdepth 1 ') </i>
-(See linux [find](https://www.lifewire.com/uses-of-linux-command-find-2201100) command for available options).</br></br>
+(See linux [find](https://www.lifewire.com/uses-of-linux-command-find-2201100) command for available options).
 
 * **files_by_pattern(path, pattern, maxDepth)**
 	* path: ```string```
@@ -164,7 +159,7 @@ Execute.remote('you', 'laptop', 'mkdir -p')
 		* results: ```array```
 		* error: ```string```
 
-<i>NOTE: This will return files containing the specified text.</i></br></br>
+<i>NOTE: This will return files containing the specified text.</i>
 
 * **files_by_user(path, user, maxDepth)**
 	* path: ```string```
@@ -196,14 +191,13 @@ Execute.remote('you', 'laptop', 'mkdir -p')
 		* results: ```array```
 		* error: ```string```
 
-**Examples:** </br>
-Find.manual('/path/to/dir', ['-maxdepth 1', '-type f', '-name "*.txt"'])</br>
-Find.files_by_pattern('/path/to/dir', '\*2017\*', 1)</br>
-Find.files_by_content('/path/to/dir', 'Finances 2017', 2)</br>
-Find.files_by_user('/path/to/dir', 'john', null)</br>
+**Examples:** 
+Find.manual('/path/to/dir', ['-maxdepth 1', '-type f', '-name "*.txt"'])
+Find.files_by_pattern('/path/to/dir', '\*2017\*', 1)
+Find.files_by_content('/path/to/dir', 'Finances 2017', 2)
+Find.files_by_user('/path/to/dir', 'john', null)
 <i>NOTE: Omiting maxDepth results in a full depth search. </i>
 
-</br>
 ### <u>List</u>
 * **visible(path)**
 	* path: ```string```
@@ -223,7 +217,6 @@ Find.files_by_user('/path/to/dir', 'john', null)</br>
 		* files: ```array```
 		* error: ```string```
 
-</br>
 ### <u>Mkdir</u>
 * **mkdir(path)**
 	* path: ```string```
@@ -237,7 +230,6 @@ Find.files_by_user('/path/to/dir', 'john', null)</br>
 		* success: ```boolean```
 		* error: ```string```
 
-</br>
 ### <u>Move</u>
 * **move(src, dest)**
 	* src: ```string```
@@ -246,7 +238,6 @@ Find.files_by_user('/path/to/dir', 'john', null)</br>
 		* success: ```boolean```
 		* error: ```string```
 
-</br>
 ### <u>Path</u>
 * **exists(path)**
 	* returns: ```Promise```
@@ -296,7 +287,6 @@ Find.files_by_user('/path/to/dir', 'john', null)</br>
 		* hasWhitespace: ```boolean```
 		* error: ```string```
 
-</br>
 ### <u>Permissions</u>
 * **permissions(path)**
 	* path: ```string```
@@ -329,10 +319,9 @@ Find.files_by_user('/path/to/dir', 'john', null)</br>
 	* permString: ```string```
 	* returns: ```string```
 
-**Example:** </br>
+**Example:**
 Permissions.perm_string_to_number_string('rw--r--x')
 
-</br>
 ### <u>Remove</u>
 * **file(path)**
 	* path: ```string```
@@ -346,7 +335,6 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* success: ```boolean```
 		* error: ```string```
 
-</br>
 ### <u>Rename</u>
 * **rename(currPath, newName)**
 	* currPath: ```string```
@@ -356,7 +344,6 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* error: ```string```
 
 
-</br>
 ### <u>Rsync</u>
 * **rsync(user, host, src, dest)**
 	* user: ```string```
@@ -370,7 +357,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* stderr: ```string```
 		* exitCode: ```int```
 	
-<i>NOTE: This will execute a normal rsync without any special flags or options enabled.</i></br></br>
+<i>NOTE: This will execute a normal rsync without any special flags or options enabled.</i>
 
 * **update(user, host, src, dest)**
 	* user: ```string```
@@ -384,7 +371,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* stderr: ```string```
 		* exitCode: ```int```
 		* 
-<i>NOTE: This will only update any items in dest if any changes were made in src.</i></br></br>
+<i>NOTE: This will only update any items in dest if any changes were made in src.</i>
 
 * **match(user, host, src, dest)**
 	* user: ```string```
@@ -398,7 +385,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* stderr: ```string```
 		* exitCode: ```int```
 
-<i>NOTE: This will force all content in dest match the content in src. Items will deleted from dest if not present src and vice versa.</i></br></br>
+<i>NOTE: This will force all content in dest match the content in src. Items will deleted from dest if not present src and vice versa.</i>
 
 * **manual(user, host, src, dest, flags, options)**
 	* user: ```string```
@@ -415,7 +402,7 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* exitCode: ```int```
 
 <i>NOTE: This will let you execute rsync with any flags and options you wish to provide.
-(See linux [rsync](https://www.computerhope.com/unix/rsync.htm) command for available options).</br></br></i></br></br>
+(See linux [rsync](https://www.computerhope.com/unix/rsync.htm) command for available options).</i>
 
 * **dry_run(user, host, src, dest, flags, options)**
 	* user: ```string```
@@ -432,12 +419,11 @@ Permissions.perm_string_to_number_string('rw--r--x')
 		* exitCode: ```int```
 
 <i>NOTE: This will execute your rsync command without actually modifying anything. (For testing) 
-(See linux [rsync](https://www.computerhope.com/unix/rsync.htm) command for available options)..</i></br></br>
+(See linux [rsync](https://www.computerhope.com/unix/rsync.htm) command for available options)..</i>
 
 **Example:** </br>
-Rsync.manual('you', 'laptop', 'path/to/src', '/path/to/dest', ['a', 'v'], ['--ignore times', '--size-only'])</br>
+Rsync.manual('you', 'laptop', 'path/to/src', '/path/to/dest', ['a', 'v'], ['--ignore times', '--size-only'])
 
-</br>
 ### <u>Stats</u>
 * **stats(path)**
 	* path: ```string```
@@ -460,7 +446,6 @@ Rsync.manual('you', 'laptop', 'path/to/src', '/path/to/dest', ['a', 'v'], ['--ig
 			* is_symlink: ```boolean```
 		* error: ```string```
 
-</br>
 ### <u>Timestamp</u>
 * **timestamp( )**
 	* returns: ```object```
@@ -506,11 +491,10 @@ Rsync.manual('you', 'laptop', 'path/to/src', '/path/to/dest', ['a', 'v'], ['--ig
 		* day: ```int```
 	* returns: ```int (seconds)```
 
-**Examples:** </br>
-Timestamp.military_to_meridiem_time('22:15:00')</br>
+**Examples:**
+Timestamp.military_to_meridiem_time('22:15:00')
 Timestamp.meridiem_to_military_time('1:15:00 PM')
 
-</br>
 ### <u>UserInfo</u>
 * **current()**
 	* returns: ```Promise```
