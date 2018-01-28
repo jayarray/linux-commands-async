@@ -1,13 +1,11 @@
 # Description
 A collection of asynchronous filesystem commands.</br>
 All functions are static.
-<hr>
 
 # Install
 ```
 npm install filesystem-async
 ```
-<hr>
 
 # Classes
 
