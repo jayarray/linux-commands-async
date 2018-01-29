@@ -842,7 +842,7 @@ class Rsync {
           return;
         }
 
-        let args = `-a ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
+        let args = ['-a', sTrimmed, `${user}@${host}:${dest}`];
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
             reject({
@@ -904,7 +904,7 @@ class Rsync {
           return;
         }
 
-        let args = `-a --update ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
+        let args = ['-a', '--update', sTrimmed, `${user}@${host}:${dest}`];
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
             reject({
@@ -966,7 +966,7 @@ class Rsync {
           return;
         }
 
-        let args = `-a --delete-after ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
+        let args = ['-a', '--delete-after', sTrimmed, `${user}@${host}:${dest}`];
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
             reject({
@@ -1030,7 +1030,7 @@ class Rsync {
 
         let flagStr = `-${flags.join('')}`; // Ex.: -av
         let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
-
+        
         let args = `${flagStr} ${optionStr} ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
