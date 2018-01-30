@@ -285,12 +285,12 @@ class Stats {
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
-          reject({ stats: null, error: results.error });
+          reject({ stats: null, error: `PATH_ERROR: ${results.error}` });
           return;
         }
 
         if (!results.exists) {
-          reject({ stats: null, error: `Path does not exist: ${pTrimmed}` });
+          reject({ stats: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
           return;
         }
 
