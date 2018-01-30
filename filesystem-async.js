@@ -13,6 +13,19 @@ function fatalFail(error) {
   process.exit(-1);
 }
 
+function invalid_type(t) {
+  if (t === undefined)
+    return 'undefined';
+  else if (t == null)
+    return 'null';
+  else if (t == '')
+    return 'empty';
+  else if (t.trim() == '')
+    return 'whitespace';
+  else
+    return null;
+}
+
 //-----------------------------------
 // SAVING DATA (to string)
 class SavedData {
@@ -30,33 +43,79 @@ class SavedData {
 // EXECUTE
 class Execute {
   static local(cmd, args) {
-    let childProcess = CHILD_PROCESS.spawn(cmd, args);
-    let errors = new SavedData(childProcess.stderr);
-    let outputs = new SavedData(childProcess.stdout);
+    return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(cmd);
+      if (invalidType) {
+        reject({
+          stderr: null,
+          stdout: null,
+          exitCode: null,
+          error: `CMD_ERROR: Command is ${invalidType}`
+        });
+        return;
+      }
 
-    return new Promise(resolve => {
+      let childProcess = CHILD_PROCESS.spawn(cmd.trim(), args);
+      let errors = new SavedData(childProcess.stderr);
+      let outputs = new SavedData(childProcess.stdout);
+
       childProcess.on('close', exitCode => {
         resolve({
           stderr: errors.value,
           stdout: outputs.value,
-          exitCode: exitCode
+          exitCode: exitCode,
+          error: null
         });
       });
     });
   }
 
   static remote(user, host, cmd) {
-    let args = [`${user}@${host}`, `${cmd}`];
-    let childProcess = CHILD_PROCESS.spawn('ssh', args);
-    let errors = new SavedData(childProcess.stderr);
-    let outputs = new SavedData(childProcess.stdout);
+    return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(user);
+      if (invalidType) {
+        reject({
+          stderr: null,
+          stdout: null,
+          exitCode: null,
+          error: `USER_ERROR: User is ${invalidType}`
+        });
+        return;
+      }
 
-    return new Promise(resolve => {
+      invalidType = invalid_type(host);
+      if (invalidType) {
+        reject({
+          stderr: null,
+          stdout: null,
+          exitCode: null,
+          error: `HOST_ERROR: Host is ${invalidType}`
+        });
+        return;
+      }
+
+      invalidType = invalid_type(cmd);
+      if (invalidType) {
+        reject({
+          stderr: null,
+          stdout: null,
+          exitCode: null,
+          error: `CMD_ERROR: Command is ${invalidType}`
+        });
+        return;
+      }
+
+      let args = [`${user.trim()}@${host.trim()}`, `${cmd.trim()}`];
+      let childProcess = CHILD_PROCESS.spawn('ssh', args);
+      let errors = new SavedData(childProcess.stderr);
+      let outputs = new SavedData(childProcess.stdout);
+
       childProcess.on('close', exitCode => {
         resolve({
           stderr: errors.value,
           stdout: outputs.value,
-          exitCode: exitCode
+          exitCode: exitCode,
+          error: null
         });
       });
     });
@@ -1030,7 +1089,7 @@ class Rsync {
 
         let flagStr = `-${flags.join('')}`; // Ex.: -av
         let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
-        
+
         let args = `${flagStr} ${optionStr} ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
         Execute.local('rsync', args).then(output => {
           if (output.stderr) {
@@ -1829,6 +1888,22 @@ class Find {
     });
   }
 }
+
+//------------------------------------
+// TEST
+
+let user = 'pi';
+let host = 'mama';
+let cmd = 'ls';
+
+Execute.remote(user, host, cmd).then(results => {
+  console.log(`STDERR: ${results.stderr}`);
+  console.log(`STDOUT: ${results.stdout}`);
+  console.log(`EXIT_CODE: ${results.exitCode}`);
+}).catch(e => {
+  console.log(`ERROR: ${e.error}`);
+});
+return;
 
 //------------------------------------
 // EXPORTS
