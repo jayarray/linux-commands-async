@@ -278,7 +278,7 @@ class Stats {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ isDir: null, error: error });
+        reject({ isDir: null, error: `PATH_ERROR: ${error}` });
         return;
       }
 
@@ -296,7 +296,7 @@ class Stats {
 
         FS.lstat(pTrimmed, (err, stats) => {
           if (err)
-            reject({ stats: null, error: err });
+            reject({ stats: null, error: `FS_LSTAT_ERROR: ${err}` });
           else {
             resolve({
               stats: {
@@ -332,7 +332,7 @@ class Path {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ exists: null, error: error });
+        reject({ exists: null, error: `PATH_ERROR: ${error}` });
         return;
       }
 
@@ -349,25 +349,25 @@ class Path {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ exists: null, error: error });
+        reject({ exists: null, error: `PATH_ERROR: ${error}` });
         return;
       }
 
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
-          reject({ isFile: null, error: results.error });
+          reject({ isFile: null, error: `PATH_ERROR: ${results.error}` });
           return;
         }
 
         if (!results.exists) {
-          reject({ isFile: null, error: `Path does not exist: ${pTrimmed}` });
+          reject({ isFile: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
           return;
         }
 
         FS.lstat(pTrimmed, (err, stats) => {
           if (err)
-            reject({ isFile: null, error: err });
+            reject({ isFile: null, error: `FS_LSTAT_ERROR: ${err}` });
           else
             resolve({ isFile: stats.isFile() && !stats.isDirectory(), error: null });
         });
@@ -379,25 +379,25 @@ class Path {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ isDir: null, error: error });
+        reject({ isDir: null, error: `PATH_ERROR: ${error}` });
         return;
       }
 
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
-          reject({ isDir: null, error: results.error });
+          reject({ isDir: null, error: `PATH_ERROR: ${results.error}` });
           return;
         }
 
         if (!results.exists) {
-          reject({ isDir: null, error: `Path does not exist: ${pTrimmed}` });
+          reject({ isDir: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
           return;
         }
 
         FS.lstat(pTrimmed, (err, stats) => {
           if (err)
-            reject({ isDir: null, error: err });
+            reject({ isDir: null, error: `FS_LSTAT_ERROR: ${err}` });
           else
             resolve({ isDir: stats.isDirectory(), error: null });
         });
@@ -408,28 +408,28 @@ class Path {
   static filename(path) {
     let error = Path.error(path);
     if (error)
-      return { name: null, error: error };
+      return { name: null, error: `PATH_ERROR: ${error}` };
     return { name: PATH.basename(path.trim()), error: null };
   }
 
   static extension(path) {
     let error = Path.error(path);
     if (error)
-      return { extension: null, error: error };
+      return { extension: null, error: `PATH_ERROR: ${error}` };
     return { extension: PATH.extname(path.trim()), error: null };
   }
 
   static parent_dir_name(path) {
     let error = Path.error(path);
     if (error)
-      return { name: null, error: error };
+      return { name: null, error: `PATH_ERROR: ${error}` };
     return { name: PATH.dirname(path.trim()).split(PATH.sep).pop(), error: null };
   }
 
   static parent_dir(path) {
     let error = Path.error(path);
     if (error)
-      return { dir: null, error: error };
+      return { dir: null, error: `PATH_ERROR: ${error}` };
     return { dir: PATH.dirname(path.trim()), error: null }; // Full path to parent dir
   }
 
@@ -448,19 +448,19 @@ class Path {
 
   static escape(path) {
     if (path === undefined)
-      return { string: null, error: `Path is undefined` };
+      return { string: null, error: `PATH_ERROR: Path is undefined` };
 
     if (path == null)
-      return { string: null, error: `Path is null` };
+      return { string: null, error: `PATH_ERROR: Path is null` };
     return { string: escape(path.trim()), error: null };
   }
 
   static contains_whitespace(path) {
     if (path === undefined)
-      return { hasWhitespace: null, error: `Path is undefined` };
+      return { hasWhitespace: null, error: `PATH_ERROR: Path is undefined` };
 
     if (path == null)
-      return { hasWhitespace: null, error: `Path is null` };
+      return { hasWhitespace: null, error: `PATH_ERROR: Path is null` };
     return { hasWhitespace: path.includes(' '), error: null };
   }
 }
