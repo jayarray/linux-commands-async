@@ -47,10 +47,10 @@ class Execute {
       let invalidType = invalid_type(cmd);
       if (invalidType) {
         reject({
+          error: `CMD_ERROR: Command is ${invalidType}`,
           stderr: null,
           stdout: null,
           exitCode: null,
-          error: `CMD_ERROR: Command is ${invalidType}`
         });
         return;
       }
@@ -61,10 +61,10 @@ class Execute {
 
       childProcess.on('close', exitCode => {
         resolve({
+          error: null,
           stderr: errors.value,
           stdout: outputs.value,
           exitCode: exitCode,
-          error: null
         });
       });
     });
@@ -75,10 +75,10 @@ class Execute {
       let invalidType = invalid_type(user);
       if (invalidType) {
         reject({
+          error: `USER_ERROR: User is ${invalidType}`,
           stderr: null,
           stdout: null,
           exitCode: null,
-          error: `USER_ERROR: User is ${invalidType}`
         });
         return;
       }
@@ -86,10 +86,11 @@ class Execute {
       invalidType = invalid_type(host);
       if (invalidType) {
         reject({
+          error: `HOST_ERROR: Host is ${invalidType}`,
           stderr: null,
           stdout: null,
           exitCode: null,
-          error: `HOST_ERROR: Host is ${invalidType}`
+
         });
         return;
       }
@@ -97,10 +98,10 @@ class Execute {
       invalidType = invalid_type(cmd);
       if (invalidType) {
         reject({
+          error: `CMD_ERROR: Command is ${invalidType}`,
           stderr: null,
           stdout: null,
           exitCode: null,
-          error: `CMD_ERROR: Command is ${invalidType}`
         });
         return;
       }
@@ -112,10 +113,10 @@ class Execute {
 
       childProcess.on('close', exitCode => {
         resolve({
+          error: null,
           stderr: errors.value,
           stdout: outputs.value,
           exitCode: exitCode,
-          error: null
         });
       });
     });
@@ -204,7 +205,11 @@ class Timestamp {
   }
 
   static military_to_meridiem_time(militaryTime) {
-    let parts = militaryTime.split(':');
+    let error = Timestamp.military_string_error(militaryTime);
+    if (error)
+      return { string: null, error: error };
+
+    let parts = militaryTime.trim().split(':');
 
     let hoursStr = parts[0];
     let hoursVal = parseInt(hoursStr);
@@ -233,10 +238,14 @@ class Timestamp {
     else {
       timeStr += ' PM';
     }
-    return timeStr;
+    return { string: timeStr, error: null };
   }
 
   static meridiem_to_military_time(meridiemTime) {
+    let error = Timestamp.meridiem_string_error(meridiemTime);
+    if (error)
+      return { string: null, error: error };
+
     let parts = meridiemTime.split(':');
 
     let hoursStr = parts[0];
@@ -258,16 +267,157 @@ class Timestamp {
     else {
       adjustedHours = hoursVal;
     }
-    return `${adjustedHours}:${minutesStr}:${secondsStr}`;
+    return { string: `${adjustedHours}:${minutesStr}:${secondsStr}`, error: null };
   }
 
-  static difference(d1, d2) {
+  static difference(d1, d2) { // CONT HERE !!!!
     let date1 = new Date(d1.year, d1.month_number, d1.day_of_month, d1.hours, d1.minutes, d1.seconds, d1.milliseconds);
     let date2 = new Date(d2.year, d2.month_number, d2.day_of_month, d2.hours, d2.minutes, d2.seconds, d2.milliseconds);
     let diff = t1.getTime() - t2.getTime();
 
     let secondsFromD1ToD2 = diff / 1000;
     return secondsFromD1ToD2;
+  }
+
+  static meridiem_string_error(string) {
+    let invalidType = invalid_type(string);
+    if (invalidType)
+      return `MERIDIEM_TIME_STR_ERROR: Time string is ${string}`;
+
+    let sTrimmed = string.trim();
+    let parts = sTrimmed.split(' ');  // parts = ['HH:MM:SS', '(AM|PM)']
+    if (parts.length == 2) {
+      let unitParts = parts[0].trim();
+      if (unitParts.length == 3) {
+        let hMin = 1;
+        let hMax = 12;
+        let mMin = 0;
+        let mMax = 59;
+        let sMin = mMin;
+        let sMax = mMax;
+
+        let hStr = unitParts[0].trim();
+        if (hStr.length == 2) {
+          let hours = null;
+          try {
+            hours = parseInt(hStr);
+          } catch {
+            return 'MERIDIEM_TIME_STR_ERROR: Hours do not resolve to an integer';
+          }
+
+          if (hours < hMin && hours > hMax)
+            return `MERIDIEM_TIME_STR_ERROR: Hours must be between ${hMin} and ${hMax}`;
+
+          let mStr = unitParts[1].trim();
+          if (mStr.length == 2) {
+            let minutes = null;
+            try {
+              minutes = parseInt(mStr);
+            } catch {
+              return 'MERIDIEM_TIME_STR_ERROR: Minutes do not resolve to an integer';
+            }
+
+            if (minutes < mMin && minutes > mMax)
+              return `MERIDIEM_TIME_STR_ERROR: Minutes must be between ${mMin} and ${mMax}`;
+
+            let sStr = unitParts[2].trim();
+            if (sStr.length == 2) {
+              let seconds = null;
+              try {
+                seconds = parseInt(sStr);
+              } catch {
+                return 'MERIDIEM_TIME_STR_ERROR: Seconds do not resolve to an integer';
+              }
+
+              if (seconds < sMin && seconds > sMax)
+                return `MERIDIEM_TIME_STR_ERROR: Seconds must be between ${sMin} and ${sMax}`;
+
+              let suffix = parts[1].trim();
+              if (suffix == 'AM' || 'PM')
+                return null;
+              else
+                return 'MERIDIEM_TIME_STR_ERROR: Suffix (AM|PM) is not formatted correctly';
+            }
+            else
+              return 'MERIDIEM_TIME_STR_ERROR: Seconds are not formatted correctly';
+          }
+          else
+            return 'MERIDIEM_TIME_STR_ERROR: Minutes are not formatted correctly';
+        }
+        else
+          return 'MERIDIEM_TIME_STR_ERROR: Hours are not formatted correctly';
+      }
+    }
+    return 'MERIDIEM_TIME_STR_ERROR: Time string is not formatted correctly. Must follow format HH:MM:SS (AM|PM)';
+  }
+
+  static military_string_error(string) {
+    let invalidType = invalid_type(string);
+    if (invalidType)
+      return `MILITARY_TIME_STR_ERROR: Time string is ${string}`;
+
+    let sTrimmed = string.trim();
+    let parts = sTrimmed.split(':');  // parts = ['HH', 'MM', 'SS [(AM|PM)]'] <-- Check for suffix in SECONDS string
+    if (parts.length == 3) {
+      let hMin = 0;
+      let hMax = 23;
+      let mMin = 0;
+      let mMax = 59;
+      let sMin = mMin;
+      let sMax = mMax;
+
+      let hStr = parts[0].trim();
+      if (hStr.length == 2) {
+        let hours = null;
+        try {
+          hours = parseInt(hStr);
+        } catch {
+          return 'MILITARY_TIME_STR_ERROR: Hours do not resolve to an integer';
+        }
+
+        if (hours < hMin && hours > hMax)
+          return `MILITARY_TIME_STR_ERROR: Hours must be between ${hMin} and ${hMax}`;
+
+        let mStr = parts[1].trim();
+        if (mStr.length == 2) {
+          let minutes = null;
+          try {
+            minutes = parseInt(mStr);
+          } catch {
+            return 'MILITARY_TIME_STR_ERROR: Minutes do not resolve to an integer';
+          }
+
+          if (minutes < mMin && minutes > mMax)
+            return `MILITARY_TIME_STR_ERROR: Minutes must be between ${mMin} and ${mMax}`;
+
+          let sStr = parts[2].trim();
+          let sParts = sStr.split(' ');
+          if (sParts.length == 2)
+            return 'MILITARY_TIME_STR_ERROR: Trailing chars at end of time string';
+
+          if (sStr.length == 2) {
+            let seconds = null;
+            try {
+              seconds = parseInt(sStr);
+            } catch {
+              return 'MILITARY_TIME_STR_ERROR: Seconds do not resolve to an integer';
+            }
+
+            if (seconds < sMin && seconds > sMax)
+              return `MILITARY_TIME_STR_ERROR: Seconds must be between ${sMin} and ${sMax}`;
+            return null;
+          }
+          else
+            return 'MILITARY_TIME_STR_ERROR: Seconds are not formatted correctly';
+        }
+        else
+          return 'MILITARY_TIME_STR_ERROR: Minutes are not formatted correctly';
+      }
+      else
+        return 'MILITARY_TIME_STR_ERROR: Hours are not formatted correctly';
+
+    }
+    return 'MILITARY_TIME_STR_ERROR: Time string is not formatted correctly. Must follow format HH:MM:SS';
   }
 }
 
@@ -349,7 +499,7 @@ class Path {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ exists: null, error: `PATH_ERROR: ${error}` });
+        reject({ isFile: null, error: `PATH_ERROR: ${error}` });
         return;
       }
 
@@ -468,29 +618,74 @@ class Path {
 //-------------------------------------------
 // PERMISSIONS
 class Permissions {
+  static file_perm_string(path) {
+    return new Promise((resolve, reject) => {
+      Path.is_file(path).then(results => {
+        if (results.error) {
+          reject({ string: null, error: results.error });
+          return;
+        }
+
+        let pTrimmed = path.trim();
+        if (!results.isFile) {
+          reject({ string: null, error: `PATH_ERROR: Path is not a file: ${pTrimmed}` });
+          return;
+        }
+
+        let args = ['-l', pTrimmed];
+        Execute.local('ls', args).then(output => {
+          if (output.error) {
+            reject({ string: null, error: output.error });
+            return;
+          }
+
+          if (output.stderr) {
+            reject({ string: null, error: `LS_ERROR: ${output.error}` });
+            return;
+          }
+
+          // CONT HERE          
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static perm_string(path) {
+    return new Promise((resolve, reject) => {
+      Path.is_file(path).then(results => {
+        if (results.error) {
+          reject({ string: null, error: results.error });
+          return;
+        }
+
+
+      }).catch(fatalFail);
+    });
+  }
+
   static permissions(path) {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ permissions: null, error: error });
+        reject({ permissions: null, error: `PATH_ERROR: ${error}` });
         return;
       }
 
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
-          reject({ permissions: null, error: results.error });
+          reject({ permissions: null, error: `PATH_ERROR: ${results.error}` });
           return;
         }
 
         if (!results.exists) {
-          reject({ permissions: null, error: `Path does not exist: ${pTrimmed}` });
+          reject({ permissions: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
           return;
         }
 
         FS.lstat(pTrimmed, (err, stats) => {
           if (err)
-            reject({ permissions: null, error: err });
+            reject({ permissions: null, error: `FS_LSTAT_ERROR: ${err}` });
           else {
             let others = {
               x: stats.mode & 1 ? 'x' : '-',
@@ -513,17 +708,23 @@ class Permissions {
             };
             let owner_string = `${owner.r}${owner.w}${owner.x}`;
 
-            resolve({
-              permissions: {
-                others: others,
-                others_string: others_string,
-                group: group,
-                group_string: group_string,
-                owner: owner,
-                owner_string: owner_string
-              },
-              error: null
-            });
+            Permissions.octal_string(pTrimmed).then(values => {
+              if (values.error) {
+                reject({ permissions: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
+                return;
+              }
+              resolve({
+                permissions: {
+                  others: others,
+                  others_string: others_string,
+                  group: group,
+                  group_string: group_string,
+                  owner: owner,
+                  owner_string: owner_string
+                },
+                error: null
+              });
+            }).catch(fatalFail);
           }
         });
       }).catch(fatalFail);
@@ -531,7 +732,17 @@ class Permissions {
   }
 
   static equal(p1, p2) {
-    return p1.owner.r == p2.owner.r &&
+    if (p1 === undefined)
+      return { equal: null, error: `P1_ERROR: Permissions object is undefined` };
+    if (p1 == null)
+      return { equal: null, error: `P1_ERROR: Permissions object is null` };
+
+    if (p2 === undefined)
+      return { equal: null, error: `P2_ERROR: Permissions object is undefined` };
+    if (p2 == null)
+      return { equal: null, error: `P2_ERROR: Permissions object is null` };
+
+    let equal = p1.owner.r == p2.owner.r &&
       p1.owner.w == p2.owner.w &&
       p1.owner.x == p2.owner.x &&
       p1.group.r == p2.group.r &&
@@ -540,26 +751,239 @@ class Permissions {
       p1.others.r == p2.others.r &&
       p1.others.w == p2.others.w &&
       p1.others.x == p2.others.x;
+
+    return { equal: equal, error: null };
   }
 
-  static obj_to_number_string(obj) {  // Example:  {u:{...}, g:{...}, o:{...}} --> 777 
-    let values = { r: 4, w: 2, x: 1, '-': 0 };
-    let leftNum = values[obj.u.r] + values[obj.u.w] + values[obj.u.x];
-    let middleNum = values[obj.g.r] + values[obj.g.w] + values[obj.g.x];
-    let rightNum = values[obj.o.r] + values[obj.o.w] + values[obj.o.x];
-    return `${leftNum}${middleNum}${rightNum}`;
+  static obj_to_octal_string(obj) {  // Example:  {u:{...}, g:{...}, o:{...}} --> 777 
+    let invalidType = invalid_type(obj);
+    if (invalidType)
+      return { string: null, error: `OBJ_ERROR: Object is ${invalidType}` };
+
+    // Check if object has required values
+    let variableList = [
+      obj.u,
+      obj.u.r,
+      obj.u.w,
+      obj.u.x,
+      obj.g,
+      obj.g.r,
+      obj.g.w,
+      obj.g.x,
+      obj.o,
+      obj.o.r,
+      obj.o.w,
+      obj.o.x
+    ];
+
+    variableList.forEach(v => {
+      if (v === undefined)
+        return { string: null, error: `OBJECT_ERROR: Object is missing required values` };
+    });
+
+
+    // Check if object values are valid
+    variableList = [
+      obj.u.r,
+      obj.u.w,
+      obj.u.x,
+      obj.g.r,
+      obj.g.w,
+      obj.g.x,
+      obj.o.r,
+      obj.o.w,
+      obj.o.x
+    ];
+
+    variableList.forEach(v => {
+      let invalidType = invalid_type(v);
+      if (invalidType)
+        return { string: null, error: `OBJECT_ERROR: Object contains variable with value of ${invalidType}` };
+
+      if (!Permissions.char_is_valid(v))
+        return { string: null, error: `OBJECT_ERROR: Object contains variable with invalid value` };
+      break;
+    });
+
+    let permStr = `${obj.u.r}${obj.u.w}${obj.u.x}${obj.g.r}${obj.g.w}${obj.g.x}${obj.o.r}${obj.o.w}${obj.o.x}`;
+    let octalStr = Permissions.perm_string_to_octal_string(permStr);
+
+    if (octalStr.error)
+      return { string: null, error: `PERM_STR_TO_OCTAL_STR_ERROR: ${octalStr.error}` };
+    return { string: octalStr.string, error: null };
   }
 
-  static perm_string_to_number_string(permString) {  // Example: rwxrwxrwx  --> 777
-    let adjustedString = permString;
-    if (permString.length > 9)
-      adjustedString = permString.slice(1);
+  static perm_string_to_octal_string(permStr) {  // permStr = r--r--r--
+    let error = Permissions.string_error(permStr);
+    if (error)
+      return { string: null, error: error };
 
-    let u = { r: adjustedString[0], w: adjustedString[1], x: adjustedString[2] };
-    let g = { r: adjustedString[3], w: adjustedString[4], x: adjustedString[5] };
-    let u = { r: adjustedString[6], w: adjustedString[7], x: adjustedString[8] };
-    let obj = { u: u, g: g, o: o };
-    return Permissions.obj_to_number_string(obj);
+    let pTrimmed = permStr.trim();
+
+    let readChars = Permissions.valid_read_chars();
+    let writeChars = Permissions.valid_write_chars();
+    let executeChars = Permissions.valid_execute_chars();
+
+    let setOctal = 0;
+
+    // Compute user octal
+    let uidIsSet = false;
+    let userOctal = 0;
+
+    let userChars = pTrimmed.substring(0, 3);
+    userChars.forEach(char => {
+      userOctal += Permissions.char_value(char);
+      if (Permissions.will_set_uid_guid_stickybit(char))
+        uidIsSet = true;
+    });
+
+    if (uidIsSet)
+      setOctal += 4;
+
+
+    // Check group permissions
+    let gidIsSet = false;
+    let groupOctal = 0;
+
+    let groupChars = pTrimmed.substring(3, 6);
+    groupChars.forEach(char => {
+      groupOctal += Permissions.char_value(char);
+      if (Permissions.will_set_uid_guid_stickybit(char))
+        gidIsSet = true;
+    });
+
+    if (gidIsSet)
+      setOctal += 2;
+
+
+    // Check execute permissions
+    let stickybitIsSet = false;
+    let othersOctal = 0;
+
+    let othersChars = pTrimmed.substring(6, 9);
+    othersChars.forEach(char => {
+      othersOctal += Permissions.char_value(char);
+      if (Permissions.will_set_uid_guid_stickybit(char))
+        stickybitIsSet = true;
+    });
+
+    if (stickybitIsSet)
+      setOctal += 1;
+
+
+    // Return octal string
+    let octalStr = `${userOctal}${groupOctal}${othersOctal}`;
+    if (setOctal > 0)
+      octalStr = setOctal + octalStr;
+    return { string: octalStr, error: null };
+  }
+
+  static valid_file_descriptor_chars() {
+    return ['b', 'c', 'd', 'l', 'n', 'p', 's', 'D', '-'];
+  }
+
+  static valid_read_chars() {
+    return ['r', '-'];
+  }
+
+  static valid_write_chars() {
+    return ['w', '-'];
+  }
+
+  static valid_execute_chars() {
+    return ['x', 's', 'S', 't', 'T', '-'];
+  }
+
+  static will_set_uid_guid_stickybit(c) {
+    return c == 's' || c == 'S' || c == 't' || c == 'T';
+  }
+
+  static valid_char_values() {
+    return [4, 2, 1, 0];
+  }
+
+  static char_value_dict() {
+    return { r: 4, w: 2, x: 1, s: 1, t: 1, S: 0, T: 0, '-': 0 };
+  }
+
+  static char_value(c) {
+    let val = Permissions.char_value_dict()[c];
+    if (Permissions.valid_char_values().includes(val))
+      return val;
+    return null;
+  }
+
+  static char_is_valid(c) {
+    return Permissions.valid_file_descriptor_chars.includes(c) ||
+      Permissions.valid_read_chars.includes(c) ||
+      Permissions.valid_write_chars.includes(c) ||
+      Permissions.valid_execute_chars.includes(c);
+  }
+
+  static valid_classes_chars() {
+    return ['u', 'g', 'o'];
+  }
+
+  static string_error(permStr) {
+    let invalidType = invalid_type(permStr);
+    if (invalidType)
+      return `PERM_STR_ERROR: Permissions string is ${invalidType}`;
+
+    let pTrimmed = permStr.trim();
+    let validSize = 9
+    if (pTrimmed.length != validSize)
+      return `PERM_STR_ERROR: Permissions string must contain exactly ${validSize} characters`;
+
+    pTrimmed.forEach(char => {
+      if (!Permissions.char_is_valid(char))
+        return `PERM_STR_ERROR: Permissions string contains invalid characters`;
+    });
+
+    // Check if all chars are valid and in respective positions
+    let readChars = Permissions.valid_read_chars();
+    let writeChars = Permissions.valid_write_chars();
+    let executeChars = Permiss.valid_execute_chars();
+
+    // Check user permissions
+    let userChars = pTrimmed.substring(0, 3);
+
+    for (let i = 0; i < userChars.length; ++i) {
+      let currChar = userChars.charAt(i);
+      if (i == 0 && !readChars.includes(currChar)) // read
+        return `PERM_STR_ERROR: Permissions string contains invalid character for user read permissions`;
+      else if (i == 1 && !writeChars.includes(currChar))  // write
+        return `PERM_STR_ERROR: Permissions string contains invalid character for user write permissions`;
+      else if (i == 2 && !executeChars.includes(currChar))  // execute
+        return `PERM_STR_ERROR: Permissions string contains invalid character for user execute permissions`;
+    }
+
+    // Check group permissions
+    let groupChars = pTrimmed.substring(3, 6);
+
+    for (let i = 0; i < groupChars.length; ++i) {
+      let currChar = groupChars.charAt(i);
+      if (i == 0 && !readChars.includes(currChar)) // read
+        return `PERM_STR_ERROR: Permissions string contains invalid character for group read permissions`;
+      else if (i == 1 && !writeChars.includes(currChar))  // write
+        return `PERM_STR_ERROR: Permissions string contains invalid character for group write permissions`;
+      else if (i == 2 && !executeChars.includes(currChar))  // execute
+        return `PERM_STR_ERROR: Permissions string contains invalid character for group execute permissions`;
+    }
+
+    // Check others permissions
+    let otherChars = pTrimmed.substring(6, 9);
+
+    for (let i = 0; i < otherChars.length; ++i) {
+      let currChar = otherChars.charAt(i);
+      if (i == 0 && !readChars.includes(currChar)) // read
+        return `PERM_STR_ERROR: Permissions string contains invalid character for others read permissions`;
+      else if (i == 1 && !writeChars.includes(currChar))  // write
+        return `PERM_STR_ERROR: Permissions string contains invalid character for others write permissions`;
+      else if (i == 2 && !executeChars.includes(currChar))  // execute
+        return `PERM_STR_ERROR: Permissions string contains invalid character for others execute permissions`;
+    }
+
+    return null; // NO errors detected
   }
 }
 
@@ -766,97 +1190,403 @@ class Move {
 //------------------------------------------------------
 // LIST (ls)
 class List {
-  static visible(path) {
+  static all_files(path) {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ files: null, error: error });
+        reject({ files: null, error: `PATH_ERROR: ${error}` });
         return;
       }
 
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
-          reject({ files: null, error: results.error });
+          reject({ files: null, error: `PATH_ERROR: ${results.error}` });
           return;
         }
 
         if (!results.exists) {
-          reject({ files: null, error: `Path does not exist: ${pTrimmed}` });
+          reject({ files: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
           return;
         }
 
         FS.readdir(pTrimmed, (err, files) => {
           if (err) {
-            reject({ files: null, error: err });
-            return;
-          }
-          resolve({ files: files.filter(x => !x.startsWith('.')), error: null });
-        });
-      }).catch(fatalFail);
-    });
-  }
-
-  static hidden(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ files: null, error: error });
-        return;
-      }
-
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ files: null, error: results.error });
-          return;
-        }
-
-        if (!results.exists) {
-          reject({ files: null, error: `Path does not exist: ${pTrimmed}` });
-          return;
-        }
-
-        FS.readdir(pTrimmed, (err, files) => {
-          if (err) {
-            reject({ files: null, error: err });
-            return;
-          }
-          resolve({ files: files.filter(x => x.startsWith('.')), error: null });
-        });
-      }).catch(fatalFail);
-    });
-  }
-
-  static all(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ files: null, error: error });
-        return;
-      }
-
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ files: null, error: results.error });
-          return;
-        }
-
-        if (!results.exists) {
-          reject({ files: null, error: `Path does not exist: ${pTrimmed}` });
-          return;
-        }
-
-        FS.readdir(pTrimmed, (err, files) => {
-          if (err) {
-            reject({ files: null, error: err });
+            reject({ files: null, error: `FS_READDIR_ERROR: ${err}` });
             return;
           }
           resolve({ files: files, error: null });
         });
       }).catch(fatalFail);
     });
+  }
+
+  static visible_files(path) {
+    return new Promise((resolve, reject) => {
+      List.all_files(path).then(results => {
+        if (results.error) {
+          reject({ files: null, error: results.error });
+          return;
+        }
+        resolve({ files: results.files.filter(x => !x.startsWith('.')), error: null });
+      }).catch(fatalFail);
+    });
+  }
+
+  static hidden_files(path) {
+    return new Promise((resolve, reject) => {
+      List.all_files(path).then(results => {
+        if (results.error) {
+          reject({ files: null, error: results.error });
+          return;
+        }
+        resolve({ files: results.files.filterfilter(x => x.startsWith('.')), error: null });
+      }).catch(fatalFail);
+    });
+  }
+
+  static file_item(filepath) {
+    return new Promise((resolve, reject) => {
+      Path.is_file(dirPath).then(results => {
+        if (results.error) {
+          reject({ item: null, error: results.error });
+          return;
+        }
+
+        let fTrimmed = filepath.trim();
+        if (!results.isFile) {
+          reject({ item: null, error: `PATH_ERROR: Path is not a file: ${fTrimmed}` });
+          return;
+        }
+
+        let args = ['-l', fTrimmed];
+        Execute.local('ls', args).then(output => {
+          if (output.error) {
+            reject({ item: null, error: output.error });
+            return;
+          }
+
+          if (output.stderr) {
+            reject({ item: null, error: `LS_ERROR: ${output.error}` });
+            return;
+          }
+
+          let i = List.parse_ls_string(output.stdout.trim());
+          if (i.error) {
+            reject({ item: null, error: i.error });
+            return;
+          }
+
+          resolve({ item: i.item, error: null });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static dir_item(dirPath) {
+    return new Promise((resolve, reject) => {
+      Path.is_dir(dirPath).then(results => {
+        if (results.error) {
+          reject({ items: null, error: results.error });
+          return;
+        }
+
+        let dTrimmed = dirPath.trim();
+        if (!results.isDir) {
+          reject({ items: null, error: `PATH_ERROR: Path is not a file: ${dTrimmed}` });
+          return;
+        }
+
+        let args = ['-ld', dTrimmed];
+        Execute.local('ls', args).then(output => {
+          if (output.error) {
+            reject({ items: null, error: output.error });
+            return;
+          }
+
+          if (output.stderr) {
+            reject({ items: null, error: `LS_ERROR: ${output.error}` });
+            return;
+          }
+
+          let i = List.parse_ls_string(output.stdout.trim());
+          if (i.error) {
+            reject({ item: null, error: i.error });
+            return;
+          }
+
+          resolve({ item: i.item, error: null });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static all_items(dirPath) {
+    return new Promise((resolve, reject) => {
+      Path.is_dir(dirPath).then(results => {
+        if (results.error) {
+          reject({ items: null, error: results.error });
+          return;
+        }
+
+        if (!results.isDir) {
+          reject({ items: null, error: `PATH_ERROR: Path is not a directory` });
+          return;
+        }
+
+        let dTrimmed = dirPath.trim();
+        let args = ['-la', dTrimmed];
+
+        Execute.local('ls', args).then(output => {
+          if (output.error) {
+            reject({ items: null, error: output.error });
+            return;
+          }
+
+          if (output.stderr) {
+            reject({ items: null, error: `LS_ERROR: ${output.error}` });
+            return;
+          }
+
+          let lines = output.stdout.trim().split('\n').map(line => line.trim());
+          if (lines.length < 2) {
+            resolve({ items: [], error: null });
+            return;
+          }
+
+          let items = [];
+          lines.slice(1).forEach(line => {
+            let i = List.parse_ls_string(line.trim());
+            items.push(i.item);
+          });
+          resolve({ items: items, error: null });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static visible_items(dirPath) {
+    return new Promise((resolve, reject) => {
+      List.all_items(dirPath).then(results => {
+        if (results.error) {
+          resolve({ items: null, error: results.error });
+          return;
+        }
+        resolve({ items: results.items.filter(item => !item.name.startsWith('.')), error: null });
+      }).catch(fatalFail);
+    });
+  }
+
+  static hidden_items(dirPath) {
+    return new Promise((resolve, reject) => {
+      List.all_items(dirPath).then(results => {
+        if (results.error) {
+          resolve({ items: null, error: results.error });
+          return;
+        }
+        resolve({ items: results.items.filter(item => item.name.startsWith('.')), error: null });
+      }).catch(fatalFail);
+    });
+  }
+
+  static parse_ls_string(string) {
+    let invalidType = invalid_type(string);
+    if (invalidType)
+      return { item: null, error: `ITEM_STR_ERROR: Item string is ${invalidType}` };
+
+    let outputStr = output.stdout.trim();
+
+    // PERMS
+    let permStr = '';
+    let startIndex = 0;
+    let endIndex = 0;
+
+    let indexes = { start: 0, end: null };
+    for (let i = indexes.start; i < outputStr.length; ++i) {
+      let currChar = outputStr.charAt(i);
+      if (currChar.trim())
+        indexes.end = i;
+      else {
+        indexes.end += 1;
+        permStr = outputStr.substring(indexes.start, indexes.end);
+
+        currChar = outputStr.charAt(indexes.end);
+        while (!currChar.trim()) {
+          indexes.end += 1;
+          currChar = outputStr.charAt(indexes.end);
+        }
+
+        indexes.start = indexes.end + 1;
+        break;
+      }
+    }
+
+    // HARD LINKS
+    let hLinksStr = '';
+    for (let i = indexes.start; i < outputStr.length; ++i) {
+      let currChar = outputStr.charAt(i);
+      if (currChar.trim())
+        indexes.end = i;
+      else {
+        indexes.end += 1;
+        hLinksStr = outputStr.substring(indexes.start, indexes.end);
+
+        currChar = outputStr.charAt(indexes.end);
+        while (!currChar.trim()) {
+          indexes.end += 1;
+          currChar = outputStr.charAt(indexes.end);
+        }
+
+        indexes.start = indexes.end + 1;
+        break;
+      }
+    }
+
+    // OWNER
+    let ownerStr = '';
+    for (let i = indexes.start; i < outputStr.length; ++i) {
+      let currChar = outputStr.charAt(i);
+      if (currChar.trim())
+        indexes.end = i;
+      else {
+        indexes.end += 1;
+        ownerStr = outputStr.substring(indexes.start, indexes.end);
+
+        currChar = outputStr.charAt(indexes.end);
+        while (!currChar.trim()) {
+          indexes.end += 1;
+          currChar = outputStr.charAt(indexes.end);
+        }
+
+        indexes.start = indexes.end + 1;
+        break;
+      }
+    }
+
+    // GROUP
+    let groupStr = '';
+    for (let i = indexes.start; i < outputStr.length; ++i) {
+      let currChar = outputStr.charAt(i);
+      if (currChar.trim())
+        indexes.end = i;
+      else {
+        indexes.end += 1;
+        groupStr = outputStr.substring(indexes.start, indexes.end);
+
+        currChar = outputStr.charAt(indexes.end);
+        while (!currChar.trim()) {
+          indexes.end += 1;
+          currChar = outputStr.charAt(indexes.end);
+        }
+
+        indexes.start = indexes.end + 1;
+        break;
+      }
+    }
+
+    // SIZE
+    let sizeStr = '';
+    for (let i = indexes.start; i < outputStr.length; ++i) {
+      let currChar = outputStr.charAt(i);
+      if (currChar.trim())
+        indexes.end = i;
+      else {
+        indexes.end += 1;
+        sizeStr = outputStr.substring(indexes.start, indexes.end);
+
+        currChar = outputStr.charAt(indexes.end);
+        while (!currChar.trim()) {
+          indexes.end += 1;
+          currChar = outputStr.charAt(indexes.end);
+        }
+
+        indexes.start = indexes.end + 1;
+        break;
+      }
+    }
+
+    // MODIFIED TIME
+
+    // Month
+    let monthStr = '';
+    for (let i = indexes.start; i < outputStr.length; ++i) {
+      let currChar = outputStr.charAt(i);
+      if (currChar.trim())
+        indexes.end = i;
+      else {
+        indexes.end += 1;
+        monthStr = outputStr.substring(indexes.start, indexes.end);
+
+        currChar = outputStr.charAt(indexes.end);
+        while (!currChar.trim()) {
+          indexes.end += 1;
+          currChar = outputStr.charAt(indexes.end);
+        }
+
+        indexes.start = indexes.end + 1;
+        break;
+      }
+    }
+
+    // Day
+    let dayStr = '';
+    for (let i = indexes.start; i < outputStr.length; ++i) {
+      let currChar = outputStr.charAt(i);
+      if (currChar.trim())
+        indexes.end = i;
+      else {
+        indexes.end += 1;
+        dayStr = outputStr.substring(indexes.start, indexes.end);
+
+        currChar = outputStr.charAt(indexes.end);
+        while (!currChar.trim()) {
+          indexes.end += 1;
+          currChar = outputStr.charAt(indexes.end);
+        }
+
+        indexes.start = indexes.end + 1;
+        break;
+      }
+    }
+
+    // Stamp
+    let stampStr = '';
+    for (let i = indexes.start; i < outputStr.length; ++i) {
+      let currChar = outputStr.charAt(i);
+      if (currChar.trim())
+        indexes.end = i;
+      else {
+        indexes.end += 1;
+        stampStr = outputStr.substring(indexes.start, indexes.end);
+
+        currChar = outputStr.charAt(indexes.end);
+        while (!currChar.trim()) {
+          indexes.end += 1;
+          currChar = outputStr.charAt(indexes.end);
+        }
+
+        indexes.start = indexes.end + 1;
+        break;
+      }
+    }
+
+    let modStr = `${monthStr} ${dayStr} ${stampStr}`;
+
+    // FILENAME
+    let nameStr = outputStr.substring(indexes.start);
+
+    // ITEM
+    let item = {
+      permstr: permStr,
+      hardlinks: parseInt(hLinksStr),
+      owner: ownerStr,
+      group: groupStr,
+      size: parseInt(sizeStr),
+      modtime: modStr,
+      name: nameStr
+    };
+
+    return { item: item, error: null };
   }
 }
 
@@ -1234,8 +1964,13 @@ class Chmod {
           });
 
           let obj = { u: perms.owner, g: perms.group, o: perms.others };
-          let newPermNumStr = Permissions.obj_to_number_string(obj);
-          FS.chmod(pTrimmed, newPermNumStr, (err) => {
+          let newPermNumStr = Permissions.obj_to_octal_string(obj);
+          if (newPermNumStr.error) {
+            reject({ success: false, error: newPermNumStr.error });
+            return;
+          }
+
+          FS.chmod(pTrimmed, newPermNumStr.string, (err) => {
             if (err) {
               reject({ success: false, error: err });
               return;
@@ -1883,6 +2618,136 @@ class Find {
 
           let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
           resolve({ results: lines, error: null });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+}
+
+//------------------------------------
+// DISK USAGE
+
+class DiskUsage {
+  static list_all_items(dirPath) {
+    return new Promise((resolve, reject) => {
+      let error = Path.error(dirPath);
+      if (error) {
+        reject({ size: null, error: `PATH_ERROR: ${error}` });
+        return;
+      }
+
+      let dTrimmed = dirPath.trim();
+      Path.is_dir(dTrimmed).then(results => {
+        if (results.error) {
+          reject({ size: null, error: results.error });
+          return;
+        }
+
+        if (!results.isDir) {
+          reject({ size: null, error: `PATH_ERROR: Path is not a directory: ${dTrimmed}` });
+          return;
+        }
+
+        let args = ['-ha', '--block-size=1 --max-depth=1', dTrimmed];
+        Execute.local('du', args).then(output => {
+          if (output.error) {
+            reject({ size: null, error: output.error });
+            return;
+          }
+
+          if (output.stderr) {
+            reject({ size: null, error: `DU_ERROR: ${output.stderr}` });
+            return;
+          }
+
+          let items = [];
+
+          let lines = output.stdout.trim().split('\n').map(line => line.trim()).filter(line => line && line != '');
+          lines.forEach(line => {
+            let sizeStr = '';
+            line.forEach(char => {
+              if (char.trim())
+                sizeStr + char;
+              else
+                break;
+            });
+
+            let filepath = line.substring(sizeStr.length + 1);
+            items.push({
+              size: parseInt(sizeStr),
+              path: filepath
+            });
+          });
+          resolve({ items: items, error: null });
+        }).catch(fatalFail);
+      }).catch(fatalFail);
+    });
+  }
+
+  static list_visible_items(dirPath) {
+    return new Promise((resolve, reject) => {
+      DiskUsage.list_all_items(dirPath).then(results => {
+        if (results.error) {
+          reject({ items: null, error: results.error });
+          return;
+        }
+        reject({ items: results.items.filter(item => !Path.filename(item.path).startsWith('.')), error: null });
+      }).catch(fatalFail);
+    });
+  }
+
+  static list_hidden_items(dirPath) {
+    return new Promise((resolve, reject) => {
+      DiskUsage.list_all_items(dirPath).then(results => {
+        if (results.error) {
+          reject({ items: null, error: results.error });
+          return;
+        }
+        reject({ items: results.items.filter(item => Path.filename(item.path).startsWith('.')), error: null });
+      }).catch(fatalFail);
+    });
+  }
+
+  static dir_size(path) {
+    return new Promise((resolve, reject) => {
+      let error = Path.error(path);
+      if (error) {
+        reject({ size: null, error: `PATH_ERROR: ${error}` });
+        return;
+      }
+
+      let pTrimmed = path.trim();
+      Path.is_dir(pTrimmed).then(results => {
+        if (results.error) {
+          reject({ size: null, error: results.error });
+          return;
+        }
+
+        if (!results.isDir) {
+          reject({ size: null, error: `PATH_ERROR: Path is not a directory: ${pTrimmed}` });
+          return;
+        }
+
+        let args = ['-sh', '--block-size=1', pTrimmed];
+        Execute.local('du', args).then(output => {
+          if (output.error) {
+            reject({ size: null, error: output.error });
+            return;
+          }
+
+          if (output.stderr) {
+            reject({ size: null, error: `DU_ERROR: ${output.stderr}` });
+            return;
+          }
+
+          let sizeStr = '';
+          output.stdout.trim().forEach(char => {
+            if (char.trim())
+              sizeStr += char;
+            else
+              break;
+          });
+          resolve({ size: parseInt(sizeStr), error: null });
         }).catch(fatalFail);
       }).catch(fatalFail);
     });
