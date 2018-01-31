@@ -718,47 +718,126 @@ class Path {
 //-------------------------------------------
 // PERMISSIONS
 class Permissions {
-  static file_perm_string(path) {
+  static file_permissions(path) {
     return new Promise((resolve, reject) => {
-      Path.is_file(path).then(results => {
+      Path.is_file(pTrimmed).then(results => {
         if (results.error) {
-          reject({ string: null, error: results.error });
+          reject({ permissions: null, error: results.error });
           return;
         }
 
         let pTrimmed = path.trim();
         if (!results.isFile) {
-          reject({ string: null, error: `PATH_ERROR: Path is not a file: ${pTrimmed}` });
+          reject({ permissions: null, error: `PATH_ERROR: Path is not a file: ${pTrimmed}` });
           return;
         }
 
-        let args = ['-l', pTrimmed];
-        Execute.local('ls', args).then(output => {
-          if (output.error) {
-            reject({ string: null, error: output.error });
+        List.file_item(pTrimmed).then(values => {
+          if (values.error) {
+            reject({ permissions: null, error: values.error });
             return;
           }
 
-          if (output.stderr) {
-            reject({ string: null, error: `LS_ERROR: ${output.error}` });
-            return;
-          }
+          let permStr = values.item.permstr.trim();
+          let octalStr = Permissions.perm_string_to_octal_string(permStr.substring(1, 10));
 
-          // CONT HERE          
+          let perms = {
+            u: {
+              r: permStr.charAt(1) != '-',
+              w: permStr.charAt(2) != '-',
+              x: permStr.charAt(3) != '-' && !Permissions.is_non_executable_char(permStr.charAt(3)),
+              xchar: permStr.charAt(3),
+              string: `${permStr.charAt(1)}${permStr.charAt(2)}${permStr.charAt(3)}`
+            },
+            g: {
+              r: permStr.charAt(4) != '-',
+              w: permStr.charAt(5) != '-',
+              x: permStr.charAt(6) != '-' && !Permissions.is_non_executable_char(permStr.charAt(6)),
+              xchar: permStr.charAt(6),
+              string: `${permStr.charAt(4)}${permStr.charAt(5)}${permStr.charAt(6)}`
+            },
+            o: {
+              r: permStr.charAt(7) != '-',
+              w: permStr.charAt(8) != '-',
+              x: permStr.charAt(9) != '-' && !Permissions.is_non_executable_char(permStr.charAt(9)),
+              xchar: permStr.charAt(9),
+              string: `${permStr.charAt(7)}${permStr.charAt(8)}${permStr.charAt(9)}`
+            },
+            octal: {
+              string: octalStr,
+              special: parseInt(octalStr.charAt(0)),
+              user: parseInt(octalStr.charAt(1)),
+              group: parseInt(octalStr.charAt(2)),
+              others: parseInt(octalStr.charAt(3))
+            },
+            owner: values.item.owner.trim(),
+            group: values.item.group.trim(),
+            string: permStr
+          };
+          resolve({ permissions: perms, error: null });
         }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
 
-  static perm_string(path) {
+  static dir_permissions(path) {
     return new Promise((resolve, reject) => {
-      Path.is_file(path).then(results => {
+      Path.is_dir(pTrimmed).then(results => {
         if (results.error) {
-          reject({ string: null, error: results.error });
+          reject({ permissions: null, error: results.error });
           return;
         }
 
+        let pTrimmed = path.trim();
+        if (!results.isDir) {
+          reject({ permissions: null, error: `PATH_ERROR: Path is not a directory: ${pTrimmed}` });
+          return;
+        }
 
+        List.dir_item(pTrimmed).then(values => {
+          if (values.error) {
+            reject({ permissions: null, error: values.error });
+            return;
+          }
+
+          let permStr = values.item.permstr.trim();
+          let octalStr = Permissions.perm_string_to_octal_string(permStr.substring(1, 10));
+
+          let perms = {
+            u: {
+              r: permStr.charAt(1) != '-',
+              w: permStr.charAt(2) != '-',
+              x: permStr.charAt(3) != '-' && !Permissions.is_non_executable_char(permStr.charAt(3)),
+              xchar: permStr.charAt(3),
+              string: `${permStr.charAt(1)}${permStr.charAt(2)}${permStr.charAt(3)}`
+            },
+            g: {
+              r: permStr.charAt(4) != '-',
+              w: permStr.charAt(5) != '-',
+              x: permStr.charAt(6) != '-' && !Permissions.is_non_executable_char(permStr.charAt(6)),
+              xchar: permStr.charAt(6),
+              string: `${permStr.charAt(4)}${permStr.charAt(5)}${permStr.charAt(6)}`
+            },
+            o: {
+              r: permStr.charAt(7) != '-',
+              w: permStr.charAt(8) != '-',
+              x: permStr.charAt(9) != '-' && !Permissions.is_non_executable_char(permStr.charAt(9)),
+              xchar: permStr.charAt(9),
+              string: `${permStr.charAt(7)}${permStr.charAt(8)}${permStr.charAt(9)}`
+            },
+            octal: {
+              string: octalStr,
+              special: parseInt(octalStr.charAt(0)),
+              user: parseInt(octalStr.charAt(1)),
+              group: parseInt(octalStr.charAt(2)),
+              others: parseInt(octalStr.charAt(3))
+            },
+            owner: values.item.owner.trim(),
+            group: values.item.group.trim(),
+            string: permStr
+          };
+          resolve({ permissions: perms, error: null });
+        }).catch(fatalFail);
       }).catch(fatalFail);
     });
   }
@@ -831,7 +910,13 @@ class Permissions {
     });
   }
 
+  static obj_error_string(obj) {
+    // TO DO
+  }
+
   static equal(p1, p2) {
+
+    // CONT HERE  (Add error checking for objects) (seeabove)
     if (p1 === undefined)
       return { equal: null, error: `P1_ERROR: Permissions object is undefined` };
     if (p1 == null)
@@ -924,7 +1009,7 @@ class Permissions {
     let writeChars = Permissions.valid_write_chars();
     let executeChars = Permissions.valid_execute_chars();
 
-    let setOctal = 0;
+    let specialOctal = 0;
 
     // Compute user octal
     let uidIsSet = false;
@@ -938,7 +1023,7 @@ class Permissions {
     });
 
     if (uidIsSet)
-      setOctal += 4;
+      specialOctal += 4;
 
 
     // Check group permissions
@@ -953,7 +1038,7 @@ class Permissions {
     });
 
     if (gidIsSet)
-      setOctal += 2;
+      specialOctal += 2;
 
 
     // Check execute permissions
@@ -968,13 +1053,13 @@ class Permissions {
     });
 
     if (stickybitIsSet)
-      setOctal += 1;
+      specialOctal += 1;
 
 
     // Return octal string
     let octalStr = `${userOctal}${groupOctal}${othersOctal}`;
-    if (setOctal > 0)
-      octalStr = setOctal + octalStr;
+    if (specialOctal > 0)
+      octalStr = `${specialOctal}${octalStr}`;
     return { string: octalStr, error: null };
   }
 
@@ -992,6 +1077,10 @@ class Permissions {
 
   static valid_execute_chars() {
     return ['x', 's', 'S', 't', 'T', '-'];
+  }
+
+  static is_non_executable_char(c) {
+    return c == 'S' || c == 'T';
   }
 
   static will_set_uid_guid_stickybit(c) {
@@ -1387,25 +1476,25 @@ class List {
     return new Promise((resolve, reject) => {
       Path.is_dir(dirPath).then(results => {
         if (results.error) {
-          reject({ items: null, error: results.error });
+          reject({ item: null, error: results.error });
           return;
         }
 
         let dTrimmed = dirPath.trim();
         if (!results.isDir) {
-          reject({ items: null, error: `PATH_ERROR: Path is not a file: ${dTrimmed}` });
+          reject({ item: null, error: `PATH_ERROR: Path is not a directory: ${dTrimmed}` });
           return;
         }
 
         let args = ['-ld', dTrimmed];
         Execute.local('ls', args).then(output => {
           if (output.error) {
-            reject({ items: null, error: output.error });
+            reject({ item: null, error: output.error });
             return;
           }
 
           if (output.stderr) {
-            reject({ items: null, error: `LS_ERROR: ${output.error}` });
+            reject({ item: null, error: `LS_ERROR: ${output.error}` });
             return;
           }
 
