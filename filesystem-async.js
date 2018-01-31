@@ -179,14 +179,12 @@ class Timestamp {
     // DATE
     let year = d.getFullYear();  // yyyy
 
-    let monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     let monthNumber = d.getMonth(); // 0-11;
-    let monthName = monthNames[monthNumber];
+    let monthName = Timestamp.month_list()[monthNumber];
     let dayOfMonth = d.getDate(); // 1-31
 
-    let weekDayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     let dayOfWeekNumber = d.getDay();  // 0-6
-    let dayOfWeekName = weekDayNames[dayOfWeekNumber];
+    let dayOfWeekName = Timestamp.day_of_week_list()[dayOfWeekNumber];
 
     return {
       hours: hours,
@@ -270,13 +268,18 @@ class Timestamp {
     return { string: `${adjustedHours}:${minutesStr}:${secondsStr}`, error: null };
   }
 
-  static difference(d1, d2) { // CONT HERE !!!!
+  static difference(d1, d2) {
+    let error = Timestamp.date_obj_error(d1);
+    if (error)
+      return { milliseconds: null, error: `DATE1_OBJ_ERROR: ${error}` };
+
+    let error = Timestamp.date_obj_error(d2);
+    if (error)
+      return { milliseconds: null, error: `DATE2_OBJ_ERROR: ${error}` };
+
     let date1 = new Date(d1.year, d1.month_number, d1.day_of_month, d1.hours, d1.minutes, d1.seconds, d1.milliseconds);
     let date2 = new Date(d2.year, d2.month_number, d2.day_of_month, d2.hours, d2.minutes, d2.seconds, d2.milliseconds);
-    let diff = t1.getTime() - t2.getTime();
-
-    let secondsFromD1ToD2 = diff / 1000;
-    return secondsFromD1ToD2;
+    return date1.getTime() - d2.getTime();
   }
 
   static meridiem_string_error(string) {
@@ -418,6 +421,103 @@ class Timestamp {
 
     }
     return 'MILITARY_TIME_STR_ERROR: Time string is not formatted correctly. Must follow format HH:MM:SS';
+  }
+
+  static date_obj_error(dateObj) {
+    let invalidType = invalid_type(dateObj);
+    if (invalidType)
+      return `Date object is ${invalidType}`;
+
+    // Check if obj missing values
+    if (
+      dateObj.year &&
+      dateObj.month_number &&
+      dateObj.day_of_month &&
+      dateObj.hours &&
+      dateObj.minutes &&
+      dateObj.seconds &&
+      dateObj.milliseconds
+    )
+      return 'Date object is missing required values';
+
+    // Check if obj values are all integers and in range
+    if (
+      Number.isInteger(dateObj.year) &&
+      Number.isInteger(dateObj.month_number) &&
+      Number.isInteger(dateObj.day) &&
+      Number.isInteger(dateObj.hours) &&
+      Number.isInteger(dateObj.minutes) &&
+      Number.isInteger(dateObj.seconds) &&
+      Number.isInteger(dateObj.milliseconds)
+    )
+      return 'Date object values must all be integers';
+
+    // Check if numbers are in range
+    let monthMin = 1;
+    let monthMax = 12;
+    let dayMin = 1;
+    let dayMax = 31;
+    let hoursMin = 0;
+    let hoursMax = 23;
+    let minutesMin = 0;
+    let minutesMax = 59;
+    let secondsMin = 0;
+    let secondsMax = 59;
+    let millisecondsMin = 0;
+    let millisecondsMax = 999;
+
+    if (dateObj.year < 0)
+      return 'Year must be integer greater than 0';
+
+    if (dateObj.month_number < monthMin && dateObj.month_number > monthMax)
+      return `Month must be integer between ${monthMin} and ${monthMax}`;
+
+    if (dateObj.day < dayMin && dateObj.day > dayMax)
+      return `Day must be integer between ${dayMin} and ${dayMax}`;
+
+    if (dateObj.hours < hoursMin && dateObj.hours > hoursMax)
+      return `Hours must be integer between ${hoursMin} and ${hoursMax}`;
+
+    if (dateObj.minutes < minutesMin && dateObj.minutes > minutesMax)
+      return `Minutes must be integer between ${minutesMin} and ${minutesMax}`;
+
+    if (dateObj.seconds < secondsMin && dateObj.seconds > secondsMax)
+      return `Seconds must be integer between ${secondsMin} and ${secondsMax}`;
+
+    if (dateObj.milliseconds < millisecondsMin && dateObj.milliseconds > millisecondsMax)
+      return `Milliseconds must be integer between ${millisecondsMin} and ${millisecondsMax}`;
+
+    return null;
+  }
+
+  static month_list() {
+    return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  }
+
+  static month_name_to_index(name) {
+    let invalidType = invalid_type(name);
+    if (invalidType)
+      return { index: null, error: `MONTH_NAME_ERROR: Name is ${invalidType}` };
+
+    let months = Timestamp.month_list();
+    if (months.includes(name))
+      return { index: months.indexOf(name), error: null };
+    return { index: null, error: `MONTH_NAME_ERROR: Name is not a valid name` };
+  }
+
+  static day_of_week_list() {
+    return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  }
+
+  static day_of_week_name_to_index(name) {
+    let invalidType = invalid_type(name);
+    if (invalidType)
+      return { index: null, error: `DAY_OF_WEEK_NAME_ERROR: Name is ${invalidType}` };
+
+    let days_of_the_week = Timestamp.month_list();
+    if (days_of_the_week.includes(name))
+      return { index: days_of_the_week.indexOf(name), error: null };
+    return { index: null, error: `DAY_OF_WEEK_NAME_ERROR: Name is not a valid name` };
   }
 }
 
