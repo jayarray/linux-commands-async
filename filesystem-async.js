@@ -522,60 +522,6 @@ class Timestamp {
 }
 
 //-------------------------------------------
-// STATS 
-class Stats {
-  static stats(path) {
-    return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ isDir: null, error: `PATH_ERROR: ${error}` });
-        return;
-      }
-
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ stats: null, error: `PATH_ERROR: ${results.error}` });
-          return;
-        }
-
-        if (!results.exists) {
-          reject({ stats: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
-          return;
-        }
-
-        FS.lstat(pTrimmed, (err, stats) => {
-          if (err)
-            reject({ stats: null, error: `FS_LSTAT_ERROR: ${err}` });
-          else {
-            resolve({
-              stats: {
-                size: stats.size,  // bytes
-                mode: stats.mode,
-                uid: stats.uid,
-                gid: stats.gid,
-                others_x: stats.mode & 1 ? 'x' : '-',
-                others_w: stats.mode & 2 ? 'w' : '-',
-                others_r: stats.mode & 4 ? 'r' : '-',
-                group_x: stats.mode & 8 ? 'x' : '-',
-                group_w: stats.mode & 16 ? 'w' : '-',
-                group_r: stats.mode & 32 ? 'r' : '-',
-                owner_x: stats.mode & 64 ? 'x' : '-',
-                owner_w: stats.mode & 128 ? 'w' : '-',
-                owner_r: stats.mode & 256 ? 'r' : '-',
-                is_dir: stats.isDirectory(),
-                is_symlink: stats.isSymbolicLink()
-              },
-              error: null
-            });
-          }
-        });
-      }).catch(fatalFail);
-    });
-  }
-}
-
-//-------------------------------------------
 // PATH
 class Path {
   static exists(path) {
@@ -739,7 +685,12 @@ class Permissions {
           }
 
           let permStr = values.item.permstr.trim();
+
           let octalStr = Permissions.perm_string_to_octal_string(permStr.substring(1, 10));
+          if (octalStr.error) {
+            reject({ permissions: null, error: octalStr.error });
+            return;
+          }
 
           let perms = {
             u: {
@@ -764,11 +715,11 @@ class Permissions {
               string: `${permStr.charAt(7)}${permStr.charAt(8)}${permStr.charAt(9)}`
             },
             octal: {
-              string: octalStr,
-              special: parseInt(octalStr.charAt(0)),
-              user: parseInt(octalStr.charAt(1)),
-              group: parseInt(octalStr.charAt(2)),
-              others: parseInt(octalStr.charAt(3))
+              string: octalStr.string,
+              special: parseInt(octalStr.string.charAt(0)),
+              user: parseInt(octalStr.string.charAt(1)),
+              group: parseInt(octalStr.string.charAt(2)),
+              others: parseInt(octalStr.string.charAt(3))
             },
             owner: values.item.owner.trim(),
             group: values.item.group.trim(),
@@ -801,7 +752,12 @@ class Permissions {
           }
 
           let permStr = values.item.permstr.trim();
+
           let octalStr = Permissions.perm_string_to_octal_string(permStr.substring(1, 10));
+          if (octalStr.error) {
+            reject({ permissions: null, error: octalStr.error });
+            return;
+          }
 
           let perms = {
             u: {
@@ -826,11 +782,11 @@ class Permissions {
               string: `${permStr.charAt(7)}${permStr.charAt(8)}${permStr.charAt(9)}`
             },
             octal: {
-              string: octalStr,
-              special: parseInt(octalStr.charAt(0)),
-              user: parseInt(octalStr.charAt(1)),
-              group: parseInt(octalStr.charAt(2)),
-              others: parseInt(octalStr.charAt(3))
+              string: octalStr.string,
+              special: parseInt(octalStr.string.charAt(0)),
+              user: parseInt(octalStr.string.charAt(1)),
+              group: parseInt(octalStr.string.charAt(2)),
+              others: parseInt(octalStr.string.charAt(3))
             },
             owner: values.item.owner.trim(),
             group: values.item.group.trim(),
@@ -910,32 +866,86 @@ class Permissions {
     });
   }
 
-  static obj_error_string(obj) {
-    // TO DO
+  static obj_error(obj) {
+    let invalidType = invalid_type(obj);
+    if (invalidType)
+      return `Permissions object is ${invalidType}`;
+
+    // Check if obj missing values
+    if (
+      obj.u && obj.u.r && obj.u.w && obj.u.x && obj.u.xchar && obj.u.string &&
+      obj.g && obj.g.r && obj.g.w && obj.g.x && obj.g.xchar && obj.g.string &&
+      obj.o && obj.o.r && obj.o.w && obj.o.x && obj.o.xchar && obj.o.string &&
+      obj.octal && obj.octal.string && obj.octal.special && obj.octal.user && obj.octal.group && obj.octal.others &&
+      obj.owner &&
+      obj.group &&
+      obj.string
+    )
+      return 'Permissions object is missing required values';
+
+    // Check if obj values are correct types
+    let boolVars = [obj.u.r, obj.u.w, obj.u.x, obj.g.r, obj.g.w, obj.g.x, obj.o.r, obj.o.w, obj.o.x];
+    boolVars.forEach(bvar => {
+      if (bvar === true || bvar === false)
+        return 'Permissions object values for u,g,o are all required to be boolean (true|false)';
+    });
+
+    if (
+      obj.octal.string != '' &&
+      obj.octal.string.trim() &&
+      Number.isInteger(obj.octal.special) &&
+      Number.isInteger(obj.octal.user) &&
+      Number.isInteger(obj.octal.group) &&
+      Number.isInteger(obj.octal.others)
+    )
+      return 'Permissions object values for octal are incorrect types';
+
+    if (
+      obj.owner != '' && obj.owner.trim() &&
+      obj.group != '' && obj.group.trim() &&
+      obj.string != '' && obj.string.trim()
+    )
+      return 'Permissions object values for owner, group, string are empty or whitespace';
+
+    return null;
   }
 
   static equal(p1, p2) {
+    let error = Permissions.obj_error(p1);
+    if (error)
+      return { equal: null, error: `PERM1_OBJ_ERROR: ${error}` };
 
-    // CONT HERE  (Add error checking for objects) (seeabove)
-    if (p1 === undefined)
-      return { equal: null, error: `P1_ERROR: Permissions object is undefined` };
-    if (p1 == null)
-      return { equal: null, error: `P1_ERROR: Permissions object is null` };
+    error = Permissions.obj_error(p2);
+    if (error)
+      return { equal: null, error: `PERM2_OBJ_ERROR: ${error}` };
 
-    if (p2 === undefined)
-      return { equal: null, error: `P2_ERROR: Permissions object is undefined` };
-    if (p2 == null)
-      return { equal: null, error: `P2_ERROR: Permissions object is null` };
+    let equal = p1.u.r == p2.u.r &&
+      p1.u.w == p2.u.w &&
+      p1.u.x == p2.u.x &&
+      p1.u.xchar == p2.u.xchar &&
+      p1.u.string == p2.u.string &&
 
-    let equal = p1.owner.r == p2.owner.r &&
-      p1.owner.w == p2.owner.w &&
-      p1.owner.x == p2.owner.x &&
-      p1.group.r == p2.group.r &&
-      p1.group.w == p2.group.w &&
-      p1.group.x == p2.group.x &&
-      p1.others.r == p2.others.r &&
-      p1.others.w == p2.others.w &&
-      p1.others.x == p2.others.x;
+      p1.g.r == p2.g.r &&
+      p1.g.w == p2.g.w &&
+      p1.g.x == p2.g.x &&
+      p1.g.xchar == p2.g.xchar &&
+      p1.g.string == p2.g.string &&
+
+      p1.o.r == p2.o.r &&
+      p1.o.w == p2.o.w &&
+      p1.o.x == p2.o.x &&
+      p1.o.xchar == p2.o.xchar &&
+      p1.o.string == p2.o.string &&
+
+      p1.octal.string == p2.octal.string &&
+      p1.octal.special == p2.octal.special &&
+      p1.octal.user == p2.octal.user &&
+      p1.octal.group == p2.octal.group &&
+      p1.octal.others == p2.octal.others &&
+
+      p1.owner == p2.owner &&
+      p1.group == p2.group &&
+      p1.string == p2.string;
 
     return { equal: equal, error: null };
   }
@@ -945,56 +955,34 @@ class Permissions {
     if (invalidType)
       return { string: null, error: `OBJ_ERROR: Object is ${invalidType}` };
 
-    // Check if object has required values
-    let variableList = [
-      obj.u,
-      obj.u.r,
-      obj.u.w,
-      obj.u.x,
-      obj.g,
-      obj.g.r,
-      obj.g.w,
-      obj.g.x,
-      obj.o,
-      obj.o.r,
-      obj.o.w,
-      obj.o.x
-    ];
+    // Check if obj missing values
+    if (
+      obj.u && obj.u.r && obj.u.w && obj.u.x && obj.u.xchar &&
+      obj.g && obj.g.r && obj.g.w && obj.g.x && obj.g.xchar &&
+      obj.o && obj.o.r && obj.o.w && obj.o.x && obj.o.xchar
+    )
+      return { string: null, error: 'OBJ_ERROR: Object is missing required values' };
 
-    variableList.forEach(v => {
-      if (v === undefined)
-        return { string: null, error: `OBJECT_ERROR: Object is missing required values` };
+    // Check if obj values are correct types
+    let boolVars = [obj.u.r, obj.u.w, obj.u.x, obj.g.r, obj.g.w, obj.g.x, obj.o.r, obj.o.w, obj.o.x];
+    boolVars.forEach(bvar => {
+      if (bvar === true || bvar === false)
+        return 'OBJ_ERROR: Object values for u,g,o are all required to be boolean (true|false)';
     });
 
-
-    // Check if object values are valid
-    variableList = [
-      obj.u.r,
-      obj.u.w,
-      obj.u.x,
-      obj.g.r,
-      obj.g.w,
-      obj.g.x,
-      obj.o.r,
-      obj.o.w,
-      obj.o.x
-    ];
-
-    variableList.forEach(v => {
-      let invalidType = invalid_type(v);
-      if (invalidType)
-        return { string: null, error: `OBJECT_ERROR: Object contains variable with value of ${invalidType}` };
-
-      if (!Permissions.char_is_valid(v))
-        return { string: null, error: `OBJECT_ERROR: Object contains variable with invalid value` };
-      break;
-    });
+    if (
+      Permissions.valid_execute_chars.includes(obj.u.xchar) &&
+      Permissions.valid_execute_chars.includes(obj.g.xchar) &&
+      Permissions.valid_execute_chars.includes(obj.o.xchar)
+    )
+      return { string: null, error: 'OBJ_ERROR: Object values for xchar are not valid characters' };
 
     let permStr = `${obj.u.r}${obj.u.w}${obj.u.x}${obj.g.r}${obj.g.w}${obj.g.x}${obj.o.r}${obj.o.w}${obj.o.x}`;
-    let octalStr = Permissions.perm_string_to_octal_string(permStr);
 
+    let octalStr = Permissions.perm_string_to_octal_string(permStr);
     if (octalStr.error)
-      return { string: null, error: `PERM_STR_TO_OCTAL_STR_ERROR: ${octalStr.error}` };
+      return { string: null, error: octalStr.error };
+
     return { string: octalStr.string, error: null };
   }
 
@@ -2964,7 +2952,6 @@ return;
 
 exports.Execute = Execute;
 exports.Timestamp = Timestamp;
-exports.Stats = Stats;
 exports.Path = Path;
 exports.Permissions = Permissions;
 exports.Copy = Copy;
