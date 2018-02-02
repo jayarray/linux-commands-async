@@ -664,250 +664,229 @@ class Path {
 //-------------------------------------------
 // PERMISSIONS
 class Permissions {
-  static file_permissions(path) {
-    return new Promise((resolve, reject) => {
-      Path.is_file(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ permissions: null, error: results.error });
-          return;
-        }
+  static create_perm_obj_using_perm_string(permStr) {
+    let error = Permissions.string_error(permStr);
+    if (error)
+      return { obj: null, error: error };
 
-        let pTrimmed = path.trim();
-        if (!results.isFile) {
-          reject({ permissions: null, error: `PATH_ERROR: Path is not a file: ${pTrimmed}` });
-          return;
-        }
+    let permTrimmed = permStr.trim();
 
-        List.file_item(pTrimmed).then(values => {
-          if (values.error) {
-            reject({ permissions: null, error: values.error });
-            return;
-          }
+    let octalStr = Permissions.perm_string_to_octal_string(permTrimmed);
+    if (octalStr.error) {
+      reject({ permissions: null, error: octalStr.error });
+      return;
+    }
 
-          let permStr = values.item.permstr.trim();
-
-          let octalStr = Permissions.perm_string_to_octal_string(permStr.substring(1, 10));
-          if (octalStr.error) {
-            reject({ permissions: null, error: octalStr.error });
-            return;
-          }
-
-          let perms = {
-            u: {
-              r: permStr.charAt(1) != '-',
-              w: permStr.charAt(2) != '-',
-              x: permStr.charAt(3) != '-' && !Permissions.is_non_executable_char(permStr.charAt(3)),
-              xchar: permStr.charAt(3),
-              string: `${permStr.charAt(1)}${permStr.charAt(2)}${permStr.charAt(3)}`
-            },
-            g: {
-              r: permStr.charAt(4) != '-',
-              w: permStr.charAt(5) != '-',
-              x: permStr.charAt(6) != '-' && !Permissions.is_non_executable_char(permStr.charAt(6)),
-              xchar: permStr.charAt(6),
-              string: `${permStr.charAt(4)}${permStr.charAt(5)}${permStr.charAt(6)}`
-            },
-            o: {
-              r: permStr.charAt(7) != '-',
-              w: permStr.charAt(8) != '-',
-              x: permStr.charAt(9) != '-' && !Permissions.is_non_executable_char(permStr.charAt(9)),
-              xchar: permStr.charAt(9),
-              string: `${permStr.charAt(7)}${permStr.charAt(8)}${permStr.charAt(9)}`
-            },
-            octal: {
-              string: octalStr.string,
-              special: parseInt(octalStr.string.charAt(0)),
-              user: parseInt(octalStr.string.charAt(1)),
-              group: parseInt(octalStr.string.charAt(2)),
-              others: parseInt(octalStr.string.charAt(3))
-            },
-            owner: values.item.owner.trim(),
-            group: values.item.group.trim(),
-            string: permStr
-          };
-          resolve({ permissions: perms, error: null });
-        }).catch(fatalFail);
-      }).catch(fatalFail);
-    });
+    let obj = {
+      u: {
+        r: permTrimmed.charAt(1) != '-',
+        w: permTrimmed.charAt(2) != '-',
+        x: permTrimmed.charAt(3) != '-' && !Permissions.is_non_executable_char(permTrimmed.charAt(3)),
+        xchar: permTrimmed.charAt(3),
+        string: `${permTrimmed.charAt(1)}${permTrimmed.charAt(2)}${permTrimmed.charAt(3)}`
+      },
+      g: {
+        r: permpermTrimmedStr.charAt(4) != '-',
+        w: permTrimmed.charAt(5) != '-',
+        x: permTrimmed.charAt(6) != '-' && !Permissions.is_non_executable_char(permTrimmed.charAt(6)),
+        xchar: permTrimmed.charAt(6),
+        string: `${permTrimmed.charAt(4)}${permTrimmed.charAt(5)}${permTrimmed.charAt(6)}`
+      },
+      o: {
+        r: permTrimmed.charAt(7) != '-',
+        w: permTrimmed.charAt(8) != '-',
+        x: permTrimmed.charAt(9) != '-' && !Permissions.is_non_executable_char(permTrimmed.charAt(9)),
+        xchar: permStr.charAt(9),
+        string: `${permTrimmed.charAt(7)}${permTrimmed.charAt(8)}${permTrimmed.charAt(9)}`
+      },
+      octal: {
+        string: octalStr.string,
+        special: parseInt(octalStr.string.charAt(0)),
+        user: parseInt(octalStr.string.charAt(1)),
+        group: parseInt(octalStr.string.charAt(2)),
+        others: parseInt(octalStr.string.charAt(3))
+      },
+      owner: null,
+      group: null,
+      string: permTrimmed,
+      filetype: null
+    };
+    return { obj: obj, error: null };
   }
 
-  static dir_permissions(path) {
-    return new Promise((resolve, reject) => {
-      Path.is_dir(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ permissions: null, error: results.error });
-          return;
-        }
+  static int_to_rwx_obj(int) {
+    let invalid = invalid_type(int);
+    if (invalidType)
+      return { obj: null, error: `INT_TO_RWX_ERROR: Int is ${invalidType}` };
 
-        let pTrimmed = path.trim();
-        if (!results.isDir) {
-          reject({ permissions: null, error: `PATH_ERROR: Path is not a directory: ${pTrimmed}` });
-          return;
-        }
+    if (Number.isInteger(int))
+      return { obj: null, error: `INT_TO_RWX_ERROR: Int is not an integer` };
 
-        List.dir_item(pTrimmed).then(values => {
-          if (values.error) {
-            reject({ permissions: null, error: values.error });
-            return;
-          }
+    let iMin = 0;
+    let iMax = 7;
+    if (int < iMin && int > iMax)
+      return { obj: null, error: `INT_TO_RWX_ERROR: Int must be a value between ${iMin} and ${iMax}` };
 
-          let permStr = values.item.permstr.trim();
+    let obj = { r: false, w: false, x: false };
 
-          let octalStr = Permissions.perm_string_to_octal_string(permStr.substring(1, 10));
-          if (octalStr.error) {
-            reject({ permissions: null, error: octalStr.error });
-            return;
-          }
+    let charValList = [
+      { char: 'r', value: 4 },
+      { char: 'w', value: 2 },
+      { char: 'x', value: 1 }
+    ];
 
-          let perms = {
-            u: {
-              r: permStr.charAt(1) != '-',
-              w: permStr.charAt(2) != '-',
-              x: permStr.charAt(3) != '-' && !Permissions.is_non_executable_char(permStr.charAt(3)),
-              xchar: permStr.charAt(3),
-              string: `${permStr.charAt(1)}${permStr.charAt(2)}${permStr.charAt(3)}`
-            },
-            g: {
-              r: permStr.charAt(4) != '-',
-              w: permStr.charAt(5) != '-',
-              x: permStr.charAt(6) != '-' && !Permissions.is_non_executable_char(permStr.charAt(6)),
-              xchar: permStr.charAt(6),
-              string: `${permStr.charAt(4)}${permStr.charAt(5)}${permStr.charAt(6)}`
-            },
-            o: {
-              r: permStr.charAt(7) != '-',
-              w: permStr.charAt(8) != '-',
-              x: permStr.charAt(9) != '-' && !Permissions.is_non_executable_char(permStr.charAt(9)),
-              xchar: permStr.charAt(9),
-              string: `${permStr.charAt(7)}${permStr.charAt(8)}${permStr.charAt(9)}`
-            },
-            octal: {
-              string: octalStr.string,
-              special: parseInt(octalStr.string.charAt(0)),
-              user: parseInt(octalStr.string.charAt(1)),
-              group: parseInt(octalStr.string.charAt(2)),
-              others: parseInt(octalStr.string.charAt(3))
-            },
-            owner: values.item.owner.trim(),
-            group: values.item.group.trim(),
-            string: permStr
-          };
-          resolve({ permissions: perms, error: null });
-        }).catch(fatalFail);
-      }).catch(fatalFail);
+    // Check if only one type is set
+    charValList.forEach(item => {
+      if (item.value == int) {
+        obj[item.char] = true;
+        return { obj: obj, error: null };
+      }
     });
+
+    // Check if multiple types are set
+    let areSet = [];
+    charValList.forEach(item => {
+      let others = charValList.filter(i => i.char != item.char);
+      if (item.value + other[0].value == int) {
+        areSet.push(item, other[0]);
+        break;
+      }
+      else if (item.value + other[1].value == int) {
+        areSet.push(item, other[1]);
+        break;
+      }
+      else if (item.value + other[0].value + other[1].value == int) {
+        areSet.push(item, other[0], other[1]);
+        break;
+      }
+    });
+
+    if (areSet) {
+      areSet.forEach(item => {
+        obj[item.char] = true;
+      });
+    }
+    return { obj: obj, error: null };
+  }
+
+  static create_perm_obj_using_octal_string(octalStr) {
+    let error = Permissions.octal_string_error(octalStr);
+    if (error)
+      return { obj: null, error: error };
+
+    let octalTrimmed = octalStr.trim();
+    let obj = {
+      u: { r: false, w: false, x: false, xchar: '-', string: '' },
+      g: { r: false, w: false, x: false, xchar: '-', string: '' },
+      o: { r: false, w: false, x: false, xchar: '-', string: '' },
+      octal: { string: '', special: '', user: '', group: '', others: '' },
+      owner: null,
+      group: null,
+      string: null,
+      filetype: null
+    };
+
+    // Set octal properties
+    obj.octal.string = octalTrimmed;
+    obj.octal.special = parseInt(octalTrimmed.charAt(0));
+    obj.octal.user = parseInt(octalTrimmed.charAt(1));
+    obj.octal.group = parseInt(octalTrimmed.charAt(2));
+    obj.octal.others = parseInt(octalTrimmed.charAt(3));
+
+    // SPECIAL
+    let specialOctal = parseInt(octalStr.char(0));
+    let specialRwxObj = Permissions.int_to_rwx_obj(specialOctal);
+    if (specialRwxObj.error)
+      return { obj: null, error: specialRwxObj.error };
+
+    // USER
+    let userOctal = parseInt(octalStr.char(1));
+    let userRwxObj = Permissions.int_to_rwx_obj(userOctal);
+    if (userRwxObj.error)
+      return { obj: null, error: userRwxObj.error };
+
+    obj.u.r = userRwxObj.obj.r;
+    obj.u.w = userRwxObj.obj.w;
+    obj.u.x = userRwxObj.obj.x;
+
+    if (userRwxObj.obj.x && specialRwxObj.obj.r)
+      obj.u.xchar = 's';
+    if (!userRwxObj.obj.x && specialRwxObj.obj.r)
+      obj.u.xchar = 'S';
+    if (userRwxObj.obj.x && !specialRwxObj.obj.r)
+      obj.u.xchar = 'x';
+
+    obj.u.string = `${obj.u.r ? 'r' : '-'}${obj.u.w ? 'w' : '-'}${obj.u.xchar}`;
+
+
+    // GROUP
+    let groupOctal = parseInt(octalStr.char(2));
+    let groupRwxObj = Permissions.int_to_rwx_obj(groupOctal);
+    if (groupRwxObj.error)
+      return { obj: null, error: groupRwxObj.error };
+
+    obj.g.r = groupRwxObj.obj.r;
+    obj.g.w = groupRwxObj.obj.w;
+    obj.g.x = groupRwxObj.obj.x;
+
+    if (groupRwxObj.obj.x && specialRwxObj.obj.w)
+      obj.g.xchar = 's';
+    if (!groupRwxObj.obj.x && specialRwxObj.obj.w)
+      obj.g.xchar = 'S';
+    if (groupRwxObj.obj.x && !specialRwxObj.obj.w)
+      obj.g.xchar = 'x';
+
+    obj.g.string = `${obj.g.r ? 'r' : '-'}${obj.g.w ? 'w' : '-'}${obj.g.xchar}`;
+
+
+    // OTHERS
+    let othersOctal = parseInt(octalStr.char(3));
+    let othersRwxObj = Permissions.int_to_rwx_obj(othersOctal);
+    if (othersRwxObj.error)
+      return { obj: null, error: othersRwxObj.error };
+
+    obj.o.r = othersRwxObj.obj.r;
+    obj.o.w = othersRwxObj.obj.w;
+    obj.o.x = othersRwxObj.obj.x;
+
+    if (othersRwxObj.obj.x && specialRwxObj.obj.x)
+      obj.o.xchar = 't';
+    if (!othersRwxObj.obj.x && specialRwxObj.obj.x)
+      obj.o.xchar = 'T';
+    if (othersRwxObj.obj.x && !specialRwxObj.obj.x)
+      obj.o.xchar = 'x';
+
+    obj.o.string = `${obj.o.r ? 'r' : '-'}${obj.o.w ? 'w' : '-'}${obj.o.xchar}`;
+
+    obj.string = `${obj.u.string}${obj.g.string}${obj.o.string}`;
+
+    return { obj: obj, error: null };
   }
 
   static permissions(path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
-      if (error) {
-        reject({ permissions: null, error: `PATH_ERROR: ${error}` });
-        return;
-      }
-
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
+      List.item(path).then(results => {
         if (results.error) {
-          reject({ permissions: null, error: `PATH_ERROR: ${results.error}` });
+          reject({ permissions: null, error: results.error });
           return;
         }
 
-        if (!results.exists) {
-          reject({ permissions: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
+        let item = results.item;
+        let permStr = item.permstr.trim();
+
+        let permObj = Permissions.create_perm_obj_using_perm_string(permStr);
+        if (permObj.error) {
+          reject({ permissions: null, error: permObj.error });
           return;
         }
 
-        FS.lstat(pTrimmed, (err, stats) => {
-          if (err)
-            reject({ permissions: null, error: `FS_LSTAT_ERROR: ${err}` });
-          else {
-            let others = {
-              x: stats.mode & 1 ? 'x' : '-',
-              w: stats.mode & 2 ? 'w' : '-',
-              r: stats.mode & 4 ? 'r' : '-',
-            };
-            let others_string = `${others.r}${others.w}${others.x}`;
+        permObj.owner = item.owner;
+        permObj.group = item.group;
+        permObj.filetype = item.filetype;
 
-            let group = {
-              x: stats.mode & 8 ? 'x' : '-',
-              w: stats.mode & 16 ? 'w' : '-',
-              r: stats.mode & 32 ? 'r' : '-',
-            };
-            let group_string = `${group.r}${group.w}${group.x}`;
-
-            let owner = {
-              x: stats.mode & 64 ? 'x' : '-',
-              w: stats.mode & 128 ? 'w' : '-',
-              r: stats.mode & 256 ? 'r' : '-',
-            };
-            let owner_string = `${owner.r}${owner.w}${owner.x}`;
-
-            Permissions.octal_string(pTrimmed).then(values => {
-              if (values.error) {
-                reject({ permissions: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
-                return;
-              }
-              resolve({
-                permissions: {
-                  others: others,
-                  others_string: others_string,
-                  group: group,
-                  group_string: group_string,
-                  owner: owner,
-                  owner_string: owner_string
-                },
-                error: null
-              });
-            }).catch(fatalFail);
-          }
-        });
+        resolve({ permissions: permObj.obj, error: null });
       }).catch(fatalFail);
     });
-  }
-
-  static obj_error(obj) {
-    let invalidType = invalid_type(obj);
-    if (invalidType)
-      return `Permissions object is ${invalidType}`;
-
-    // Check if obj missing values
-    if (
-      obj.u && obj.u.r && obj.u.w && obj.u.x && obj.u.xchar && obj.u.string &&
-      obj.g && obj.g.r && obj.g.w && obj.g.x && obj.g.xchar && obj.g.string &&
-      obj.o && obj.o.r && obj.o.w && obj.o.x && obj.o.xchar && obj.o.string &&
-      obj.octal && obj.octal.string && obj.octal.special && obj.octal.user && obj.octal.group && obj.octal.others &&
-      obj.owner &&
-      obj.group &&
-      obj.string
-    )
-      return 'Permissions object is missing required values';
-
-    // Check if obj values are correct types
-    let boolVars = [obj.u.r, obj.u.w, obj.u.x, obj.g.r, obj.g.w, obj.g.x, obj.o.r, obj.o.w, obj.o.x];
-    boolVars.forEach(bvar => {
-      if (bvar === true || bvar === false)
-        return 'Permissions object values for u,g,o are all required to be boolean (true|false)';
-    });
-
-    if (
-      obj.octal.string != '' &&
-      obj.octal.string.trim() &&
-      Number.isInteger(obj.octal.special) &&
-      Number.isInteger(obj.octal.user) &&
-      Number.isInteger(obj.octal.group) &&
-      Number.isInteger(obj.octal.others)
-    )
-      return 'Permissions object values for octal are incorrect types';
-
-    if (
-      obj.owner != '' && obj.owner.trim() &&
-      obj.group != '' && obj.group.trim() &&
-      obj.string != '' && obj.string.trim()
-    )
-      return 'Permissions object values for owner, group, string are empty or whitespace';
-
-    return null;
   }
 
   static equal(p1, p2) {
@@ -950,7 +929,7 @@ class Permissions {
     return { equal: equal, error: null };
   }
 
-  static obj_to_octal_string(obj) {  // Example:  {u:{...}, g:{...}, o:{...}} --> 777 
+  static obj_to_octal_string(obj) {  // Example:  obj = { u:{...}, g:{...}, o:{...} }
     let invalidType = invalid_type(obj);
     if (invalidType)
       return { string: null, error: `OBJ_ERROR: Object is ${invalidType}` };
@@ -986,7 +965,7 @@ class Permissions {
     return { string: octalStr.string, error: null };
   }
 
-  static perm_string_to_octal_string(permStr) {  // permStr = r--r--r--
+  static perm_string_to_octal_string(permStr) {  // permStr = "r--r--r--" (9 chars only)
     let error = Permissions.string_error(permStr);
     if (error)
       return { string: null, error: error };
@@ -1051,8 +1030,32 @@ class Permissions {
     return { string: octalStr, error: null };
   }
 
-  static valid_file_descriptor_chars() {
-    return ['b', 'c', 'd', 'l', 'n', 'p', 's', 'D', '-'];
+  static file_type_char_name_dict() {
+    return {
+      '-': 'file',
+      b: 'block device',
+      c: 'character device',
+      d: 'directory',
+      l: 'symbolic link',
+      p: 'named pipe',
+      s: 'socket',
+      D: 'door'
+    };
+  }
+
+  static file_type_name(char) {
+    let invalidType = invalid_type(char);
+    if (invalidType)
+      return { name: null, error: `FILE_TYPE_CHAR_ERROR: Char is ${invalidType}` };
+
+    let name = Permissions.file_type_char_name_dict()[char];
+    if (name)
+      return { name: name, error: null };
+    return { name: null, error: 'FILE_TYPE_CHAR_ERROR: Char is not a valid file type character' };
+  }
+
+  static valid_file_type_chars() {
+    return ['b', 'c', 'd', 'l', 'p', 's', 'D', '-'];
   }
 
   static valid_read_chars() {
@@ -1091,14 +1094,43 @@ class Permissions {
   }
 
   static char_is_valid(c) {
-    return Permissions.valid_file_descriptor_chars.includes(c) ||
+    return Permissions.valid_file_type_chars.includes(c) ||
       Permissions.valid_read_chars.includes(c) ||
       Permissions.valid_write_chars.includes(c) ||
       Permissions.valid_execute_chars.includes(c);
   }
 
-  static valid_classes_chars() {
+  static valid_class_chars() {
     return ['u', 'g', 'o'];
+  }
+
+  static octal_string_error(octalStr) {
+    let invalidType = invalid_type(octalStr);
+    if (invalid_type)
+      return `Octal string is ${invalidType}`;
+
+    let oTrimmed = octalStr.trim();
+
+    let lengthMin = 3;
+    let lengthMax = 4;
+
+    if (octalStr.length < lengthMin && octalStr.length > lengthMax)
+      return `Octal string is must have ${lengthMin} or ${lengthMax} characters`;
+
+    let valMin = 0;
+    let valMax = 7;
+
+    octalStr.forEach(char => {
+      try {
+        let i = parseInt(char);
+        if (i < valMin && i > valMax)
+          return `Octal string numeric values must be between ${valMin} and ${valMax}`;
+      } catch {
+        return `Octal string contains non-numeric characters`;
+      }
+    });
+
+    return null;
   }
 
   static string_error(permStr) {
@@ -1162,6 +1194,50 @@ class Permissions {
 
     return null; // NO errors detected
   }
+
+  static obj_error(obj) {
+    let invalidType = invalid_type(obj);
+    if (invalidType)
+      return `Permissions object is ${invalidType}`;
+
+    // Check if obj missing values
+    if (
+      obj.u && obj.u.r && obj.u.w && obj.u.x && obj.u.xchar && obj.u.string &&
+      obj.g && obj.g.r && obj.g.w && obj.g.x && obj.g.xchar && obj.g.string &&
+      obj.o && obj.o.r && obj.o.w && obj.o.x && obj.o.xchar && obj.o.string &&
+      obj.octal && obj.octal.string && obj.octal.special && obj.octal.user && obj.octal.group && obj.octal.others &&
+      obj.owner &&
+      obj.group &&
+      obj.string
+    )
+      return 'Permissions object is missing required values';
+
+    // Check if obj values are correct types
+    let boolVars = [obj.u.r, obj.u.w, obj.u.x, obj.g.r, obj.g.w, obj.g.x, obj.o.r, obj.o.w, obj.o.x];
+    boolVars.forEach(bvar => {
+      if (bvar === true || bvar === false)
+        return 'Permissions object values for u,g,o are all required to be boolean (true|false)';
+    });
+
+    if (
+      obj.octal.string != '' &&
+      obj.octal.string.trim() &&
+      Number.isInteger(obj.octal.special) &&
+      Number.isInteger(obj.octal.user) &&
+      Number.isInteger(obj.octal.group) &&
+      Number.isInteger(obj.octal.others)
+    )
+      return 'Permissions object values for octal are incorrect types';
+
+    if (
+      obj.owner != '' && obj.owner.trim() &&
+      obj.group != '' && obj.group.trim() &&
+      obj.string != '' && obj.string.trim()
+    )
+      return 'Permissions object values for owner, group, string are empty or whitespace';
+
+    return null;
+  }
 }
 
 //-------------------------------------------------
@@ -1171,25 +1247,31 @@ class Copy {
     return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ success: false, error: `SRC_PATH_ERROR: ${error}` });
+        return;
+      }
+
+      let error = Path.error(dest);
+      if (error) {
+        reject({ success: false, error: `DEST_PATH_ERROR: ${error}` });
         return;
       }
 
       let sTrimmed = src.trim();
       Path.exists(sTrimmed).then(results => {
         if (results.error) {
-          reject({ success: false, error: results.error });
+          reject({ success: false, error: `SRC_PATH_ERROR: ${results.error}` });
           return;
         }
 
         if (!results.exists) {
-          reject({ success: false, error: `Path does not exist: ${sTrimmed}` });
+          reject({ success: false, error: `SRC_PATH_ERROR: Path does not exist: ${sTrimmed}` });
           return;
         }
 
-        FS.copy(sTrimmed, dest, (err) => {
+        FS.copy(sTrimmed, dest.trim(), (err) => {
           if (err) {
-            reject({ success: false, error: err });
+            reject({ success: false, error: `FS_COPY_ERROR: ${err}` });
             return;
           }
           resolve({ success: true, error: null });
@@ -1206,7 +1288,7 @@ class Remove {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ success: false, error: `PATH_ERROR: ${error}` });
         return;
       }
 
@@ -1218,7 +1300,7 @@ class Remove {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: `Path does not exist: ${pTrimmed}` });
+          reject({ success: false, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1229,13 +1311,13 @@ class Remove {
           }
 
           if (!results.isFile) {
-            resolve({ success: false, error: 'Path is not a file' });
+            resolve({ success: false, error: `PATH_ERROR: Path is not a file: ${pTrimmed}` });
             return;
           }
 
           FS.unlink(pTrimmed, (err) => {
             if (err) {
-              reject({ success: false, error: err });
+              reject({ success: false, error: `FS_UNLINK_ERROR: ${err}` });
               return;
             }
             resolve({ success: true, error: null });
@@ -1249,7 +1331,7 @@ class Remove {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ success: false, error: `PATH_ERROR: ${error}` });
         return;
       }
 
@@ -1261,7 +1343,7 @@ class Remove {
         }
 
         if (!results.exists) {
-          reject({ success: false, error: `Path does not exist: ${pTrimmed}` });
+          reject({ success: false, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
           return;
         }
 
@@ -1272,13 +1354,13 @@ class Remove {
           }
 
           if (!results.isDir) {
-            resolve({ success: false, error: `Path is not a directory: ${pTrimmed}` });
+            resolve({ success: false, error: `PATH_ERROR: Path is not a directory: ${pTrimmed}` });
             return;
           }
 
           RIMRAF(pTrimmed, (err) => {
             if (err) {
-              reject({ success: false, error: err });
+              reject({ success: false, error: `RIMRAF_ERROR: ${err}` });
               return;
             }
             resolve({ success: true, error: null });
@@ -1296,13 +1378,13 @@ class Mkdir {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ success: false, error: `PATH_ERROR: ${error}` });
         return;
       }
 
       FS.mkdir(path.trim(), (err) => {
         if (err) {
-          reject({ success: false, error: err });
+          reject({ success: false, error: `FS_MKDIR_ERROR: ${err}` });
           return;
         }
         resolve({ success: true, error: null });
@@ -1314,13 +1396,13 @@ class Mkdir {
     return new Promise((resolve, reject) => {
       let error = Path.error(path);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ success: false, error: `PATH_ERROR: ${error}` });
         return;
       }
 
       MKDIRP(path.trim(), (err) => {
         if (err) {
-          reject({ success: false, error: err });
+          reject({ success: false, error: `MKDIRP_ERROR: ${err}` });
           return;
         }
         resolve({ success: true, error: null });
@@ -1336,25 +1418,31 @@ class Move {
     return new Promise((resolve, reject) => {
       let error = Path.error(src);
       if (error) {
-        reject({ success: false, error: error });
+        reject({ success: false, error: `SRC_PATH_ERROR: ${error}` });
+        return;
+      }
+
+      error = Path.error(dest);
+      if (error) {
+        reject({ success: false, error: `DEST_PATH_ERROR: ${error}` });
         return;
       }
 
       let sTrimmed = src.trim();
       Path.exists(sTrimmed).then(results => {
         if (results.error) {
-          reject({ success: false, error: results.error });
+          reject({ success: false, error: `SRC_PATH_ERROR: ${results.error}` });
           return;
         }
 
         if (!results.exists) {
-          reject({ success: false, error: `Path does not exist: ${sTrimmed}` });
+          reject({ success: false, error: `SRC_PATH_ERROR: Path does not exist: ${sTrimmed}` });
           return;
         }
 
         FS.move(sTrimmed, dest, (err) => {
           if (err) {
-            reject({ success: false, error: err });
+            reject({ success: false, error: `FS_MOVE_ERROR: ${err}` });
             return;
           }
           resolve({ success: true, error: null });
@@ -1422,6 +1510,25 @@ class List {
     });
   }
 
+  static item(path) {
+    return new Promise((resolve, reject) => {
+      List.file_item(path).then(results => {
+        resolve({ item: results.item, error: null });
+      }).catch((ferr) => {
+        List.dir_item(path).then(values => {
+          resolve({ item: values.item, error: null });
+        }).catch((derr) => {
+          let errArr = [];
+          if (ferr.error)
+            errArr.push(ferr.error);
+          if (ferr.error)
+            errArr.push(derr.error);
+          reject({ type: null, error: `ITEM_ERROR: ${errArr.join('; ')}` });
+        });
+      });
+    });
+  }
+
   static file_item(filepath) {
     return new Promise((resolve, reject) => {
       Path.is_file(dirPath).then(results => {
@@ -1439,12 +1546,12 @@ class List {
         let args = ['-l', fTrimmed];
         Execute.local('ls', args).then(output => {
           if (output.error) {
-            reject({ item: null, error: output.error });
+            reject({ item: null, error: `LS_FILE_ERROR: ${output.error}` });
             return;
           }
 
           if (output.stderr) {
-            reject({ item: null, error: `LS_ERROR: ${output.error}` });
+            reject({ item: null, error: `LS_FILE_ERROR: ${output.stderr}` });
             return;
           }
 
@@ -1477,12 +1584,12 @@ class List {
         let args = ['-ld', dTrimmed];
         Execute.local('ls', args).then(output => {
           if (output.error) {
-            reject({ item: null, error: output.error });
+            reject({ item: null, error: `LS_DIR_ERROR: ${output.error}` });
             return;
           }
 
           if (output.stderr) {
-            reject({ item: null, error: `LS_ERROR: ${output.error}` });
+            reject({ item: null, error: `LS_DIR_ERROR: ${output.stderr}` });
             return;
           }
 
@@ -1506,22 +1613,21 @@ class List {
           return;
         }
 
+        let dTrimmed = dirPath.trim();
         if (!results.isDir) {
-          reject({ items: null, error: `PATH_ERROR: Path is not a directory` });
+          reject({ items: null, error: `PATH_ERROR: Path is not a directory: ${dTrimmed}` });
           return;
         }
 
-        let dTrimmed = dirPath.trim();
         let args = ['-la', dTrimmed];
-
         Execute.local('ls', args).then(output => {
           if (output.error) {
-            reject({ items: null, error: output.error });
+            reject({ items: null, error: `LS_LA_ERROR: ${output.error}` });
             return;
           }
 
           if (output.stderr) {
-            reject({ items: null, error: `LS_ERROR: ${output.error}` });
+            reject({ items: null, error: `LS_LA_ERROR: ${output.stderr}` });
             return;
           }
 
@@ -1569,7 +1675,7 @@ class List {
   static parse_ls_string(string) {
     let invalidType = invalid_type(string);
     if (invalidType)
-      return { item: null, error: `ITEM_STR_ERROR: Item string is ${invalidType}` };
+      return { item: null, error: `LS_STR_ERROR: Item string is ${invalidType}` };
 
     let outputStr = output.stdout.trim();
 
@@ -1754,15 +1860,15 @@ class List {
 
     // ITEM
     let item = {
-      permstr: permStr,
+      permstr: permStr.substring(1),
       hardlinks: parseInt(hLinksStr),
       owner: ownerStr,
       group: groupStr,
       size: parseInt(sizeStr),
       modtime: modStr,
-      name: nameStr
+      name: nameStr,
+      filetype: permStr.charAt(0)
     };
-
     return { item: item, error: null };
   }
 }
@@ -1772,11 +1878,47 @@ class List {
 class Rsync {
   static rsync(user, host, src, dest) {
     return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(user);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `USER_ERROR: User is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      invalidType = invalid_type(host);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `HOST_ERROR: Host is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
       let error = Path.error(src);
       if (error) {
         reject({
           success: false,
-          error: error,
+          error: `SRC_PATH_ERROR: ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      error = Path.error(dest);
+      if (error) {
+        reject({
+          success: false,
+          error: `DEST_PATH_ERROR: ${error}`,
           stdout: null,
           stderr: null,
           exitCode: null
@@ -1789,7 +1931,7 @@ class Rsync {
         if (results.error) {
           reject({
             success: false,
-            error: results.error,
+            error: `SRC_PATH_ERROR: ${results.error}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1800,7 +1942,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: `Path does not exist: ${sTrimmed}`,
+            error: `SRC_PATH_ERROR: Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1808,8 +1950,19 @@ class Rsync {
           return;
         }
 
-        let args = ['-a', sTrimmed, `${user}@${host}:${dest}`];
+        let args = ['-a', sTrimmed, `${user.trim()}@${host.trim()}:${dest.trim()}`];
         Execute.local('rsync', args).then(output => {
+          if (output.error) {
+            reject({
+              success: false,
+              error: `RSYNC_ERROR: ${output.error}`,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+
           if (output.stderr) {
             reject({
               success: false,
@@ -1820,6 +1973,7 @@ class Rsync {
             });
             return;
           }
+
           resolve({
             success: true,
             error: null,
@@ -1834,11 +1988,47 @@ class Rsync {
 
   static update(user, host, src, dest) { // Update dest if src was updated
     return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(user);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `USER_ERROR: User is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      invalidType = invalid_type(host);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `HOST_ERROR: Host is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
       let error = Path.error(src);
       if (error) {
         reject({
           success: false,
-          error: error,
+          error: `SRC_PATH_ERROR: ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      error = Path.error(dest);
+      if (error) {
+        reject({
+          success: false,
+          error: `DEST_PATH_ERROR: ${error}`,
           stdout: null,
           stderr: null,
           exitCode: null
@@ -1851,7 +2041,7 @@ class Rsync {
         if (results.error) {
           reject({
             success: false,
-            error: results.error,
+            error: `SRC_PATH_ERROR: ${results.error}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1862,7 +2052,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: `Path does not exist: ${sTrimmed}`,
+            error: `SRC_PATH_ERROR: Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1870,8 +2060,19 @@ class Rsync {
           return;
         }
 
-        let args = ['-a', '--update', sTrimmed, `${user}@${host}:${dest}`];
+        let args = ['-a', '--update', sTrimmed, `${user.trim()}@${host.trim()}:${dest.trim()}`];
         Execute.local('rsync', args).then(output => {
+          if (output.error) {
+            reject({
+              success: false,
+              error: `RSYNC_UPDATE_ERROR: ${output.error}`,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+
           if (output.stderr) {
             reject({
               success: false,
@@ -1896,11 +2097,47 @@ class Rsync {
 
   static match(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
     return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(user);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `USER_ERROR: User is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      invalidType = invalid_type(host);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `HOST_ERROR: Host is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
       let error = Path.error(src);
       if (error) {
         reject({
           success: false,
-          error: error,
+          error: `SRC_PATH_ERROR: ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      error = Path.error(dest);
+      if (error) {
+        reject({
+          success: false,
+          error: `DEST_PATH_ERROR: ${error}`,
           stdout: null,
           stderr: null,
           exitCode: null
@@ -1913,7 +2150,7 @@ class Rsync {
         if (results.error) {
           reject({
             success: false,
-            error: results.error,
+            error: `SRC_PATH_ERROR: ${results.error}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1924,7 +2161,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: `Path does not exist: ${sTrimmed}`,
+            error: `SRC_PATH_ERROR: Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1932,8 +2169,19 @@ class Rsync {
           return;
         }
 
-        let args = ['-a', '--delete-after', sTrimmed, `${user}@${host}:${dest}`];
+        let args = ['-a', '--delete-after', sTrimmed, `${user.trim()}@${host.trim()}:${dest.trim()}`];
         Execute.local('rsync', args).then(output => {
+          if (output.error) {
+            reject({
+              success: false,
+              error: `RSYNC_MATCH_ERROR: ${output.error}`,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+
           if (output.stderr) {
             reject({
               success: false,
@@ -1958,11 +2206,69 @@ class Rsync {
 
   static manual(user, host, src, dest, flags, options) {  // flags: [chars], options: [strings]
     return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(user);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `USER_ERROR: User is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      invalidType = invalid_type(host);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `HOST_ERROR: Host is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
       let error = Path.error(src);
       if (error) {
         reject({
           success: false,
-          error: error,
+          error: `SRC_PATH_ERROR: ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      error = Path.error(dest);
+      if (error) {
+        reject({
+          success: false,
+          error: `DEST_PATH_ERROR: ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      if (!flags) {
+        reject({
+          success: false,
+          error: `FLAGS_ERROR: Flags is undefined, null, or empty (must be an array of strings)`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      if (!flags) {
+        reject({
+          success: false,
+          error: `OPTIONS_ERROR: Options is undefined, null, or empty (must be an array of strings)`,
           stdout: null,
           stderr: null,
           exitCode: null
@@ -1975,7 +2281,7 @@ class Rsync {
         if (results.error) {
           reject({
             success: false,
-            error: results.error,
+            error: `SRC_PATH_ERROR: ${results.error}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1986,7 +2292,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: `Path does not exist: ${sTrimmed}`,
+            error: `SRC_PATH_ERROR: Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -1997,8 +2303,19 @@ class Rsync {
         let flagStr = `-${flags.join('')}`; // Ex.: -av
         let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
 
-        let args = `${flagStr} ${optionStr} ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
+        let args = [flagStr, optionStr, sTrimmed, `${user.trim()}@${host.trim()}:${dest.trim()}`];
         Execute.local('rsync', args).then(output => {
+          if (output.error) {
+            reject({
+              success: false,
+              error: `RSYNC_MANUAL_ERROR: ${output.error}`,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+
           if (output.stderr) {
             reject({
               success: false,
@@ -2023,11 +2340,69 @@ class Rsync {
 
   static dry_run(user, host, src, dest, flags, options) { // Will execute without making changes (for testing command)
     return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(user);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `USER_ERROR: User is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      invalidType = invalid_type(host);
+      if (invalidType) {
+        reject({
+          success: false,
+          error: `HOST_ERROR: Host is ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
       let error = Path.error(src);
       if (error) {
         reject({
           success: false,
-          error: error,
+          error: `SRC_PATH_ERROR: ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      error = Path.error(dest);
+      if (error) {
+        reject({
+          success: false,
+          error: `DEST_PATH_ERROR: ${error}`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      if (!flags) {
+        reject({
+          success: false,
+          error: `FLAGS_ERROR: Flags is undefined, null, or empty (must be an array of strings)`,
+          stdout: null,
+          stderr: null,
+          exitCode: null
+        });
+        return;
+      }
+
+      if (!flags) {
+        reject({
+          success: false,
+          error: `OPTIONS_ERROR: Options is undefined, null, or empty (must be an array of strings)`,
           stdout: null,
           stderr: null,
           exitCode: null
@@ -2040,7 +2415,7 @@ class Rsync {
         if (results.error) {
           reject({
             success: false,
-            error: results.error,
+            error: `SRC_PATH_ERROR: ${results.error}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -2051,7 +2426,7 @@ class Rsync {
         if (!results.exists) {
           reject({
             success: false,
-            error: `Path does not exist: ${sTrimmed}`,
+            error: `SRC_PATH_ERROR: Path does not exist: ${sTrimmed}`,
             stdout: null,
             stderr: null,
             exitCode: null
@@ -2062,8 +2437,19 @@ class Rsync {
         let flagStr = `-${flags.join('')}`; // Ex.: -av
         let optionStr = options.join(' ');  // Ex.: --ignore times, --size-only, --exclude <pattern>
 
-        let args = `${flagStr} --dry-run ${optionStr} ${sTrimmed} ${user}@${host}:${dest}`.split(' ');
+        let args = [flagStr, '--dry-run', optionStr, sTrimmed, `${user}@${host}:${dest}`];
         Execute.local('rsync', args).then(output => {
+          if (output.error) {
+            reject({
+              success: false,
+              error: `RSYNC_DRY_RUN_ERROR: ${output.error}`,
+              stdout: output.stdout,
+              stderr: output.stderr,
+              exitCode: output.exitCode
+            });
+            return;
+          }
+
           if (output.stderr) {
             reject({
               success: false,
@@ -2090,77 +2476,339 @@ class Rsync {
 //-----------------------------------------
 // CHMOD
 class Chmod {
-  static chmod(op, who, types, path) {    // op = (- | + | =)  who = [u, g, o]  types = [r, w, x]
+  static valid_class_chars() {
+    return Permissions.valid_class_chars();
+  }
+
+  static valid_type_chars() {
+    return ['r', 'w', 'x'];
+  }
+
+  static using_perm_string(permStr, path) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
+      let error = Permissions.string_error(permStr);
       if (error) {
         reject({ success: false, error: error });
         return;
       }
 
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
+      error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: `PATH_ERROR: ${error}` });
+        return;
+      }
+
+      permTrimmed = permStr.trim();
+      pathTrimmed = path.trim();
+
+      Path.exists(pathTrimmed).then(results => {
         if (results.error) {
           reject({ success: false, error: results.error });
           return;
         }
 
         if (!results.exists) {
-          reject({ success: false, error: `Path does not exist: ${pTrimmed}` });
+          reject({ success: false, error: `PATH_ERROR: Path does not exist: ${pathTrimmed}` });
           return;
         }
 
-        Permissions.permissions(pTrimmed).then(values => {
-          if (values.error) {
-            reject({ success: false, error: values.error });
+        let octalStr = Permissions.perm_string_to_octal_string(permTrimmed);
+        if (octalStr.error) {
+          reject({ success: false, error: octalStr.error });
+          return;
+        }
+
+        FS.chmod(pathTrimmed, octalStr.string, (err) => {
+          if (err) {
+            reject({ success: false, error: `FS_CHMOD_ERROR: ${err}` });
             return;
           }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
 
-          let perms = values.permissions;
-          let whoMapping = { u: 'owner', g: 'group', o: 'others' };
-          who.forEach(w => {
-            let whoString = whoMapping[w];
+  static using_octal_string(octalStr, path) {
+    return new Promise((resolve, reject) => {
+      let error = Permissions.octal_string_error(octalStr);
+      if (error) {
+        reject({ success: false, error: error });
+        return;
+      }
 
-            if (op == '=') { // SET
-              let typesList = ['r', 'w', 'x'];
-              typesList.forEach(t => {
-                if (types.includes(t))
-                  perms[whoString][t] = t;
-                else
-                  perms[whoString][t] = '-';
-              });
-            }
-            else {
-              types.forEach(t => {
-                if (op == '+')  // ADD
-                  perms[whoString][t] = t;
-                else if (op == '-')  // REMOVE
-                  perms[whoString][t] = '-';
-              });
-            }
-          });
+      error = Path.error(path);
+      if (error) {
+        reject({ success: false, error: `PATH_ERROR: ${error}` });
+        return;
+      }
 
-          let obj = { u: perms.owner, g: perms.group, o: perms.others };
-          let newPermNumStr = Permissions.obj_to_octal_string(obj);
-          if (newPermNumStr.error) {
-            reject({ success: false, error: newPermNumStr.error });
+      octalTrimmed = octalStr.trim();
+      pathTrimmed = path.trim();
+
+      Path.exists(pathTrimmed).then(results => {
+        if (results.error) {
+          reject({ success: false, error: results.error });
+          return;
+        }
+
+        if (!results.exists) {
+          reject({ success: false, error: `PATH_ERROR: Path does not exist: ${pathTrimmed}` });
+          return;
+        }
+
+        FS.chmod(pathTrimmed, octalTrimmed, (err) => {
+          if (err) {
+            reject({ success: false, error: `FS_CHMOD_ERROR: ${err}` });
             return;
           }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
 
-          FS.chmod(pTrimmed, newPermNumStr.string, (err) => {
-            if (err) {
-              reject({ success: false, error: err });
-              return;
-            }
-            resolve({ success: true, error: null });
+  static remove_permissions(classes, types, path) { // Example: classes = 'ugo',  types = 'rwx'
+    return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(classes);
+      if (invalidType) {
+        reject({ success: false, error: `CLASSES_STR_ERROR: Classes string is ${invalidType}` });
+        return;
+      }
+
+      invalidType = invalid_type(types);
+      if (invalidType) {
+        reject({ success: false, error: `TYPES_STR_ERROR: Types string is ${invalidType}` });
+        return;
+      }
+
+      let minLength = 1;
+      let maxLength = 3;
+
+      let cTrimmed = classes.trim();
+      if (cTrimmed.length < minLength || cTrimmed.length > maxLength) {
+        reject({ success: false, error: `CLASSES_STR_ERROR: Classes string must have ${minLength} to ${maxLength} valid characters` });
+        return;
+      }
+
+      cTrimmed.forEach(char => {
+        if (!Chmod.valid_class_chars().includes(char)) {
+          reject({ success: false, error: `CLASSES_STR_ERROR: Classes string contains invalid characters` });
+          return;
+        }
+      });
+
+      let tTrimmed = types.trim();
+      if (tTrimmed.length < minLength || tTrimmed.length > maxLength) {
+        reject({ success: false, error: `TYPES_STR_ERROR: Types string must have ${minLength} to ${maxLength} valid characters` });
+        return;
+      }
+
+      tTrimmed.forEach(char => {
+        if (!Chmod.valid_type_chars().includes(char)) {
+          reject({ success: false, error: `TYPES_STR_ERROR: Types string contains invalid characters` });
+          return;
+        }
+      });
+
+      let pTrimmed = path.trim();
+      Permissions.permissions(pTrimmed).then(results => {
+        if (results.error) {
+          reject({ success: false, error: results.error });
+          return;
+        }
+
+        let permsObj = results.permissions;
+        classes.forEach(c => {
+          types.forEach(t => {
+            permsObj[c][t] = false;
           });
-        }).catch(fatalFail);
+        });
+
+        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${permsObj.u.x ? permsObj.u.xchar : '-'}`;
+        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${permsObj.g.x ? permsObj.g.xchar : '-'}`;
+        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${permsObj.o.x ? permsObj.o.xchar : '-'}`;
+
+        let octalStr = Permissions.perm_string_to_octal_string(newPermStr);
+        if (octalStr.error) {
+          reject({ success: false, error: octalStr.error });
+          return;
+        }
+
+        FS.chmod(pTrimmed, newPermNumStr.string, (err) => {
+          if (err) {
+            reject({ success: false, error: `FS_CHMOD_ERROR: ${err}` });
+            return;
+          }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
+
+  static add_permissions(classes, types, path) {
+    return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(classes);
+      if (invalidType) {
+        reject({ success: false, error: `CLASSES_STR_ERROR: Classes string is ${invalidType}` });
+        return;
+      }
+
+      invalidType = invalid_type(types);
+      if (invalidType) {
+        reject({ success: false, error: `TYPES_STR_ERROR: Types string is ${invalidType}` });
+        return;
+      }
+
+      let minLength = 1;
+      let maxLength = 3;
+
+      let cTrimmed = classes.trim();
+      if (cTrimmed.length < minLength || cTrimmed.length > maxLength) {
+        reject({ success: false, error: `CLASSES_STR_ERROR: Classes string must have ${minLength} to ${maxLength} valid characters` });
+        return;
+      }
+
+      cTrimmed.forEach(char => {
+        if (!Chmod.valid_class_chars().includes(char)) {
+          reject({ success: false, error: `CLASSES_STR_ERROR: Classes string contains invalid characters` });
+          return;
+        }
+      });
+
+      let tTrimmed = types.trim();
+      if (tTrimmed.length < minLength || tTrimmed.length > maxLength) {
+        reject({ success: false, error: `TYPES_STR_ERROR: Types string must have ${minLength} to ${maxLength} valid characters` });
+        return;
+      }
+
+      tTrimmed.forEach(char => {
+        if (!Chmod.valid_type_chars().includes(char)) {
+          reject({ success: false, error: `TYPES_STR_ERROR: Types string contains invalid characters` });
+          return;
+        }
+      });
+
+      let pTrimmed = path.trim();
+      Permissions.permissions(pTrimmed).then(results => {
+        if (results.error) {
+          reject({ success: false, error: results.error });
+          return;
+        }
+
+        let permsObj = results.permissions;
+        classes.forEach(c => {
+          types.forEach(t => {
+            permsObj[c][t] = true;
+          });
+        });
+
+        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${permsObj.u.x ? permsObj.u.xchar : '-'}`;
+        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${permsObj.g.x ? permsObj.g.xchar : '-'}`;
+        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${permsObj.o.x ? permsObj.o.xchar : '-'}`;
+
+        let octalStr = Permissions.perm_string_to_octal_string(newPermStr);
+        if (octalStr.error) {
+          reject({ success: false, error: octalStr.error });
+          return;
+        }
+
+        FS.chmod(pTrimmed, newPermNumStr.string, (err) => {
+          if (err) {
+            reject({ success: false, error: `FS_CHMOD_ERROR: ${err}` });
+            return;
+          }
+          resolve({ success: true, error: null });
+        });
+      }).catch(fatalFail);
+    });
+  }
+
+  static set_permissions(classes, types, path) {
+    return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(classes);
+      if (invalidType) {
+        reject({ success: false, error: `CLASSES_STR_ERROR: Classes string is ${invalidType}` });
+        return;
+      }
+
+      invalidType = invalid_type(types);
+      if (invalidType) {
+        reject({ success: false, error: `TYPES_STR_ERROR: Types string is ${invalidType}` });
+        return;
+      }
+
+      let minLength = 1;
+      let maxLength = 3;
+
+      let cTrimmed = classes.trim();
+      if (cTrimmed.length < minLength || cTrimmed.length > maxLength) {
+        reject({ success: false, error: `CLASSES_STR_ERROR: Classes string must have ${minLength} to ${maxLength} valid characters` });
+        return;
+      }
+
+      cTrimmed.forEach(char => {
+        if (!Chmod.valid_class_chars().includes(char)) {
+          reject({ success: false, error: `CLASSES_STR_ERROR: Classes string contains invalid characters` });
+          return;
+        }
+      });
+
+      let tTrimmed = types.trim();
+      if (tTrimmed.length < minLength || tTrimmed.length > maxLength) {
+        reject({ success: false, error: `TYPES_STR_ERROR: Types string must have ${minLength} to ${maxLength} valid characters` });
+        return;
+      }
+
+      tTrimmed.forEach(char => {
+        if (!Chmod.valid_type_chars().includes(char)) {
+          reject({ success: false, error: `TYPES_STR_ERROR: Types string contains invalid characters` });
+          return;
+        }
+      });
+
+      let pTrimmed = path.trim();
+      Permissions.permissions(pTrimmed).then(results => {
+        if (results.error) {
+          reject({ success: false, error: results.error });
+          return;
+        }
+
+        let permsObj = results.permissions;
+
+        classes.forEach(c => {
+          let typesList = Chmod.valid_type_chars();
+          typesList.forEach(t => {
+            if (types.includes(t))
+              permsObj[c][t] = true;
+            else
+              perms[c][t] = false;
+          });
+        });
+
+        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${permsObj.u.x ? permsObj.u.xchar : '-'}`;
+        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${permsObj.g.x ? permsObj.g.xchar : '-'}`;
+        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${permsObj.o.x ? permsObj.o.xchar : '-'}`;
+
+        let octalStr = Permissions.perm_string_to_octal_string(newPermStr);
+        if (octalStr.error) {
+          reject({ success: false, error: octalStr.error });
+          return;
+        }
+
+        FS.chmod(pTrimmed, newPermNumStr.string, (err) => {
+          if (err) {
+            reject({ success: false, error: `FS_CHMOD_ERROR: ${err}` });
+            return;
+          }
+          resolve({ success: true, error: null });
+        });
       }).catch(fatalFail);
     });
   }
 }
 
-//-----------------------------------------------
+//-----------------------------------------------  // CONT HERE
 // CHOWN
 class Chown {
   static chown(path, uid, gid) {
@@ -2168,6 +2816,28 @@ class Chown {
       let error = Path.error(path);
       if (error) {
         reject({ success: false, error: error });
+        return;
+      }
+
+      let invalidType = invalid_type(uid);
+      if (invalidType) {
+        reject({ success: false, error: `uid is ${invalidType}` });
+        return;
+      }
+
+      if (Number.isInteger(uid) && uid >= 0) {
+        reject({ success: false, error: `uid must be integer equal to or greater than 0` });
+        return;
+      }
+
+      invalidType = invalid_type(gid);
+      if (invalidType) {
+        reject({ success: false, error: `gid is ${invalidType}` });
+        return;
+      }
+
+      if (Number.isInteger(uid) && uid >= 0) {
+        reject({ success: false, error: `gid must be integer equal to or greater than 0` });
         return;
       }
 
@@ -2185,7 +2855,7 @@ class Chown {
 
         FS.chown(pTrimmed, uid, gid, (err) => {
           if (err) {
-            reject({ success: false, error: err });
+            reject({ success: false, error: `FS_CHOWN_ERROR: ${erri}` });
             return;
           }
           resolve({ success: true, error: null });
@@ -2198,11 +2868,6 @@ class Chown {
 //-----------------------------------------------
 // USER
 class UserInfo {
-  static me() {
-    let i = OS.userInfo();
-    return { username: i.username, uid: i.uid, gid: i.gid };
-  }
-
   static current() {
     return new Promise((resolve, reject) => {
       let username = OS.userInfo().username;
@@ -2248,6 +2913,12 @@ class UserInfo {
 
   static other(username) {
     return new Promise((resolve, reject) => {
+      let invalidType = invalid_type(username);
+      if (invalidType) {
+        reject({ info: null, error: `username is ${invalidType}` });
+        return;
+      }
+
       Execute.local('id', [username]).then(output => {
         if (output.stderr) {
           if (output.stderr.toLowerCase().includes('no such user'))
@@ -2303,6 +2974,12 @@ class Rename {
         return;
       }
 
+      let invalidType = invalid_type(newName);
+      if (invalidType) {
+        reject({ success: false, error: `newName is ${invalidType}` });
+        return;
+      }
+
       let cTrimmed = currPath.trim();
       Path.exists(cTrimmed).then(results => {
         if (results.error) {
@@ -2320,7 +2997,7 @@ class Rename {
 
         FS.rename(cTrimmed, updatedPath, (err) => {
           if (err) {
-            reject({ success: false, error: err });
+            reject({ success: false, error: `FS_RENAME_ERR: ${err}` });
             return;
           }
           resolve({ success: true, error: null });
@@ -2345,9 +3022,15 @@ class File {
         return;
       }
 
+      if (text === undefined || text == null) {
+        reject({ success: false, error: `text cannot be undefined or null` });
+        return;
+      }
+
       FS.writeFile(path.trim(), text, (err) => {
         if (err) {
-          reject({ success: false, error: err });
+          reject({ success: false, error: `FS_WRITE_FILE_ERRO: ${err}` });
+          return;
         }
         resolve({ success: true, error: null })
       });
@@ -2385,10 +3068,7 @@ class File {
             return;
           }
 
-          let op = '+';
-          let who = ['u', 'g', 'o'];
-          let types = ['x'];
-          Chmod.chmod(op, who, types, pTrimmed).then(vals => {
+          Chmod.add_permissions('ugo', 'x', pTrimmed).then(vals => {
             if (vals.error) {
               reject({ success: false, error: vals.error });
               return;
@@ -2433,7 +3113,7 @@ class File {
 
           FS.readFile(pTrimmed, (err, data) => {
             if (err) {
-              reject({ content: null, error: err });
+              reject({ content: null, error: `FS_READ_FILE_ERR: ${err}` });
               return;
             }
             resolve({ content: data, error: null });
@@ -2537,6 +3217,11 @@ class Find {
         return;
       }
 
+      if (options === undefined || options == null || Array.isArray(options)) {
+        reject({ results: null, error: `options must be an array and cannot be undefined or null` });
+        return;
+      }
+
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
@@ -2571,6 +3256,16 @@ class Find {
       let error = Path.error(path);
       if (error) {
         reject({ results: null, error: error });
+        return;
+      }
+
+      if (pattern === undefined || pattern == null || typeof pattern != 'string') {
+        reject({ results: null, error: `pattern must be a string and cannot be undefined or null` });
+        return;
+      }
+
+      if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
+        reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
         return;
       }
 
@@ -2613,6 +3308,16 @@ class Find {
         return;
       }
 
+      if (text === undefined || text == null || typeof text != 'string') {
+        reject({ results: null, error: `test must be a string and cannot be undefined or null` });
+        return;
+      }
+
+      if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
+        reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
+        return;
+      }
+
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
@@ -2649,6 +3354,17 @@ class Find {
       let error = Path.error(path);
       if (error) {
         reject({ results: null, error: error });
+        return;
+      }
+
+      let invalidType = invalid_type(user);
+      if (invalidType) {
+        reject({ results: null, error: `user is ${invalidType}` });
+        return;
+      }
+
+      if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
+        reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
         return;
       }
 
@@ -2691,6 +3407,16 @@ class Find {
         return;
       }
 
+      if (pattern === undefined || pattern == null || typeof pattern != 'string') {
+        reject({ results: null, error: `pattern must be a string and cannot be undefined or null` });
+        return;
+      }
+
+      if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
+        reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
+        return;
+      }
+
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
@@ -2730,6 +3456,11 @@ class Find {
         return;
       }
 
+      if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
+        reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
+        return;
+      }
+
       let pTrimmed = path.trim();
       Path.exists(pTrimmed).then(results => {
         if (results.error) {
@@ -2766,6 +3497,11 @@ class Find {
       let error = Path.error(path);
       if (error) {
         reject({ results: null, error: error });
+        return;
+      }
+      
+      if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
+        reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
         return;
       }
 
