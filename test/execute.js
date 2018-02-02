@@ -1,6 +1,9 @@
 let EXPECT = require('chai').expect;
 let PATH = require('path');
-let EXECUTE = require(PATH.join(__dirname, '..', 'execute.js'));
+
+let p = PATH.join(__dirname, '..', 'execute.js');
+console.log(`Path: ${p}\n`);
+let EXECUTE = require(p);
 
 //------------------------------------------
 
@@ -79,11 +82,13 @@ describe('*** execute.js ***', () => {
 
   describe('Execute', () => {
     describe('Local(cmd, args)', () => {
-      describe('Cmd error check:', () => {
-        let validArgs = [];
+      let validCmd = 'echo';
+      let invalidCmd = null;
+      let validArgs = [1];
+      let invalidArgs = null;
 
+      describe('Cmd error check:', () => {
         it(`Invalid cmd gives error.`, () => {
-          let invalidCmd = null;
           let invalidType = EXECUTE.Error.StringError(invalidCmd);
           EXECUTE.Execute.Local(invalidCmd, validArgs).then(o => {
             EXPECT(o.error).to.equal(null);
@@ -93,7 +98,6 @@ describe('*** execute.js ***', () => {
         });
 
         it(`Valid cmd gives no error.`, () => {
-          let validCmd = 'ls';
           EXECUTE.Execute.Local(validCmd, validArgs).then(o => {
             EXPECT(o.error).to.equal(null);
           }).catch((e) => {
@@ -103,10 +107,7 @@ describe('*** execute.js ***', () => {
       });
 
       describe('Args error check', () => {
-        let validCmd = 'ls';
-
         it(`Invalid args gives error.`, () => {
-          let invalidArgs = null;
           let invalidType = EXECUTE.Error.ArgsError(invalidArgs);
           EXECUTE.Execute.Local(validCmd, invalidArgs).then(o => {
             EXPECT(o.error).to.equal(null);
@@ -116,9 +117,19 @@ describe('*** execute.js ***', () => {
         });
 
         it(`Valid args gives no error.`, () => {
-          let validArgs = ['-l', '/path/to/file'];
           EXECUTE.Execute.Local(validCmd, validArgs).then(o => {
             EXPECT(o.error).to.equal(null);
+          }).catch((e) => {
+            EXPECT(e.error).to.equal(null); // NO ERROR EXPECTED
+          });
+        });
+      });
+
+      describe('Returns expected object', () => {
+        it(`Contains variables: error, stderr, stdout, exitCode.`, () => {
+          EXECUTE.Execute.Local(validCmd, validArgs).then(o => {
+            let hasAllVariables = !(o.error === undefined) && !(o.stderr === undefined) && !(o.stdout === undefined) && !(o.exitCode === undefined);
+            EXPECT(hasAllVariables).to.equal(true);
           }).catch((e) => {
             EXPECT(e.error).to.equal(null); // NO ERROR EXPECTED
           });
@@ -131,7 +142,7 @@ describe('*** execute.js ***', () => {
       let invalidUser = '';
       let validHost = 'host';
       let invalidHost = '';
-      let validCmd = 'ls -l';
+      let validCmd = 'echo 1';
       let invalidCmd = '';
 
       describe('User error check:', () => {
@@ -185,6 +196,17 @@ describe('*** execute.js ***', () => {
         it(`Valid cmd gives no error.`, () => {
           EXECUTE.Execute.Remote(validUser, validHost, validCmd).then(o => {
             EXPECT(o.error).to.equal(null);
+          }).catch((e) => {
+            EXPECT(e.error).to.equal(null); // NO ERROR EXPECTED
+          });
+        });
+      });
+
+      describe('Returns expected object', () => {
+        it(`Contains variables: error, stderr, stdout, exitCode.`, () => {
+          EXECUTE.Execute.Remote(validUser, validHost, validCmd).then(o => {
+            let hasAllVariables = !(o.error === undefined) && !(o.stderr === undefined) && !(o.stdout === undefined) && !(o.exitCode === undefined);
+            EXPECT(hasAllVariables).to.equal(true);
           }).catch((e) => {
             EXPECT(e.error).to.equal(null); // NO ERROR EXPECTED
           });
