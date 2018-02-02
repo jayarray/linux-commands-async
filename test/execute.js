@@ -64,7 +64,8 @@ describe('*** execute.js ***', () => {
       });
 
       it(`Returns 'not an array' if args is not an array.`, () => {
-        EXPECT(EXECUTE.Error.ArgsError(undefined)).to.equal('undefined');
+        EXPECT(EXECUTE.Error.ArgsError(2)).to.equal('not an array');
+        EXPECT(EXECUTE.Error.ArgsError('string')).to.equal('not an array');
       });
 
       it(`Returns null if args is valid.`, () => {
@@ -85,7 +86,7 @@ describe('*** execute.js ***', () => {
           let invalidCmd = null;
           let invalidType = EXECUTE.Error.StringError(invalidCmd);
           EXECUTE.Execute.Local(invalidCmd, validArgs).then(o => {
-            EXPECT(o.error).not.equal(null);
+            EXPECT(o.error).to.equal(null);
           }).catch((e) => {
             EXPECT(e.error).to.equal(`cmd is ${invalidType}`); // ERROR EXPECTED
           });
@@ -96,7 +97,7 @@ describe('*** execute.js ***', () => {
           EXECUTE.Execute.Local(validCmd, validArgs).then(o => {
             EXPECT(o.error).to.equal(null);
           }).catch((e) => {
-            EXPECT(e.error).not.equal(null);
+            EXPECT(e.error).to.equal(null); // NO ERROR EXPECTED
           });
         });
       });
@@ -108,7 +109,7 @@ describe('*** execute.js ***', () => {
           let invalidArgs = null;
           let invalidType = EXECUTE.Error.ArgsError(invalidArgs);
           EXECUTE.Execute.Local(validCmd, invalidArgs).then(o => {
-            EXPECT(o.error).not.equal(null);
+            EXPECT(o.error).to.equal(null);
           }).catch((e) => {
             EXPECT(e.error).to.equal(`args is ${invalidType}`); // ERROR EXPECTED
           });
@@ -136,15 +137,15 @@ describe('*** execute.js ***', () => {
       describe('User error check:', () => {
         it(`Invalid user gives error.`, () => {
           let invalidType = EXECUTE.Error.StringError(invalidUser);
-          EXECUTE.Execute.Local(invalidUser, validHost, validCmd).then(o => {
-            EXPECT(o.error).not.equal(null);
+          EXECUTE.Execute.Remote(invalidUser, validHost, validCmd).then(o => {
+            EXPECT(o.error).to.equal(null);
           }).catch((e) => {
             EXPECT(e.error).to.equal(`user is ${invalidType}`); // ERROR EXPECTED
           });
         });
 
         it(`Valid user gives no error.`, () => {
-          EXECUTE.Execute.Local(validUser, validHost, validCmd).then(o => {
+          EXECUTE.Execute.Remote(validUser, validHost, validCmd).then(o => {
             EXPECT(o.error).to.equal(null);
           }).catch((e) => {
             EXPECT(e.error).to.equal(null); // NO ERROR EXPECTED
@@ -154,16 +155,16 @@ describe('*** execute.js ***', () => {
 
       describe('Host error check:', () => {
         it(`Invalid host gives error.`, () => {
-          let invalidType = EXECUTE.Error.StringError(invalidUser);
-          EXECUTE.Execute.Local(validUser, invalidHost, validCmd).then(o => {
-            EXPECT(o.error).not.equal(null);
+          let invalidType = EXECUTE.Error.StringError(invalidHost);
+          EXECUTE.Execute.Remote(validUser, invalidHost, validCmd).then(o => {
+            EXPECT(o.error).to.equal(null);
           }).catch((e) => {
             EXPECT(e.error).to.equal(`host is ${invalidType}`); // ERROR EXPECTED
           });
         });
 
         it(`Valid host gives no error.`, () => {
-          EXECUTE.Execute.Local(validUser, validHost, validCmd).then(o => {
+          EXECUTE.Execute.Remote(validUser, validHost, validCmd).then(o => {
             EXPECT(o.error).to.equal(null);
           }).catch((e) => {
             EXPECT(e.error).to.equal(null); // NO ERROR EXPECTED
@@ -174,15 +175,15 @@ describe('*** execute.js ***', () => {
       describe('Cmd error check:', () => {
         it(`Invalid cmd gives error.`, () => {
           let invalidType = EXECUTE.Error.StringError(invalidCmd);
-          EXECUTE.Execute.Local(validUser, validHost, invalidCmd).then(o => {
-            EXPECT(o.error).not.equal(null);
+          EXECUTE.Execute.Remote(validUser, validHost, invalidCmd).then(o => {
+            EXPECT(o.error).to.equal(null);
           }).catch((e) => {
             EXPECT(e.error).to.equal(`cmd is ${invalidType}`); // ERROR EXPECTED
           });
         });
 
         it(`Valid cmd gives no error.`, () => {
-          EXECUTE.Execute.Local(validUser, validHost, validCmd).then(o => {
+          EXECUTE.Execute.Remote(validUser, validHost, validCmd).then(o => {
             EXPECT(o.error).to.equal(null);
           }).catch((e) => {
             EXPECT(e.error).to.equal(null); // NO ERROR EXPECTED
