@@ -1,24 +1,31 @@
 var CHILD_PROCESS = require('child_process');
 
+//-----------------------------------
+// ERROR CATCHING
+
+function fatalFail(error) {
+  console.log(error);
+  process.exit(-1);
+}
+
 //---------------------------------------------
 // SAVING DATA (to string)
 
 class SavedData {
   constructor(thing) {
     this.value = '';
-    thing.on('data', this.callback_.bind(this));
+    thing.on('data', this.Callback_.bind(this));
   }
 
-  callback_(data) {
+  Callback_(data) {
     this.value += data.toString();
   }
 }
 
 //---------------------------------------------
 // EXECUTE
-
 class Execute {
-  static local(cmd, args) {
+  static Local(cmd, args) {
     return new Promise((resolve, reject) => {
       let error = Error.StringError(cmd);
       if (error) {
@@ -57,7 +64,7 @@ class Execute {
     });
   }
 
-  static remote(user, host, cmd) {
+  static Remote(user, host, cmd) {
     return new Promise((resolve, reject) => {
       let error = Error.StringError(user);
       if (error) {
@@ -116,7 +123,7 @@ class Error {
   static NullOrUndefined(o) {
     if (o === undefined)
       return 'undefined';
-    else if (0 == null)
+    else if (o == null)
       return 'null';
     else
       return null;
@@ -144,6 +151,7 @@ class Error {
 
     if (!Array.isArray(args))
       return 'not an array';
+    return null;
   }
 }
 
@@ -152,11 +160,3 @@ class Error {
 
 exports.Execute = Execute;
 exports.Error = Error;
-
-
-
-/*
-NOTES:
-
-1) Test if spawn(cmd, args) works when args = (null | undefined | [])
-*/
