@@ -3499,7 +3499,7 @@ class Find {
         reject({ results: null, error: error });
         return;
       }
-      
+
       if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
         reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
         return;
