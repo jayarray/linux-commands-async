@@ -8,11 +8,15 @@ mocha.reporter('list').ui('bdd').ignoreLeaks();
 let PATH = require('path');
 let rootDir = PATH.join(__dirname, '..');
 let testDir = PATH.join(rootDir, 'test');
-let testExecuteDir = PATH.join(testDir, 'execute');
 
-
+//----------------------------------------------------
 // Add test files to run
+
+let testExecuteDir = PATH.join(testDir, 'execute');
 mocha.addFile(PATH.join(testExecuteDir, 'test_execute.js'));
+
+let testTimestampDir = PATH.join(testDir, 'timestamp');
+mocha.addFile(PATH.join(testTimestampDir, 'test_timestamp.js'));
 
 
 let runner = mocha.run(() => { });
@@ -30,3 +34,4 @@ function importTest(name, path) {
 // TESTS
 
 importTest('execute.js', PATH.join(__dirname, '..', 'execute.js'));
+importTest('timestamp.js', PATH.join(__dirname, '..', 'timestamp.js'));
