@@ -1,15 +1,5 @@
-//-----------------------------------
-// ERROR CATCHING
-
-function fatalFail(error) {
-  console.log(error);
-  process.exit(-1);
-}
-
-//------------------------------------
-
 class Timestamp {
-  static timestamp() {
+  static Timestamp() {
     let d = new Date();
 
     // TIME
@@ -33,29 +23,34 @@ class Timestamp {
     secondsStr = secondsStr.slice(-2);
 
     let adjustedHours = null;
+    let suffix = null;
     let timeStr = '';
+
     if (hours == 0) {
       adjustedHours = 12;
-      timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} AM`;
+      suffix = 'AM';
     }
     else if (hours == 12) {
       adjustedHours = 12;
-      timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} PM`;
+      suffix = 'PM';
     }
     else if (hours > 12) {
       adjustedHours = hours % 12;
-      timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} PM`;
+      suffix = 'PM';
     }
     else {
       adjustedHours = hours;
-      timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} AM`;
+      suffix = 'AM';
     }
+
+    let timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} ${suffix}`;
 
     let meridiemTime = {  // 12-hour format (AM | PM)
       hours: adjustedHours,
       minutes: minutes,
       seconds: seconds,
       milliseconds: milliseconds,
+      suffix: suffix,
       string: timeStr
     }
 
@@ -85,8 +80,8 @@ class Timestamp {
     };
   }
 
-  static military_to_meridiem_time(militaryTime) {
-    let error = Timestamp.military_string_error(militaryTime);
+  static MilitaryStringToMeridiemString(militaryTime) {
+    let error = Error.MilitaryTimeStringError(militaryTime);
     if (error)
       return { string: null, error: error };
 
@@ -122,8 +117,8 @@ class Timestamp {
     return { string: timeStr, error: null };
   }
 
-  static meridiem_to_military_time(meridiemTime) {
-    let error = Timestamp.meridiem_string_error(meridiemTime);
+  static MeridiemToMilitaryTime(meridiemTime) {
+    let error = Error.MeridiemTimeStringError(meridiemTime); i
     if (error)
       return { string: null, error: error };
 
@@ -151,48 +146,46 @@ class Timestamp {
     return { string: `${adjustedHours}:${minutesStr}:${secondsStr}`, error: null };
   }
 
-  static difference(d1, d2) {
-    let error = Timestamp.date_obj_error(d1);
+  static Difference(d1, d2) {
+    let error = Error.DateObjectError(d1);
     if (error)
       return { milliseconds: null, error: `DATE1_OBJ_ERROR: ${error}` };
 
-    let error = Timestamp.date_obj_error(d2);
+    error = Error.DateObjectError(d2);
     if (error)
       return { milliseconds: null, error: `DATE2_OBJ_ERROR: ${error}` };
 
     let date1 = new Date(d1.year, d1.month_number, d1.day_of_month, d1.hours, d1.minutes, d1.seconds, d1.milliseconds);
     let date2 = new Date(d2.year, d2.month_number, d2.day_of_month, d2.hours, d2.minutes, d2.seconds, d2.milliseconds);
-    return date1.getTime() - d2.getTime();
+    return ({ milliseconds: date1.getTime() - d2.getTime(), error: null });
   }
 
-  static month_list() {
+  static Months() {
     return ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   }
 
-  static month_name_to_index(name) {
-    let invalidType = invalid_type(name);
-    if (invalidType)
-      return { index: null, error: `MONTH_NAME_ERROR: Name is ${invalidType}` };
+  static MonthIndex(name) {
+    let error = Error.StringError(name);
+    if (error)
+      return { index: null, error: `MONTH_NAME_ERROR: Name is ${error}` };
 
-    let months = Timestamp.month_list();
-    if (months.includes(name))
+    if (Timestamp.Months().includes(name))
       return { index: months.indexOf(name), error: null };
     return { index: null, error: `MONTH_NAME_ERROR: Name is not a valid name` };
   }
 
-  static day_of_week_list() {
+  static DaysOfTheWeek() {
     return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   }
 
-  static day_of_week_name_to_index(name) {
-    let invalidType = invalid_type(name);
-    if (invalidType)
-      return { index: null, error: `DAY_OF_WEEK_NAME_ERROR: Name is ${invalidType}` };
+  static DayOfTheWeekIndex(name) {
+    let error = Error.StringError(name);
+    if (error)
+      return { index: null, error: `DAY_OF_WEEK_INDEX_ERROR: Name is ${error}` };
 
-    let days_of_the_week = Timestamp.month_list();
-    if (days_of_the_week.includes(name))
-      return { index: days_of_the_week.indexOf(name), error: null };
-    return { index: null, error: `DAY_OF_WEEK_NAME_ERROR: Name is not a valid name` };
+    if (Timestamp.DaysOfTheWeek().includes(name))
+      return { index: daysOfTheWeek.indexOf(name), error: null };
+    return { index: null, error: `DAY_OF_WEEK_INDEX_ERROR: Name is not a valid name` };
   }
 }
 
@@ -200,7 +193,7 @@ class Timestamp {
 // ERROR
 
 class Error {
-  static static NullOrUndefined(o) {
+  static NullOrUndefined(o) {
     if (o === undefined)
       return 'undefined';
     else if (o == null)
@@ -225,9 +218,9 @@ class Error {
   }
 
   static MeridiemTimeStringError(string) {
-    let invalidType = invalid_type(string);
-    if (invalidType)
-      return `MERIDIEM_TIME_STR_ERROR: Time string is ${string}`;
+    let error = Error.StringError(string);
+    if (error)
+      return `Time string is ${error}`;
 
     let sTrimmed = string.trim();
     let parts = sTrimmed.split(' ');  // parts = ['HH:MM:SS', '(AM|PM)']
@@ -247,11 +240,11 @@ class Error {
           try {
             hours = parseInt(hStr);
           } catch {
-            return 'MERIDIEM_TIME_STR_ERROR: Hours do not resolve to an integer';
+            return 'Hours do not resolve to an integer';
           }
 
           if (hours < hMin && hours > hMax)
-            return `MERIDIEM_TIME_STR_ERROR: Hours must be between ${hMin} and ${hMax}`;
+            return `Hours must be between ${hMin} and ${hMax}`;
 
           let mStr = unitParts[1].trim();
           if (mStr.length == 2) {
@@ -259,11 +252,11 @@ class Error {
             try {
               minutes = parseInt(mStr);
             } catch {
-              return 'MERIDIEM_TIME_STR_ERROR: Minutes do not resolve to an integer';
+              return 'Minutes do not resolve to an integer';
             }
 
             if (minutes < mMin && minutes > mMax)
-              return `MERIDIEM_TIME_STR_ERROR: Minutes must be between ${mMin} and ${mMax}`;
+              return `Minutes must be between ${mMin} and ${mMax}`;
 
             let sStr = unitParts[2].trim();
             if (sStr.length == 2) {
@@ -271,35 +264,35 @@ class Error {
               try {
                 seconds = parseInt(sStr);
               } catch {
-                return 'MERIDIEM_TIME_STR_ERROR: Seconds do not resolve to an integer';
+                return 'Seconds do not resolve to an integer';
               }
 
               if (seconds < sMin && seconds > sMax)
-                return `MERIDIEM_TIME_STR_ERROR: Seconds must be between ${sMin} and ${sMax}`;
+                return `Seconds must be between ${sMin} and ${sMax}`;
 
               let suffix = parts[1].trim();
               if (suffix == 'AM' || 'PM')
                 return null;
               else
-                return 'MERIDIEM_TIME_STR_ERROR: Suffix (AM|PM) is not formatted correctly';
+                return 'Suffix (AM|PM) is not formatted correctly';
             }
             else
-              return 'MERIDIEM_TIME_STR_ERROR: Seconds are not formatted correctly';
+              return 'Seconds are not formatted correctly';
           }
           else
-            return 'MERIDIEM_TIME_STR_ERROR: Minutes are not formatted correctly';
+            return 'Minutes are not formatted correctly';
         }
         else
-          return 'MERIDIEM_TIME_STR_ERROR: Hours are not formatted correctly';
+          return 'Hours are not formatted correctly';
       }
     }
-    return 'MERIDIEM_TIME_STR_ERROR: Time string is not formatted correctly. Must follow format HH:MM:SS (AM|PM)';
+    return 'Time string is not formatted correctly. Must follow format HH:MM:SS (AM|PM)';
   }
 
   static MilitaryTimeStringError(string) {
-    let invalidType = invalid_type(string);
-    if (invalidType)
-      return `MILITARY_TIME_STR_ERROR: Time string is ${string}`;
+    let error = Error.StringError(string);
+    if (error)
+      return `Time string is ${error}`;
 
     let sTrimmed = string.trim();
     let parts = sTrimmed.split(':');  // parts = ['HH', 'MM', 'SS [(AM|PM)]'] <-- Check for suffix in SECONDS string
@@ -317,11 +310,11 @@ class Error {
         try {
           hours = parseInt(hStr);
         } catch {
-          return 'MILITARY_TIME_STR_ERROR: Hours do not resolve to an integer';
+          return 'Hours do not resolve to an integer';
         }
 
         if (hours < hMin && hours > hMax)
-          return `MILITARY_TIME_STR_ERROR: Hours must be between ${hMin} and ${hMax}`;
+          return `Hours must be between ${hMin} and ${hMax}`;
 
         let mStr = parts[1].trim();
         if (mStr.length == 2) {
@@ -329,56 +322,56 @@ class Error {
           try {
             minutes = parseInt(mStr);
           } catch {
-            return 'MILITARY_TIME_STR_ERROR: Minutes do not resolve to an integer';
+            return 'Minutes do not resolve to an integer';
           }
 
           if (minutes < mMin && minutes > mMax)
-            return `MILITARY_TIME_STR_ERROR: Minutes must be between ${mMin} and ${mMax}`;
+            return `Minutes must be between ${mMin} and ${mMax}`;
 
           let sStr = parts[2].trim();
           let sParts = sStr.split(' ');
           if (sParts.length == 2)
-            return 'MILITARY_TIME_STR_ERROR: Trailing chars at end of time string';
+            return 'Trailing chars at end of time string';
 
           if (sStr.length == 2) {
             let seconds = null;
             try {
               seconds = parseInt(sStr);
             } catch {
-              return 'MILITARY_TIME_STR_ERROR: Seconds do not resolve to an integer';
+              return 'Seconds do not resolve to an integer';
             }
 
             if (seconds < sMin && seconds > sMax)
-              return `MILITARY_TIME_STR_ERROR: Seconds must be between ${sMin} and ${sMax}`;
+              return `Seconds must be between ${sMin} and ${sMax}`;
             return null;
           }
           else
-            return 'MILITARY_TIME_STR_ERROR: Seconds are not formatted correctly';
+            return 'Seconds are not formatted correctly';
         }
         else
-          return 'MILITARY_TIME_STR_ERROR: Minutes are not formatted correctly';
+          return 'Minutes are not formatted correctly';
       }
       else
-        return 'MILITARY_TIME_STR_ERROR: Hours are not formatted correctly';
+        return 'Hours are not formatted correctly';
 
     }
-    return 'MILITARY_TIME_STR_ERROR: Time string is not formatted correctly. Must follow format HH:MM:SS';
+    return 'Time string is not formatted correctly. Must follow format HH:MM:SS';
   }
 
   static DateObjectError(dateObj) {
-    let invalidType = invalid_type(dateObj);
-    if (invalidType)
-      return `Date object is ${invalidType}`;
+    let error = Error.NullOrUndefined(dateObj);
+    if (error)
+      return `Date object is ${error}`;
 
     // Check if obj missing values
     if (
-      dateObj.year &&
-      dateObj.month_number &&
-      dateObj.day_of_month &&
-      dateObj.hours &&
-      dateObj.minutes &&
-      dateObj.seconds &&
-      dateObj.milliseconds
+      !(dateObj.year === undefined) &&
+      !(dateObj.month_number === undefined) &&
+      !(dateObj.day_of_month === undefined) &&
+      !(dateObj.hours === undefined) &&
+      !(dateObj.minutes === undefined) &&
+      !(dateObj.seconds === undefined) &&
+      !(dateObj.milliseconds === undefined)
     )
       return 'Date object is missing required values';
 
@@ -409,7 +402,7 @@ class Error {
     let millisecondsMax = 999;
 
     if (dateObj.year < 0)
-      return 'Year must be integer greater than 0';
+      return 'Year must be integer greater than or equal to 0';
 
     if (dateObj.month_number < monthMin && dateObj.month_number > monthMax)
       return `Month must be integer between ${monthMin} and ${monthMax}`;
