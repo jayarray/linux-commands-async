@@ -225,7 +225,7 @@ class Error {
     let sTrimmed = string.trim();
     let parts = sTrimmed.split(' ');  // parts = ['HH:MM:SS', '(AM|PM)']
     if (parts.length == 2) {
-      let unitParts = parts[0].trim();
+      let unitParts = parts[0].trim().split(':');
       if (unitParts.length == 3) {
         let hMin = 1;
         let hMax = 12;
@@ -239,11 +239,11 @@ class Error {
           let hours = null;
           try {
             hours = parseInt(hStr);
-          } catch {
+          } catch (err) {
             return 'Hours do not resolve to an integer';
           }
 
-          if (hours < hMin && hours > hMax)
+          if (hours < hMin || hours > hMax)
             return `Hours must be between ${hMin} and ${hMax}`;
 
           let mStr = unitParts[1].trim();
@@ -251,11 +251,11 @@ class Error {
             let minutes = null;
             try {
               minutes = parseInt(mStr);
-            } catch {
+            } catch (err) {
               return 'Minutes do not resolve to an integer';
             }
 
-            if (minutes < mMin && minutes > mMax)
+            if (minutes < mMin || minutes > mMax)
               return `Minutes must be between ${mMin} and ${mMax}`;
 
             let sStr = unitParts[2].trim();
@@ -263,18 +263,18 @@ class Error {
               let seconds = null;
               try {
                 seconds = parseInt(sStr);
-              } catch {
+              } catch (err) {
                 return 'Seconds do not resolve to an integer';
               }
 
-              if (seconds < sMin && seconds > sMax)
+              if (seconds < sMin || seconds > sMax)
                 return `Seconds must be between ${sMin} and ${sMax}`;
 
               let suffix = parts[1].trim();
-              if (suffix == 'AM' || 'PM')
+              if (suffix == 'AM' || suffix == 'PM')
                 return null;
               else
-                return 'Suffix (AM|PM) is not formatted correctly';
+                return 'Suffix AM|PM is not formatted correctly';
             }
             else
               return 'Seconds are not formatted correctly';
@@ -309,11 +309,11 @@ class Error {
         let hours = null;
         try {
           hours = parseInt(hStr);
-        } catch {
+        } catch (err) {
           return 'Hours do not resolve to an integer';
         }
 
-        if (hours < hMin && hours > hMax)
+        if (hours < hMin || hours > hMax)
           return `Hours must be between ${hMin} and ${hMax}`;
 
         let mStr = parts[1].trim();
@@ -321,11 +321,11 @@ class Error {
           let minutes = null;
           try {
             minutes = parseInt(mStr);
-          } catch {
+          } catch (err) {
             return 'Minutes do not resolve to an integer';
           }
 
-          if (minutes < mMin && minutes > mMax)
+          if (minutes < mMin || minutes > mMax)
             return `Minutes must be between ${mMin} and ${mMax}`;
 
           let sStr = parts[2].trim();
@@ -337,11 +337,11 @@ class Error {
             let seconds = null;
             try {
               seconds = parseInt(sStr);
-            } catch {
+            } catch (err) {
               return 'Seconds do not resolve to an integer';
             }
 
-            if (seconds < sMin && seconds > sMax)
+            if (seconds < sMin || seconds > sMax)
               return `Seconds must be between ${sMin} and ${sMax}`;
             return null;
           }
@@ -404,22 +404,22 @@ class Error {
     if (dateObj.year < 0)
       return 'Year must be integer greater than or equal to 0';
 
-    if (dateObj.month_number < monthMin && dateObj.month_number > monthMax)
+    if (dateObj.month_number < monthMin || dateObj.month_number > monthMax)
       return `Month must be integer between ${monthMin} and ${monthMax}`;
 
-    if (dateObj.day < dayMin && dateObj.day > dayMax)
+    if (dateObj.day < dayMin || dateObj.day > dayMax)
       return `Day must be integer between ${dayMin} and ${dayMax}`;
 
-    if (dateObj.hours < hoursMin && dateObj.hours > hoursMax)
+    if (dateObj.hours < hoursMin || dateObj.hours > hoursMax)
       return `Hours must be integer between ${hoursMin} and ${hoursMax}`;
 
-    if (dateObj.minutes < minutesMin && dateObj.minutes > minutesMax)
+    if (dateObj.minutes < minutesMin || dateObj.minutes > minutesMax)
       return `Minutes must be integer between ${minutesMin} and ${minutesMax}`;
 
-    if (dateObj.seconds < secondsMin && dateObj.seconds > secondsMax)
+    if (dateObj.seconds < secondsMin || dateObj.seconds > secondsMax)
       return `Seconds must be integer between ${secondsMin} and ${secondsMax}`;
 
-    if (dateObj.milliseconds < millisecondsMin && dateObj.milliseconds > millisecondsMax)
+    if (dateObj.milliseconds < millisecondsMin || dateObj.milliseconds > millisecondsMax)
       return `Milliseconds must be integer between ${millisecondsMin} and ${millisecondsMax}`;
 
     return null;
