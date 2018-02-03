@@ -60,34 +60,33 @@ describe('*** timestamp.js ***', () => {
 
     describe('MeridiemTimeStringError(string)', () => { // CONT HERE
       it(`Reports undefined strings.`, () => {
-        let error = EXECUTE.Error.MeridiemTimeStringError(undefined);
+        let error = TIMESTAMP.Error.MeridiemTimeStringError(undefined);
         EXPECT(error).to.equal('Time string is undefined');
       });
 
-      it(`Returns null strings.`, () => {
-        let error = EXECUTE.Error.MeridiemTimeStringError(null);
-        EXPECT(error).to.equal('Time string is undefined');
+      it(`Reports null strings.`, () => {
+        let error = TIMESTAMP.Error.MeridiemTimeStringError(null);
+        EXPECT(error).to.equal('Time string is null');
       });
 
       it(`Reports invalid values.`, () => {
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('X:00:00 AM')).to.equal('Hours do not resolve to an integer');
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('15:00:00 AM')).to.equal('Hours must be between 1 and 12');
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('X:00:00 AM')).to.equal('Hours are not formatted correctly');
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('15:00:00 AM')).to.equal('Hours must be between 1 and 12');
 
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:X:00 AM')).to.equal('Minutes do not resolve to an integer');
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:65:00 AM')).to.equal('Minutes must be between 0 and 59');
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:X:00 AM')).to.equal('Minutes are not formatted correctly');
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:65:00 AM')).to.equal('Minutes must be between 0 and 59');
 
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:00:X AM')).to.equal('Seconds do not resolve to an integer');
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:00:65 AM')).to.equal('Seconds must be between 0 and 59');
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:00:X AM')).to.equal('Seconds are not formatted correctly');
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:00:65 AM')).to.equal('Seconds must be between 0 and 59');
 
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:00:00 CA')).to.equal('Suffix (AM|PM) is not formatted correctly');
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:65:00 AM')).to.equal('Minutes must be between 0 and 59');
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:00:00 CA')).to.equal('Suffix AM|PM is not formatted correctly');
       });
 
       it(`Returns null if no errors detected.`, () => {
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:00:00 AM')).to.equal(null);
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:30:00 AM')).to.equal(null);
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:00:30 AM')).to.equal(null);
-        EXPECT(EXECUTE.Error.MeridiemTimeStringError('10:00:00 PM')).to.equal(null);
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:00:00 AM')).to.equal(null);
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:30:00 AM')).to.equal(null);
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:00:30 AM')).to.equal(null);
+        EXPECT(TIMESTAMP.Error.MeridiemTimeStringError('10:00:00 PM')).to.equal(null);
       });
     });
   });
