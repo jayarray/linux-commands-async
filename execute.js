@@ -1,13 +1,5 @@
 var CHILD_PROCESS = require('child_process');
 
-//-----------------------------------
-// ERROR CATCHING
-
-function fatalFail(error) {
-  console.log(error);
-  process.exit(-1);
-}
-
 //---------------------------------------------
 // SAVING DATA (to string)
 
@@ -118,7 +110,6 @@ class Execute {
 
 //---------------------------------------
 // ERROR
-
 class Error {
   static NullOrUndefined(o) {
     if (o === undefined)
