@@ -1,338 +1,278 @@
 let PATH = require('./path.js');
-
+let EXECUTE = require('./execute.js').Execute;
+let FS = require('fs-extra')
 //---------------------------------------------
-// LIST (ls)
-
-class List {
-  static all_files(path) {
+// Ls
+class Ls {
+  static AllFilenames(path) {
     return new Promise((resolve, reject) => {
       let error = PATH.Error.PathError(path);
       if (error) {
-        reject({ files: null, error: `PATH_ERROR: ${error}` });
+        reject(error);
         return;
       }
 
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ files: null, error: `PATH_ERROR: ${results.error}` });
+      PATH.Path.Exists(path).then(exists => {
+        if (!exists) {
+          reject(`Path does not exist: ${path}`);
           return;
         }
 
-        if (!results.exists) {
-          reject({ files: null, error: `PATH_ERROR: Path does not exist: ${pTrimmed}` });
-          return;
-        }
-
-        FS.readdir(pTrimmed, (err, files) => {
+        FS.readdir(path, (err, files) => {
           if (err) {
-            reject({ files: null, error: `FS_READDIR_ERROR: ${err}` });
+            reject(`Failed to read filenames: ${err}`);
             return;
           }
-          resolve({ files: files, error: null });
+          resolve(files);
         });
-      }).catch(fatalFail);
+      }).catch(reject);
     });
   }
 
-  static visible_files(path) {
+  static VisibleFilenames(path) {
     return new Promise((resolve, reject) => {
-      List.all_files(path).then(results => {
-        if (results.error) {
-          reject({ files: null, error: results.error });
-          return;
-        }
-        resolve({ files: results.files.filter(x => !x.startsWith('.')), error: null });
-      }).catch(fatalFail);
+      Ls.AllFilenames(path).then(files => {
+        resolve(files.filter(x => !x.startsWith('.')));
+      }).catch(reject);
     });
   }
 
-  static hidden_files(path) {
+  static HiddenFilenames(path) {
     return new Promise((resolve, reject) => {
-      List.all_files(path).then(results => {
-        if (results.error) {
-          reject({ files: null, error: results.error });
-          return;
-        }
-        resolve({ files: results.files.filterfilter(x => x.startsWith('.')), error: null });
-      }).catch(fatalFail);
+      Ls.AllFilenames(path).then(files => {
+        resolve(files.filter(x => x.startsWith('.')));
+      }).catch(reject);
     });
   }
 
-  static item(path) {
+  static Info(path) {
     return new Promise((resolve, reject) => {
-      List.file_item(path).then(results => {
-        resolve({ item: results.item, error: null });
+      Ls.FileInfo(path).then(fileInfo => {
+        resolve(fileInfo);
       }).catch((ferr) => {
-        List.dir_item(path).then(values => {
-          resolve({ item: values.item, error: null });
+        Ls.DirInfo(path).then(dirInfo => {
+          resolve(dirInfo);
         }).catch((derr) => {
           let errArr = [];
           if (ferr.error)
             errArr.push(ferr.error);
           if (ferr.error)
             errArr.push(derr.error);
-          reject({ type: null, error: `ITEM_ERROR: ${errArr.join('; ')}` });
+          reject({ type: null, error: `Failed to get info: ${errArr.join('; ')}` });
         });
       });
     });
   }
 
-  static file_item(filepath) {
+  static FileInfo(filepath) {
     return new Promise((resolve, reject) => {
-      Path.is_file(dirPath).then(results => {
-        if (results.error) {
-          reject({ item: null, error: results.error });
+      PATH.Path.IsFile(filepath).then(isFile => {
+        if (!isFile) {
+          reject(`Path is not a file: ${filepath}`);
           return;
         }
 
-        let fTrimmed = filepath.trim();
-        if (!results.isFile) {
-          reject({ item: null, error: `PATH_ERROR: Path is not a file: ${fTrimmed}` });
-          return;
-        }
-
-        let args = ['-l', fTrimmed];
-        Execute.local('ls', args).then(output => {
-          if (output.error) {
-            reject({ item: null, error: `LS_FILE_ERROR: ${output.error}` });
-            return;
-          }
-
+        let args = ['-l', filepath];
+        EXECUTE.Local('ls', args).then(output => {
           if (output.stderr) {
-            reject({ item: null, error: `LS_FILE_ERROR: ${output.stderr}` });
+            reject(`Failed to get file info: ${output.stderr}`);
             return;
           }
 
-          let i = List.parse_ls_string(output.stdout.trim());
-          if (i.error) {
-            reject({ item: null, error: i.error });
+          let results = Ls.ParseLsString(output.stdout.trim());
+          if (results.error) {
+            reject(results.error);
             return;
           }
-
-          resolve({ item: i.item, error: null });
-        }).catch(fatalFail);
-      }).catch(fatalFail);
+          resolve(results.info);
+        }).catch(reject);
+      }).catch(reject);
     });
   }
 
-  static dir_item(dirPath) {
+  static DirInfo(dirPath) {
     return new Promise((resolve, reject) => {
-      Path.is_dir(dirPath).then(results => {
-        if (results.error) {
-          reject({ item: null, error: results.error });
+      PATH.Path.IsDir(dirPath).then(isDir => {
+        if (!isDir) {
+          reject(`Path is not a directory: ${dirPath}`);
           return;
         }
 
-        let dTrimmed = dirPath.trim();
-        if (!results.isDir) {
-          reject({ item: null, error: `PATH_ERROR: Path is not a directory: ${dTrimmed}` });
-          return;
-        }
-
-        let args = ['-ld', dTrimmed];
-        Execute.local('ls', args).then(output => {
-          if (output.error) {
-            reject({ item: null, error: `LS_DIR_ERROR: ${output.error}` });
-            return;
-          }
-
+        let args = ['-ld', dirPath];
+        EXECUTE.Local('ls', args).then(output => {
           if (output.stderr) {
-            reject({ item: null, error: `LS_DIR_ERROR: ${output.stderr}` });
+            reject(`Failed to get directory info: ${output.stderr}`);
             return;
           }
 
-          let i = List.parse_ls_string(output.stdout.trim());
-          if (i.error) {
-            reject({ item: null, error: i.error });
+          let results = Ls.ParseLsString(output.stdout.trim());
+          if (results.error) {
+            reject(results.error);
             return;
           }
-
-          resolve({ item: i.item, error: null });
-        }).catch(fatalFail);
-      }).catch(fatalFail);
+          resolve(results.info);
+        }).catch(reject);
+      }).catch(reject);
     });
   }
 
-  static all_items(dirPath) {
+  static AllInfos(dirPath) {
     return new Promise((resolve, reject) => {
-      Path.is_dir(dirPath).then(results => {
-        if (results.error) {
-          reject({ items: null, error: results.error });
+      PATH.Path.IsDir(dirPath).then(isDir => {
+        if (!isDir) {
+          reject(`Path is not a directory: ${dirPath}`);
           return;
         }
 
-        let dTrimmed = dirPath.trim();
-        if (!results.isDir) {
-          reject({ items: null, error: `PATH_ERROR: Path is not a directory: ${dTrimmed}` });
-          return;
-        }
-
-        let args = ['-la', dTrimmed];
-        Execute.local('ls', args).then(output => {
-          if (output.error) {
-            reject({ items: null, error: `LS_LA_ERROR: ${output.error}` });
-            return;
-          }
-
+        let args = ['-la', dirPath];
+        EXECUTE.Local('ls', args).then(output => {
           if (output.stderr) {
-            reject({ items: null, error: `LS_LA_ERROR: ${output.stderr}` });
+            reject(`Failed to get all infos: ${output.stderr}`);
             return;
           }
 
-          let lines = output.stdout.trim().split('\n').map(line => line.trim());
+          let lines = output.stdout.trim().split('\n').slice(1).map(line => line.trim());
           if (lines.length < 2) {
-            resolve({ items: [], error: null });
+            resolve([]);
             return;
           }
 
-          let items = [];
-          lines.slice(1).forEach(line => {
-            let i = List.parse_ls_string(line.trim());
-            items.push(i.item);
+          let infos = [];
+          lines.forEach(line => {
+            let results = Ls.ParseLsString(line.trim()); // CONT HERE
+            infos.push(results.info);
           });
-          resolve({ items: items, error: null });
-        }).catch(fatalFail);
-      }).catch(fatalFail);
+          resolve(infos);
+        }).catch(reject);
+      }).catch(reject);
     });
   }
 
-  static visible_items(dirPath) {
+  static VisibleInfos(dirPath) {
     return new Promise((resolve, reject) => {
-      List.all_items(dirPath).then(results => {
-        if (results.error) {
-          resolve({ items: null, error: results.error });
-          return;
-        }
-        resolve({ items: results.items.filter(item => !item.name.startsWith('.')), error: null });
-      }).catch(fatalFail);
+      Ls.AllInfos(dirPath).then(infos => {
+        resolve(infos.filter(item => !item.name.startsWith('.')));
+      }).catch(reject);
     });
   }
 
-  static hidden_items(dirPath) {
+  static HiddenInfos(dirPath) {
     return new Promise((resolve, reject) => {
-      List.all_items(dirPath).then(results => {
-        if (results.error) {
-          resolve({ items: null, error: results.error });
-          return;
-        }
-        resolve({ items: results.items.filter(item => item.name.startsWith('.')), error: null });
-      }).catch(fatalFail);
+      Ls.AllInfos(dirPath).then(infos => {
+        resolve(infos.filter(item => item.name.startsWith('.')));
+      }).catch(reject);
     });
   }
 
-  static parse_ls_string(string) {
-    let invalidType = invalid_type(string);
-    if (invalidType)
-      return { item: null, error: `LS_STR_ERROR: Item string is ${invalidType}` };
-
-    let outputStr = output.stdout.trim();
+  static ParseLsString(string) {
+    let error = Error.LsStringError(string);
+    if (error)
+      return ({ info: null, error: `Failed to parse ls string: ${error}` });
 
     // PERMS
     let permStr = '';
     let startIndex = 0;
     let endIndex = 0;
 
-    let indexes = { start: 0, end: null };
-    for (let i = indexes.start; i < outputStr.length; ++i) {
-      let currChar = outputStr.charAt(i);
+    for (let i = startIndex; i < string.length; ++i) {
+      let currChar = string.charAt(i);
       if (currChar.trim())
-        indexes.end = i;
+        endIndex = i;
       else {
-        indexes.end += 1;
-        permStr = outputStr.substring(indexes.start, indexes.end);
+        endIndex += 1;
+        permStr = string.substring(startIndex, endIndex);
 
-        currChar = outputStr.charAt(indexes.end);
+        currChar = string.charAt(endIndex);
         while (!currChar.trim()) {
-          indexes.end += 1;
-          currChar = outputStr.charAt(indexes.end);
+          endIndex += 1;
+          currChar = string.charAt(endIndex);
         }
 
-        indexes.start = indexes.end + 1;
+        startIndex = endIndex;
         break;
       }
     }
 
     // HARD LINKS
     let hLinksStr = '';
-    for (let i = indexes.start; i < outputStr.length; ++i) {
-      let currChar = outputStr.charAt(i);
+    for (let i = startIndex; i < string.length; ++i) {
+      let currChar = string.charAt(i);
       if (currChar.trim())
-        indexes.end = i;
+        endIndex = i;
       else {
-        indexes.end += 1;
-        hLinksStr = outputStr.substring(indexes.start, indexes.end);
+        endIndex += 1;
+        hLinksStr = string.substring(startIndex, endIndex);
 
-        currChar = outputStr.charAt(indexes.end);
+        currChar = string.charAt(endIndex);
         while (!currChar.trim()) {
-          indexes.end += 1;
-          currChar = outputStr.charAt(indexes.end);
+          endIndex += 1;
+          currChar = string.charAt(endIndex);
         }
 
-        indexes.start = indexes.end + 1;
+        startIndex = endIndex;
         break;
       }
     }
 
     // OWNER
     let ownerStr = '';
-    for (let i = indexes.start; i < outputStr.length; ++i) {
-      let currChar = outputStr.charAt(i);
+    for (let i = startIndex; i < string.length; ++i) {
+      let currChar = string.charAt(i);
       if (currChar.trim())
-        indexes.end = i;
+        endIndex = i;
       else {
-        indexes.end += 1;
-        ownerStr = outputStr.substring(indexes.start, indexes.end);
+        endIndex += 1;
+        ownerStr = string.substring(startIndex, endIndex);
 
-        currChar = outputStr.charAt(indexes.end);
+        currChar = string.charAt(endIndex);
         while (!currChar.trim()) {
-          indexes.end += 1;
-          currChar = outputStr.charAt(indexes.end);
+          endIndex += 1;
+          currChar = string.charAt(endIndex);
         }
 
-        indexes.start = indexes.end + 1;
+        startIndex = endIndex;
         break;
       }
     }
 
     // GROUP
     let groupStr = '';
-    for (let i = indexes.start; i < outputStr.length; ++i) {
-      let currChar = outputStr.charAt(i);
+    for (let i = startIndex; i < string.length; ++i) {
+      let currChar = string.charAt(i);
       if (currChar.trim())
-        indexes.end = i;
+        endIndex = i;
       else {
-        indexes.end += 1;
-        groupStr = outputStr.substring(indexes.start, indexes.end);
+        endIndex += 1;
+        groupStr = string.substring(startIndex, endIndex);
 
-        currChar = outputStr.charAt(indexes.end);
+        currChar = string.charAt(endIndex);
         while (!currChar.trim()) {
-          indexes.end += 1;
-          currChar = outputStr.charAt(indexes.end);
+          endIndex += 1;
+          currChar = string.charAt(endIndex);
         }
 
-        indexes.start = indexes.end + 1;
+        startIndex = endIndex;
         break;
       }
     }
 
     // SIZE
     let sizeStr = '';
-    for (let i = indexes.start; i < outputStr.length; ++i) {
-      let currChar = outputStr.charAt(i);
+    for (let i = startIndex; i < string.length; ++i) {
+      let currChar = string.charAt(i);
       if (currChar.trim())
-        indexes.end = i;
+        endIndex = i;
       else {
-        indexes.end += 1;
-        sizeStr = outputStr.substring(indexes.start, indexes.end);
+        endIndex += 1;
+        sizeStr = string.substring(startIndex, endIndex);
 
-        currChar = outputStr.charAt(indexes.end);
+        currChar = string.charAt(endIndex);
         while (!currChar.trim()) {
-          indexes.end += 1;
-          currChar = outputStr.charAt(indexes.end);
+          endIndex += 1;
+          currChar = string.charAt(endIndex);
         }
 
-        indexes.start = indexes.end + 1;
+        startIndex = endIndex;
         break;
       }
     }
@@ -341,63 +281,63 @@ class List {
 
     // Month
     let monthStr = '';
-    for (let i = indexes.start; i < outputStr.length; ++i) {
-      let currChar = outputStr.charAt(i);
+    for (let i = startIndex; i < string.length; ++i) {
+      let currChar = string.charAt(i);
       if (currChar.trim())
-        indexes.end = i;
+        endIndex = i;
       else {
-        indexes.end += 1;
-        monthStr = outputStr.substring(indexes.start, indexes.end);
+        endIndex += 1;
+        monthStr = string.substring(startIndex, endIndex);
 
-        currChar = outputStr.charAt(indexes.end);
+        currChar = string.charAt(endIndex);
         while (!currChar.trim()) {
-          indexes.end += 1;
-          currChar = outputStr.charAt(indexes.end);
+          endIndex += 1;
+          currChar = string.charAt(endIndex);
         }
 
-        indexes.start = indexes.end + 1;
+        startIndex = endIndex;
         break;
       }
     }
 
     // Day
     let dayStr = '';
-    for (let i = indexes.start; i < outputStr.length; ++i) {
-      let currChar = outputStr.charAt(i);
+    for (let i = startIndex; i < string.length; ++i) {
+      let currChar = string.charAt(i);
       if (currChar.trim())
-        indexes.end = i;
+        endIndex = i;
       else {
-        indexes.end += 1;
-        dayStr = outputStr.substring(indexes.start, indexes.end);
+        endIndex += 1;
+        dayStr = string.substring(startIndex, endIndex);
 
-        currChar = outputStr.charAt(indexes.end);
+        currChar = string.charAt(endIndex);
         while (!currChar.trim()) {
-          indexes.end += 1;
-          currChar = outputStr.charAt(indexes.end);
+          endIndex += 1;
+          currChar = string.charAt(endIndex);
         }
 
-        indexes.start = indexes.end + 1;
+        startIndex = endIndex;
         break;
       }
     }
 
     // Stamp
     let stampStr = '';
-    for (let i = indexes.start; i < outputStr.length; ++i) {
-      let currChar = outputStr.charAt(i);
+    for (let i = startIndex; i < string.length; ++i) {
+      let currChar = string.charAt(i);
       if (currChar.trim())
-        indexes.end = i;
+        endIndex = i;
       else {
-        indexes.end += 1;
-        stampStr = outputStr.substring(indexes.start, indexes.end);
+        endIndex += 1;
+        stampStr = string.substring(startIndex, endIndex);
 
-        currChar = outputStr.charAt(indexes.end);
+        currChar = string.charAt(endIndex);
         while (!currChar.trim()) {
-          indexes.end += 1;
-          currChar = outputStr.charAt(indexes.end);
+          endIndex += 1;
+          currChar = string.charAt(endIndex);
         }
 
-        indexes.start = indexes.end + 1;
+        startIndex = endIndex;
         break;
       }
     }
@@ -405,10 +345,10 @@ class List {
     let modStr = `${monthStr} ${dayStr} ${stampStr}`;
 
     // FILENAME
-    let nameStr = outputStr.substring(indexes.start);
+    let nameStr = string.substring(startIndex);
 
     // ITEM
-    let item = {
+    let info = {
       permstr: permStr.substring(1),
       hardlinks: parseInt(hLinksStr),
       owner: ownerStr,
@@ -418,6 +358,123 @@ class List {
       name: nameStr,
       filetype: permStr.charAt(0)
     };
-    return { item: item, error: null };
+    return { info: info, error: null };
   }
 }
+
+//----------------------------------------
+// ERROR
+
+class Error {
+  static NullOrUndefined(o) {
+    if (o === undefined)
+      return 'undefined';
+    else if (o == null)
+      return 'null';
+    else
+      return null;
+  }
+
+  static LsStringError(s) {
+    // Check if undefined
+    let error = Error.NullOrUndefined(s);
+    if (error)
+      return `Ls string is ${error}`;
+
+    // Check if string and non-empty
+    if (typeof s != 'string')
+      return 'Ls string is not a string';
+    else if (s == '')
+      return 'Ls string is empty';
+    else if (s.trim() == '')
+      return 'Ls string is whitespace';
+    else if (!Error.LsStringIsFormattedCorrectly(s))
+      return `Ls string is not formatted correctly`
+    else
+      return null;
+  }
+
+  static LsStringIsFormattedCorrectly(s) {
+    /* Check if it has 7 parts: 
+         1) permissions string
+         2) hard links count
+         3) owner
+         4) group
+         5) size
+         6) date
+         7) filename 
+    */
+
+    let expectedTotal = 7;
+
+    let expectedCount = 5;
+    let actualCount = 0;
+
+    let startIndex = 0;
+    let endIndex = 0;
+    let spaceDelimitedStrings = 5;
+
+    // Check permissions string
+    for (let i = 0; i < spaceDelimitedStrings; ++i) {
+      for (let j = startIndex; j < s.length; ++j) {
+        let currChar = s.charAt(j);
+        if (currChar.trim())
+          endIndex = j;
+        else {
+          endIndex += 1;
+          currChar = s.charAt(endIndex);
+          while (!currChar.trim()) {
+            endIndex += 1;
+            currChar = s.charAt(endIndex);
+          }
+
+          startIndex = endIndex;
+          break;
+        }
+      }
+      actualCount += 1;
+    }
+
+    if (actualCount < expectedCount)
+      return false;
+
+    // Check date string
+    expectedCount = 3;
+    actualCount = 0;
+
+    for (let i = 0; i < expectedCount; ++i) {
+      for (let j = startIndex; j < s.length; ++j) {
+        let currChar = s.charAt(j);
+        if (currChar.trim())
+          endIndex = j;
+        else {
+          endIndex += 1;
+          currChar = s.charAt(endIndex);
+          while (!currChar.trim()) {
+            endIndex += 1;
+            currChar = s.charAt(endIndex);
+          }
+
+          startIndex = endIndex;
+          break;
+        }
+      }
+      actualCount += 1;
+    }
+
+    if (actualCount != expectedCount)
+      return false
+
+    // Check filepath
+    let substr = s.substring(startIndex);
+    if (!s.substring(startIndex))
+      return false
+    return true;
+  }
+}
+
+//-------------------------------
+// EXPORTS
+
+exports.Ls = Ls;
+exports.Error = Error;
