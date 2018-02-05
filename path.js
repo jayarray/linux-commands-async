@@ -8,7 +8,7 @@ class Path {
     return new Promise((resolve, reject) => {
       let error = Error.PathError(path);
       if (error) {
-        reject(`Path is ${error}`);
+        reject(error);
         return;
       }
 
@@ -70,28 +70,28 @@ class Path {
   static Filename(path) {
     let error = Error.PathError(path);
     if (error)
-      return { name: null, error: `Path is ${error}` };
+      return { name: null, error: error };
     return { name: PATH.basename(path), error: null };
   }
 
   static Extension(path) {
     let error = Error.PathError(path);
     if (error)
-      return { extension: null, error: `Path is ${error}` };
+      return { extension: null, error: error };
     return { extension: PATH.extname(path), error: null };
   }
 
   static ParentDirName(path) {
     let error = Error.PathError(path);
     if (error)
-      return { name: null, error: `Path is ${error}` };
+      return { name: null, error: error };
     return { name: PATH.dirname(path).split(PATH.sep).pop(), error: null };
   }
 
   static ParentDir(path) {
     let error = Error.PathError(path);
     if (error)
-      return { dir: null, error: `Path is ${error}` };
+      return { dir: null, error: error };
     return { dir: PATH.dirname(path), error: null }; // Full path to parent dir
   }
 
@@ -126,14 +126,14 @@ class Error {
   static PathError(p) {
     let error = Error.NullOrUndefined(p);
     if (error)
-      return error;
+      return `Path is ${error}`;
 
     if (typeof p != 'string')
-      return 'not a string';
+      return 'Path is not a string';
     else if (p == '')
-      return 'empty';
+      return 'Path is empty';
     else if (p.trim() == '')
-      return 'whitespace'
+      return 'Path is whitespace'
     else
       return null;
   }
