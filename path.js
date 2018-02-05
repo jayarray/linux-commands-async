@@ -1,4 +1,4 @@
-
+let PATH = require('path');
 let FS = require('fs-extra');
 
 //-----------------------------------
@@ -8,15 +8,15 @@ class Path {
     return new Promise((resolve, reject) => {
       let error = Error.PathError(path);
       if (error) {
-        reject({ exists: null, error: `Path is ${error}` });
+        reject(`Path is ${error}`);
         return;
       }
 
       FS.access(path, FS.F_OK, (err) => {
         if (err)
-          resolve({ exists: false, error: null });
+          resolve(false);
         else
-          resolve({ exists: true, error: null });
+          resolve(true);
       });
     });
   }
@@ -25,22 +25,22 @@ class Path {
     return new Promise((resolve, reject) => {
       Path.Exists(path).then(results => {
         if (results.error) {
-          reject({ isFile: null, error: results.error });
+          reject(results.error);
           return;
         }
 
         if (!results.exists) {
-          reject({ isFile: null, error: `Path does not exist: ${path}` });
+          reject(`Path does not exist: ${path}`);
           return;
         }
 
         FS.lstat(path, (err, stats) => {
           if (err)
-            reject({ isFile: null, error: err });
+            reject(err);
           else
-            resolve({ isFile: stats.isFile() && !stats.isDirectory(), error: null });
+            resolve(stats.isFile() && !stats.isDirectory());
         });
-      }).catch(fatalFail);
+      }).catch(reject);
     });
   }
 
@@ -48,22 +48,22 @@ class Path {
     return new Promise((resolve, reject) => {
       Path.Exists(path).then(results => {
         if (results.error) {
-          reject({ isDir: null, error: results.error });
+          reject(results.error);
           return;
         }
 
         if (!results.exists) {
-          reject({ isDir: null, error: `Path does not exist: ${path}` });
+          reject(`Path does not exist: ${path}`);
           return;
         }
 
         FS.lstat(path, (err, stats) => {
           if (err)
-            reject({ isDir: null, error: err });
+            reject(err);
           else
-            resolve({ isDir: stats.isDirectory(), error: null });
+            resolve(stats.isDirectory());
         });
-      }).catch(fatalFail);
+      }).catch(reject);
     });
   }
 
