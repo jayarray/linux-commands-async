@@ -21,23 +21,13 @@ class Execute {
     return new Promise((resolve, reject) => {
       let error = Error.StringError(cmd);
       if (error) {
-        reject({
-          error: `cmd is ${error}`,
-          stderr: null,
-          stdout: null,
-          exitCode: null,
-        });
+        reject(`cmd is ${error}`);
         return;
       }
 
       error = Error.ArgsError(args);
       if (error) {
-        reject({
-          error: `args is ${error}`,
-          stderr: null,
-          stdout: null,
-          exitCode: null,
-        });
+        reject(`args is ${error}`);
         return;
       }
 
@@ -47,7 +37,6 @@ class Execute {
 
       childProcess.on('close', exitCode => {
         resolve({
-          error: null,
           stderr: errors.value,
           stdout: outputs.value,
           exitCode: exitCode,
@@ -60,34 +49,19 @@ class Execute {
     return new Promise((resolve, reject) => {
       let error = Error.StringError(user);
       if (error) {
-        reject({
-          error: `user is ${error}`,
-          stderr: null,
-          stdout: null,
-          exitCode: null,
-        });
+        reject(`user is ${error}`);
         return;
       }
 
       error = Error.StringError(host);
       if (error) {
-        reject({
-          error: `host is ${error}`,
-          stderr: null,
-          stdout: null,
-          exitCode: null,
-        });
+        reject(`host is ${error}`);
         return;
       }
 
       error = Error.StringError(cmd);
       if (error) {
-        reject({
-          error: `cmd is ${error}`,
-          stderr: null,
-          stdout: null,
-          exitCode: null,
-        });
+        reject(`cmd is ${error}`);
         return;
       }
 
@@ -98,7 +72,6 @@ class Execute {
 
       childProcess.on('close', exitCode => {
         resolve({
-          error: null,
           stderr: errors.value,
           stdout: outputs.value,
           exitCode: exitCode,
