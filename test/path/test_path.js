@@ -1,9 +1,9 @@
 let EXPECT = require('chai').expect;
 
-let _PATH = require('path');
-let rootDir = _PATH.join(__dirname, '..', '..');
+let _path = require('path');
+let rootDir = _path.join(__dirname, '..', '..');
 
-let pathJs = _PATH.join(rootDir, 'path.js');
+let pathJs = _path.join(rootDir, 'path.js');
 let PATH = require(pathJs);
 
 //------------------------------------------
@@ -65,111 +65,138 @@ describe('*** path.js ***', () => {
 
     describe('Exists(path)', () => {
       it('Returns error if path is invalid.', () => {
-        PATH.Path.Exists(invalidPath).then(o => {
-          EXPECT(o.error).to.equal(null);
-        }).catch((e) => {
-          EXPECT(e.error).to.equal('Path is empty');
-        });
+        PATH.Path.Exists(invalidPath).then(o => EXPECT(false))
+          .catch(error => {
+            let invalidType = PATH.Error.PathError(invalidPath);
+            EXPECT(error).to.equal(`Path is ${invalidType}`);
+          });
       });
 
       it('Returns boolean value if path is valid.', () => {
-        PATH.Path.Exists(validPath).then(o => {
-          EXPECT(o.exists).to.equal(false);
-        }).catch((e) => {
-          EXPECT(e.error).to.equal(null);
-        });
+        PATH.Path.Exists(validPath).then(o => EXPECT(true))
+          .catch(error => EXPECT(false));
       });
     });
 
     describe('IsFile(path)', () => {
       it('Returns error if path is invalid.', () => {
-        PATH.Path.IsFile(invalidPath).then(o => {
-          EXPECT(o.error).to.equal(null);
-        }).catch((e) => {
-          EXPECT(e.error).to.not.equal(null);
-        });
+        PATH.Path.IsFile(invalidPath).then(o => EXPECT(false))
+          .catch(error => {
+            let invalidType = PATH.Error.PathError(invalidPath);
+            EXPECT(error).to.equal(`Path is ${invalidType}`);
+          });
       });
     });
 
     describe('IsDir(path)', () => {
       it('Returns error if path is invalid.', () => {
-        PATH.Path.IsDir(invalidPath).then(o => {
-          EXPECT(o.error).to.equal(null);
-        }).catch((e) => {
-          EXPECT(e.error).to.not.equal(null);
-        });
+        PATH.Path.IsDir(invalidPath).then(o => EXPECT(false))
+          .catch(error => {
+            let invalidType = PATH.Error.PathError(invalidPath);
+            EXPECT(error).to.equal(`Path is ${invalidType}`);
+          });
       });
     });
 
     describe('Filename(path)', () => {
       it('Returns error if path is invalid.', () => {
+        let invalidType = PATH.Error.PathError(invalidPath);
         let o = PATH.Path.Filename(invalidPath);
-        EXPECT(o.error).to.not.equal(null);
+        if (o.error)
+          EXPECT(o.error).to.equal(`Path is ${invalidType}`);
+        EXPECT(false);
       });
 
       it('Returns string if path is valid.', () => {
         let o = PATH.Path.Filename(validPath);
+        if (o.error)
+          EXPECT(false);
         EXPECT(o.name).to.equal('file.txt');
       });
     });
 
     describe('Extension(path)', () => {
       it('Returns error if path is invalid.', () => {
+        let invalidType = PATH.Error.PathError(invalidPath);
         let o = PATH.Path.Extension(invalidPath);
-        EXPECT(o.error).to.not.equal(null);
+        if (o.error)
+          EXPECT(o.error).to.equal(`Path is ${invalidType}`);
+        EXPECT(false);
       });
 
       it('Returns string if path is valid.', () => {
         let o = PATH.Path.Extension(validPath);
-        EXPECT(o.extension).to.equal('txt');
+        if (o.error)
+          EXPECT(false);
+        EXPECT(o.extension).to.equal('.txt');
       });
     });
 
     describe('ParentDirName(path)', () => {
       it('Returns error if path is invalid.', () => {
+        let invalidType = PATH.Error.PathError(invalidPath);
         let o = PATH.Path.ParentDirName(invalidPath);
-        EXPECT(o.error).to.not.equal(null);
+        if (o.error)
+          EXPECT(o.error).to.equal(`Path is ${invalidType}`);
+        EXPECT(false);
       });
 
       it('Returns string if path is valid.', () => {
         let o = PATH.Path.ParentDirName(validPath);
+        if (o.error)
+          EXPECT(false);
         EXPECT(o.name).to.equal('to');
       });
     });
 
     describe('ParentDir(path)', () => {
       it('Returns error if path is invalid.', () => {
+        let invalidType = PATH.Error.PathError(invalidPath);
         let o = PATH.Path.ParentDir(invalidPath);
-        EXPECT(o.error).to.not.equal(null);
+        if (o.error)
+          EXPECT(o.error).to.equal(`Path is ${invalidType}`);
+        EXPECT(false);
       });
 
       it('Returns string if path is valid.', () => {
         let o = PATH.Path.ParentDir(validPath);
-        EXPECT(o.dir).to.equal('/path/to/');
+        if (o.error)
+          EXPECT(false);
+        EXPECT(o.dir).to.equal('/path/to');
       });
     });
 
     describe('Escape(path)', () => {
       it('Returns error if path is invalid.', () => {
+        let invalidType = PATH.Error.PathError(invalidPath);
         let o = PATH.Path.Escape(invalidPath);
-        EXPECT(o.error).to.not.equal(null);
+        if (o.error)
+          EXPECT(o.error).to.equal(`Path is ${invalidType}`);
+        EXPECT(false);
       });
 
       it('Returns string if path is valid.', () => {
-        let o = PATH.Path.Escape(validPath);
-        EXPECT(o.string).to.equal('/path/to/');
+        let o = PATH.Path.Escape(invalidPath);
+        if (o.error)
+          EXPECT(false);
+        EXPECT(true);
       });
     });
 
     describe('ContainsWhitespace(path)', () => {
       it('Returns error if path is invalid.', () => {
+        let invalidType = PATH.Error.PathError(invalidPath);
         let o = PATH.Path.ContainsWhitespace(invalidPath);
-        EXPECT(o.error).to.not.equal(null);
+        if (o.error)
+          EXPECT(o.error).to.equal(`Path is ${invalidType}`);
+        EXPECT(false);
       });
 
       it('Returns boolean if path is valid.', () => {
-        let o = PATH.Path.ContainsWhitespacecape(validPath);
-        EXPECT(o.hasWhitespace).to.equal(false);
+        let o = PATH.Path.ContainsWhitespace(validPath);
+        if (o.error)
+          EXPECT(false);
+        EXPECT(true);
       });
     });
   });
