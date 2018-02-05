@@ -23,13 +23,8 @@ class Path {
 
   static IsFile(path) {
     return new Promise((resolve, reject) => {
-      Path.Exists(path).then(results => {
-        if (results.error) {
-          reject(results.error);
-          return;
-        }
-
-        if (!results.exists) {
+      Path.Exists(path).then(exists => {
+        if (!exists) {
           reject(`Path does not exist: ${path}`);
           return;
         }
@@ -46,13 +41,8 @@ class Path {
 
   static IsDir(path) {
     return new Promise((resolve, reject) => {
-      Path.Exists(path).then(results => {
-        if (results.error) {
-          reject(results.error);
-          return;
-        }
-
-        if (!results.exists) {
+      Path.Exists(path).then(exists => {
+        if (!exists) {
           reject(`Path does not exist: ${path}`);
           return;
         }
