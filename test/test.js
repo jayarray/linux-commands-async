@@ -18,6 +18,9 @@ mocha.addFile(PATH.join(testExecuteDir, 'test_execute.js'));
 let testTimestampDir = PATH.join(testDir, 'timestamp');
 mocha.addFile(PATH.join(testTimestampDir, 'test_timestamp.js'));
 
+let testPathDir = PATH.join(testDir, 'path');
+mocha.addFile(PATH.join(testPathDir, 'test_path.js'));
+
 
 let runner = mocha.run(() => { });
 
