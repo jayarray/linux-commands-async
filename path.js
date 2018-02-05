@@ -3,7 +3,6 @@ let FS = require('fs-extra');
 
 //-----------------------------------
 // PATH
-
 class Path {
   static Exists(path) {
     return new Promise((resolve, reject) => {
@@ -124,18 +123,24 @@ class Error {
       return null;
   }
 
-  static PathError(s) {
-    let error = Error.NullOrUndefined(s);
+  static PathError(p) {
+    let error = Error.NullOrUndefined(p);
     if (error)
       return error;
 
-    if (typeof s != 'string')
+    if (typeof p != 'string')
       return 'not a string';
-    else if (s == '')
+    else if (p == '')
       return 'empty';
-    else if (s.trim() == '')
+    else if (p.trim() == '')
       return 'whitespace'
     else
       return null;
   }
 }
+
+//------------------------------------
+// EXPORTS
+
+exports.Path = Path;
+exports.Error = Error;
