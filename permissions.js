@@ -27,17 +27,15 @@ class Permissions {
   }
 
   static CreatePermissionsObjectUsingPermissionsString(permStr) {
-    let error = Permissions.PermissionsStringError(permStr);
+    let error = Error.PermissionsStringError(permStr);
     if (error)
       return { obj: null, error: error };
 
     let permTrimmed = permStr.trim();
 
     let octalStr = Permissions.PermissionsStringToOctalString(permTrimmed);
-    if (octalStr.error) {
-      reject({ permissions: null, error: octalStr.error });
-      return;
-    }
+    if (octalStr.error)
+      return { obj: null, error: octalStr.error };
 
     let octalTrimmed = octalStr.string.trim();
 
@@ -143,7 +141,7 @@ class Permissions {
   }
 
   static CreatePermissionsObjectUsingOctalString(octalStr) {
-    let error = Permissions.OctalStringError(octalStr);
+    let error = Error.OctalStringError(octalStr);
     if (error)
       return { obj: null, error: error };
 
@@ -250,7 +248,7 @@ class Permissions {
   }
 
   static Equal(p1, p2) {
-    let error = Permissions.ObjectError(p1, false);
+    let error = Error.ObjectError(p1, false);
     if (error)
       return { equal: null, error: `Object 1: ${error}` };
 
@@ -462,7 +460,7 @@ class Error {
       return `is ${error}`;
 
     if (!Number.isInteger(i))
-      return `is not an integer: ${i}`;
+      return `is not an integer`;
 
     let iMin = 0;
     let iMax = 7;
@@ -564,31 +562,45 @@ class Error {
     if (error)
       return `Object is ${error} `;
 
+    let prefix = '';
+    if (isPseudo)
+      prefix = 'Object';
+    else
+      prefix = 'Permissions object';
+
     // Check if obj missing values
-    if (
-      obj.u && obj.u.r && obj.u.w && obj.u.x && obj.u.xchar && obj.u.string &&
-      obj.g && obj.g.r && obj.g.w && obj.g.x && obj.g.xchar && obj.g.string &&
-      obj.o && obj.o.r && obj.o.w && obj.o.x && obj.o.xchar && obj.o.string &&
-      obj.octal && obj.octal.string && obj.octal.special && obj.octal.user && obj.octal.group && obj.octal.others &&
-      obj.owner &&
-      obj.group &&
-      obj.string
-    )
-      return 'Permissions object is missing required values';
+    let groupChars = Permissions.ValidClassChars();
+    let variableNames = ['r', 'w', 'x', 'xchar', 'string'];
+
+    groupChars.forEach(gChar => {
+      variableNames.forEach(varName => {
+        if (obj[gChar][varName] === undefined)
+          return `${prefix} is missing required values`;
+      });
+    });
+
+    let octalVariableNames = ['string', 'user', 'group', 'others'];
+    octalVariableNames.forEach(varName => {
+      if (obj.octal[varName] === undefined)
+        return `${prefix} is missing required values`;
+    });
+
+    if (obj.owner === undefined || obj.group === undefined || obj.string === undefined)
+      return `${prefix} is missing required values`;
 
     // Check if obj values are correct types
     let boolVars = [obj.u.r, obj.u.w, obj.u.x, obj.g.r, obj.g.w, obj.g.x, obj.o.r, obj.o.w, obj.o.x];
     boolVars.forEach(bvar => {
-      if (bvar === true || bvar === false)
-        return 'Permissions object values for u,g,o are all required to be boolean values (true|false)';
+      if (!(bvar === true) || !(bvar === false))
+        return `${prefix} values for u,g,o are all required to be boolean values (true|false)`;
     });
 
     if (
-      Permissions.ValidExecuteChars.includes(obj.u.xchar) &&
-      Permissions.ValidExecuteChars.includes(obj.g.xchar) &&
-      Permissions.ValidExecuteChars.includes(obj.o.xchar)
+      !Permissions.ValidExecuteChars.includes(obj.u.xchar) ||
+      !Permissions.ValidExecuteChars.includes(obj.g.xchar) ||
+      !Permissions.ValidExecuteChars.includes(obj.o.xchar)
     )
-      return { string: null, error: 'Object values for xchar are not valid characters' };
+      return `${prefix} values for xchar are not valid characters`;
 
     if (isPseudo)
       return true;
@@ -601,14 +613,14 @@ class Error {
       Number.isInteger(obj.octal.group) &&
       Number.isInteger(obj.octal.others)
     )
-      return 'Permissions object values for octal are incorrect types';
+      return `${prefix} values for octal are incorrect types`;
 
     if (
       obj.owner != '' && obj.owner.trim() &&
       obj.group != '' && obj.group.trim() &&
       obj.string != '' && obj.string.trim()
     )
-      return 'Permissions object values for owner, group, string are empty or whitespace';
+      return `${prefix} values for owner, group, string are empty or whitespace`;
 
     return null;
   }
