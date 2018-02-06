@@ -430,17 +430,17 @@ class Permissions {
   }
 
   static CharValue(c) {
-    let val = Permissions.char_value_dict()[c];
-    if (Permissions.valid_char_values().includes(val))
+    let val = Permissions.CharValueDict()[c];
+    if (Permissions.ValidCharValues().includes(val))
       return val;
     return null;
   }
 
   static CharIsValid(c) {
-    return Permissions.valid_file_type_chars.includes(c) ||
-      Permissions.valid_read_chars.includes(c) ||
-      Permissions.valid_write_chars.includes(c) ||
-      Permissions.valid_execute_chars.includes(c);
+    return Permissions.ValidFileTypeChars.includes(c) ||
+      Permissions.ValidReadChars.includes(c) ||
+      Permissions.ValidWriteChars.includes(c) ||
+      Permissions.ValidExecuteChars.includes(c);
   } I
 }
 
@@ -462,7 +462,7 @@ class Error {
       return `is ${error}`;
 
     if (!Number.isInteger(i))
-      return `is not an integer`;
+      return `is not an integer: ${i}`;
 
     let iMin = 0;
     let iMax = 7;
