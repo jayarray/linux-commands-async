@@ -441,7 +441,7 @@ class Permissions {
       Permissions.ValidReadChars.includes(c) ||
       Permissions.ValidWriteChars.includes(c) ||
       Permissions.ValidExecuteChars.includes(c);
-  } I
+  }
 }
 
 //----------------------------------------
@@ -551,7 +551,7 @@ class Error {
         let i = parseInt(char);
         if (i < valMin && i > valMax)
           return `Octal string numeric values must be between ${valMin} and ${valMax} `;
-      } catch {
+      } catch (error) {
         return `Octal string contains non- numeric characters`;
       }
     });
