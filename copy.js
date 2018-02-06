@@ -4,7 +4,7 @@ let FS = require('fs-extra');
 //-------------------------------------------------
 // COPY (cp)
 class Copy {
-  static copy(src, dest) {
+  static Copy(src, dest) {
     return new Promise((resolve, reject) => {
       let error = PATH.Error.PathError(src);
       if (error) {
