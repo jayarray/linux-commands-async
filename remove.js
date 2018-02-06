@@ -1,5 +1,6 @@
 let PATH = require('./path.js');
 let FS = require('fs-extra');
+var RIMRAF = require('rimraf');
 
 //-------------------------------------------------
 // REMOVE (rm)
@@ -51,13 +52,13 @@ class Remove {
           return;
         }
 
-        Path.IsDir(path).then(isDir => {
+        PATH.Path.IsDir(path).then(isDir => {
           if (!isDir) {
             resolve(`Path is not a directory: ${path}`);
             return;
           }
 
-          RIMRAF(pTrimmed, (err) => {
+          RIMRAF(path, (err) => {
             if (err) {
               reject(`Failed to remove directory: ${err}`);
               return;
