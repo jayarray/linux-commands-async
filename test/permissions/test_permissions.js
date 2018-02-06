@@ -42,21 +42,45 @@ describe('*** permissions.js ***', () => {
       });
 
       it(`Returns null if i is a valid integer between 0 and 7.`, () => {
-        EXPECT(PERMISSIONS.Error.IntegerError(0)).to.equal('is not an integer');
-        EXPECT(PERMISSIONS.Error.IntegerError(5 - 4)).to.equal('is not an integer');
-        EXPECT(PERMISSIONS.Error.IntegerError(7)).to.equal('is not an integer');
+        EXPECT(PERMISSIONS.Error.IntegerError(0)).to.equal(null);
+        EXPECT(PERMISSIONS.Error.IntegerError(5 - 4)).to.equal(null);
+        EXPECT(PERMISSIONS.Error.IntegerError(7)).to.equal(null);
       });
-
     });
   });
 
   describe('Permissions', () => {
+    let invalidPermStr = 'r--r--r-- 12 root root 4096 Jan 1 14:30 file.txt';
+    let validPermStr = 'r--r--r--';
+
     describe('Permissions(path)', () => {
-      // TO DO
+      let invalidPath = '';
+      let validPath = rootDir;
+
+      it('Returns error if path is invalid.', () => {
+        PERMISSIONS.Permissions.Permissions(invalidPath).then(permObj => EXPECT(false))
+          .catch(error => EXPECT(true));
+      });
+
+      it('Returns permissions object if path is valid.', () => {
+        PERMISSIONS.Permissions.Permissions(validPath).then(permObj => {
+          let results = PERMISSIONS.Error.ObjectError(permObj, false);
+          EXPECT(results.error).to.equal(null);
+        }).catch(error => EXPECT(true));
+      });
     });
 
     describe('CreatePermissionsObjectUsingPermissionsString(permStr)', () => {
-      // TO DO
+      it('Returns error if permStr is invalid.', () => {
+        let results = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(invalidPermStr);
+        EXPECT(results.error).to.not.equal(null);
+      });
+
+      it('Returns an object if permStr is valid.', () => {
+        let results = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(validPermStr);
+        let error = PERMISSIONS.Error.ObjectError(results.obj, false);
+        EXPECT(error).to.equal(null);
+      });
     });
 
     describe('IntToRwxObject(int)', () => {
@@ -64,7 +88,19 @@ describe('*** permissions.js ***', () => {
     });
 
     describe('CreatePermissionsObjectUsingOctalString(octalStr) ', () => {
-      // TO DO
+      let validOctalStr = '1777';
+      let invalidOctalStr = '77A';
+
+      it('Returns error if octalStr is invalid.', () => {
+        let results = PERMISSIONS.Permissions.CreatePermissionsObjectUsingOctalString(invalidOctalStr);
+        EXPECT(results.error).to.not.equal(null);
+      });
+
+      it('Returns an object if octalStr is valid.', () => {
+        let results = PERMISSIONS.Permissions.CreatePermissionsObjectUsingOctalString(validOctalStr);
+        let error = PERMISSIONS.Error.ObjectError(results.obj, false);
+        EXPECT(error).to.equal(null);
+      });
     });
 
     describe('Equal(p1, p2)', () => {
