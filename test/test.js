@@ -30,6 +30,9 @@ mocha.addFile(PATH.join(testPermissionsDir, 'test_permissions.js'));
 let testCopyDir = PATH.join(testDir, 'copy');
 mocha.addFile(PATH.join(testCopyDir, 'test_copy.js'));
 
+let testRemoveDir = PATH.join(testDir, 'remove');
+mocha.addFile(PATH.join(testRemoveDir, 'test_remove.js'));
+
 let runner = mocha.run(() => { });
 
 //-------------------------------
@@ -50,3 +53,4 @@ importTest('path.js', PATH.join(rootDir, 'path.js'));
 importTest('list.js', PATH.join(rootDir, 'list.js'));
 importTest('permissions.js', PATH.join(rootDir, 'permissions.js'));
 importTest('copy.js', PATH.join(rootDir, 'copy.js'));
+importTest('remove.js', PATH.join(rootDir, 'remove.js'));
