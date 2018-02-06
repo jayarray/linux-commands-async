@@ -22,6 +22,9 @@ let testPathDir = PATH.join(testDir, 'path');
 mocha.addFile(PATH.join(testPathDir, 'test_path.js'));
 
 
+let testLsDir = PATH.join(testDir, 'ls');
+mocha.addFile(PATH.join(testLsDir, 'test_ls.js'));
+
 let runner = mocha.run(() => { });
 
 //-------------------------------
@@ -38,3 +41,5 @@ function importTest(name, path) {
 
 importTest('execute.js', PATH.join(__dirname, '..', 'execute.js'));
 importTest('timestamp.js', PATH.join(__dirname, '..', 'timestamp.js'));
+importTest('path.js', PATH.join(__dirname, '..', 'path.js'));
+importTest('ls.js', PATH.join(__dirname, '..', 'ls.js'));
