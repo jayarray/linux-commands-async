@@ -21,9 +21,12 @@ mocha.addFile(PATH.join(testTimestampDir, 'test_timestamp.js'));
 let testPathDir = PATH.join(testDir, 'path');
 mocha.addFile(PATH.join(testPathDir, 'test_path.js'));
 
-
 let testLsDir = PATH.join(testDir, 'ls');
 mocha.addFile(PATH.join(testLsDir, 'test_ls.js'));
+
+
+let testPermissionsDir = PATH.join(testDir, 'permissions');
+mocha.addFile(PATH.join(testPermissionsDir, 'test_permissions.js'));
 
 let runner = mocha.run(() => { });
 
@@ -43,3 +46,4 @@ importTest('execute.js', PATH.join(__dirname, '..', 'execute.js'));
 importTest('timestamp.js', PATH.join(__dirname, '..', 'timestamp.js'));
 importTest('path.js', PATH.join(__dirname, '..', 'path.js'));
 importTest('ls.js', PATH.join(__dirname, '..', 'ls.js'));
+importTest('permissions.js', PATH.join(__dirname, '..', 'permissions.js'));
