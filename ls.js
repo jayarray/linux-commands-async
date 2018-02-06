@@ -479,17 +479,6 @@ class Error {
 }
 
 //-------------------------------
-// TEST
-
-let s = 'cr--r--r-- 1 root root 4096 Jan 1 14:30 file.txt';
-let error = Error.LsStringError(s);
-if (error)
-  console.log(`ERROR: ${error}`);
-else
-  console.log(`All good! --> STRING: ${s}`);
-
-
-//-------------------------------
 // EXPORTS
 
 exports.Ls = Ls;
