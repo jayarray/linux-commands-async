@@ -1,5 +1,5 @@
 let PATH = require('./path.js');
-let LS = require('./ls.js').Ls;
+let LIST = require('./list.js').List;
 
 //--------------------------------------------
 // PERMISSIONS
@@ -7,7 +7,7 @@ let LS = require('./ls.js').Ls;
 class Permissions {
   static Permissions(path) {
     return new Promise((resolve, reject) => {
-      LS.Info(path).then(info => {
+      LIST.Info(path).then(info => {
         let permStr = info.permstr.trim();
 
         let results = Permissions.CreatePermissionsObjectUsingPermissionsString(permStr);
