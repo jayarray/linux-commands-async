@@ -23,7 +23,7 @@ class Ls {
             reject(`Failed to read filenames: ${err}`);
             return;
           }
-          resolve(files);
+          resolve(filenames);
         });
       }).catch(reject);
     });
@@ -31,36 +31,17 @@ class Ls {
 
   static VisibleFilenames(path) {
     return new Promise((resolve, reject) => {
-      Ls.AllFilenames(path).then(files => {
-        resolve(files.filter(x => !x.startsWith('.')));
+      Ls.AllFilenames(path).then(filenames => {
+        resolve(filenames.filter(x => !x.startsWith('.')));
       }).catch(reject);
     });
   }
 
   static HiddenFilenames(path) {
     return new Promise((resolve, reject) => {
-      Ls.AllFilenames(path).then(files => {
-        resolve(files.filter(x => x.startsWith('.')));
+      Ls.AllFilenames(path).then(filenames => {
+        resolve(filenames.filter(x => x.startsWith('.')));
       }).catch(reject);
-    });
-  }
-
-  static Info(path) {
-    return new Promise((resolve, reject) => {
-      Ls.FileInfo(path).then(fileInfo => {
-        resolve(fileInfo);
-      }).catch((ferr) => {
-        Ls.DirInfo(path).then(dirInfo => {
-          resolve(dirInfo);
-        }).catch((derr) => {
-          let errArr = [];
-          if (ferr.error)
-            errArr.push(ferr.error);
-          if (ferr.error)
-            errArr.push(derr.error);
-          reject({ type: null, error: `Failed to get info: ${errArr.join('; ')}` });
-        });
-      });
     });
   }
 
@@ -113,6 +94,25 @@ class Ls {
           resolve(results.info);
         }).catch(reject);
       }).catch(reject);
+    });
+  }
+
+  static Info(path) {
+    return new Promise((resolve, reject) => {
+      Ls.FileInfo(path).then(fileInfo => {
+        resolve(fileInfo);
+      }).catch((ferr) => {
+        Ls.DirInfo(path).then(dirInfo => {
+          resolve(dirInfo);
+        }).catch((derr) => {
+          let errArr = [];
+          if (ferr.error)
+            errArr.push(ferr.error);
+          if (ferr.error)
+            errArr.push(derr.error);
+          reject(`Failed to get info: ${errArr.join('; ')}`);
+        });
+      });
     });
   }
 
@@ -406,6 +406,7 @@ class Error {
     */
 
     let expectedTotal = 7;
+    let parts = [];
 
     let expectedCount = 5;
     let actualCount = 0;
@@ -422,6 +423,8 @@ class Error {
           endIndex = j;
         else {
           endIndex += 1;
+          parts.push(s.substring(startIndex, endIndex));
+
           currChar = s.charAt(endIndex);
           while (!currChar.trim()) {
             endIndex += 1;
@@ -432,15 +435,13 @@ class Error {
           break;
         }
       }
-      actualCount += 1;
     }
 
-    if (actualCount < expectedCount)
+    if (parts.length < expectedCount)
       return false;
 
     // Check date string
-    expectedCount = 3;
-    actualCount = 0;
+    let dateParts = [];
 
     for (let i = 0; i < expectedCount; ++i) {
       for (let j = startIndex; j < s.length; ++j) {
@@ -449,6 +450,7 @@ class Error {
           endIndex = j;
         else {
           endIndex += 1;
+          dateParts.push(s.substring(startIndex, endIndex));
           currChar = s.charAt(endIndex);
           while (!currChar.trim()) {
             endIndex += 1;
@@ -459,19 +461,33 @@ class Error {
           break;
         }
       }
-      actualCount += 1;
     }
 
-    if (actualCount != expectedCount)
+    if (dateParts.length != 3)
       return false
+
+    parts.push(dateParts.join(' '));
 
     // Check filepath
     let substr = s.substring(startIndex);
     if (!s.substring(startIndex))
       return false
-    return true;
+
+    parts.push(s.substring(startIndex));
+    return parts.length == expectedTotal;
   }
 }
+
+//-------------------------------
+// TEST
+
+let s = 'cr--r--r-- 1 root root 4096 Jan 1 14:30 file.txt';
+let error = Error.LsStringError(s);
+if (error)
+  console.log(`ERROR: ${error}`);
+else
+  console.log(`All good! --> STRING: ${s}`);
+
 
 //-------------------------------
 // EXPORTS
