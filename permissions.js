@@ -39,10 +39,10 @@ class Permissions {
 
     let octalTrimmed = octalStr.string.trim();
 
-    specialOctal = 0;
-    userOctal = 0;
-    groupOctal = 0;
-    othersOctal = 0;
+    let specialOctal = 0;
+    let userOctal = 0;
+    let groupOctal = 0;
+    let othersOctal = 0;
 
     if (octalTrimmed.length == 4) {
       specialOctal = parseInt(octalTrimmed.charAt(0));
@@ -50,7 +50,7 @@ class Permissions {
       groupOctal = parseInt(octalTrimmed.charAt(2));
       othersOctal = parseInt(octalTrimmed.charAt(3));
     }
-    else if (octalTrimmed == 3) {
+    else if (octalTrimmed.length == 3) {
       userOctal = parseInt(octalTrimmed.charAt(0));
       groupOctal = parseInt(octalTrimmed.charAt(1));
       othersOctal = parseInt(octalTrimmed.charAt(2));
@@ -58,25 +58,25 @@ class Permissions {
 
     let obj = {
       u: {
-        r: permTrimmed.charAt(1) != '-',
-        w: permTrimmed.charAt(2) != '-',
-        x: permTrimmed.charAt(3) != '-' && !Permissions.IsNonExecutableChar(permTrimmed.charAt(3)),
-        xchar: permTrimmed.charAt(3),
-        string: `${permTrimmed.charAt(1)}${permTrimmed.charAt(2)}${permTrimmed.charAt(3)}`
+        r: permTrimmed.charAt(0) != '-',
+        w: permTrimmed.charAt(1) != '-',
+        x: permTrimmed.charAt(2) != '-' && !Permissions.IsNonExecutableChar(permTrimmed.charAt(2)),
+        xchar: permTrimmed.charAt(2),
+        string: `${permTrimmed.charAt(0)}${permTrimmed.charAt(1)}${permTrimmed.charAt(2)}`
       },
       g: {
-        r: permpermTrimmedStr.charAt(4) != '-',
-        w: permTrimmed.charAt(5) != '-',
-        x: permTrimmed.charAt(6) != '-' && !Permissions.IsNonExecutableChar(permTrimmed.charAt(6)),
-        xchar: permTrimmed.charAt(6),
-        string: `${permTrimmed.charAt(4)}${permTrimmed.charAt(5)}${permTrimmed.charAt(6)}`
+        r: permTrimmed.charAt(3) != '-',
+        w: permTrimmed.charAt(4) != '-',
+        x: permTrimmed.charAt(5) != '-' && !Permissions.IsNonExecutableChar(permTrimmed.charAt(5)),
+        xchar: permTrimmed.charAt(5),
+        string: `${permTrimmed.charAt(3)}${permTrimmed.charAt(4)}${permTrimmed.charAt(5)}`
       },
       o: {
-        r: permTrimmed.charAt(7) != '-',
-        w: permTrimmed.charAt(8) != '-',
-        x: permTrimmed.charAt(9) != '-' && !Permissions.IsNonExecutableChar(permTrimmed.charAt(9)),
-        xchar: permStr.charAt(9),
-        string: `${permTrimmed.charAt(7)}${permTrimmed.charAt(8)}${permTrimmed.charAt(9)}`
+        r: permTrimmed.charAt(6) != '-',
+        w: permTrimmed.charAt(7) != '-',
+        x: permTrimmed.charAt(8) != '-' && !Permissions.IsNonExecutableChar(permTrimmed.charAt(8)),
+        xchar: permStr.charAt(8),
+        string: `${permTrimmed.charAt(6)}${permTrimmed.charAt(7)}${permTrimmed.charAt(8)}`
       },
       octal: {
         string: octalStr.string,
@@ -116,21 +116,22 @@ class Permissions {
 
     // Check if multiple types are set
     let areSet = [];
-    charValList.forEach(item => {
-      let others = charValList.filter(i => i.char != item.char);
-      if (item.value + other[0].value == int) {
-        areSet.push(item, other[0]);
+    for (let i = 0; i < charValList.length; ++i) {
+      let currObj = charValList[i];
+      let others = charValList.filter(i => i.char != currObj.char);
+
+      if (currObj.value + others[0].value == int) {
+        areSet.push(currObj, others[0]);
         break;
       }
-      else if (item.value + other[1].value == int) {
-        areSet.push(item, other[1]);
+      else if (currObj.value + others[1].value == int) {
+        areSet.push(currObj, others[1]);
         break;
       }
-      else if (item.value + other[0].value + other[1].value == int) {
-        areSet.push(item, other[0], other[1]);
-        break;
+      else if (currObj.value + others[0].value + others[1].value == int) {
+        areSet.push(currObj, others[0], others[1]);
       }
-    });
+    }
 
     if (areSet) {
       areSet.forEach(item => {
@@ -320,7 +321,7 @@ class Permissions {
     let userOctal = 0;
 
     let userChars = pTrimmed.substring(0, 3);
-    userChars.forEach(char => {
+    userChars.split('').forEach(char => {
       userOctal += Permissions.CharValue(char);
       if (Permissions.WillSetUidOrGuidOrStickybit(char))
         uidIsSet = true;
@@ -335,7 +336,7 @@ class Permissions {
     let groupOctal = 0;
 
     let groupChars = pTrimmed.substring(3, 6);
-    groupChars.forEach(char => {
+    groupChars.split('').forEach(char => {
       groupOctal += Permissions.CharValue(char);
       if (Permissions.WillSetUidOrGuidOrStickybit(char))
         gidIsSet = true;
@@ -350,7 +351,7 @@ class Permissions {
     let othersOctal = 0;
 
     let othersChars = pTrimmed.substring(6, 9);
-    othersChars.forEach(char => {
+    othersChars.split('').forEach(char => {
       othersOctal += Permissions.CharValue(char);
       if (Permissions.WillSetUidOrGuidOrStickybit(char))
         stickybitIsSet = true;
@@ -361,9 +362,9 @@ class Permissions {
 
 
     // Return octal string
-    let octalStr = `${userOctal} ${groupOctal} ${othersOctal}`;
+    let octalStr = `${userOctal}${groupOctal}${othersOctal}`;
     if (specialOctal > 0)
-      octalStr = `${specialOctal} ${octalStr} `;
+      octalStr = `${specialOctal}${octalStr}`;
     return { string: octalStr, error: null };
   }
 
@@ -435,10 +436,10 @@ class Permissions {
   }
 
   static CharIsValid(c) {
-    return Permissions.ValidFileTypeChars.includes(c) ||
-      Permissions.ValidReadChars.includes(c) ||
-      Permissions.ValidWriteChars.includes(c) ||
-      Permissions.ValidExecuteChars.includes(c);
+    return Permissions.ValidFileTypeChars().includes(c) ||
+      Permissions.ValidReadChars().includes(c) ||
+      Permissions.ValidWriteChars().includes(c) ||
+      Permissions.ValidExecuteChars().includes(c);
   }
 }
 
@@ -478,7 +479,7 @@ class Error {
     if (string.length != validSize)
       return `Permissions string must contain exactly ${validSize} characters`;
 
-    string.forEach(char => {
+    string.split('').forEach(char => {
       if (!Permissions.CharIsValid(char))
         return `Permissions string contains invalid characters`;
     });
@@ -541,19 +542,25 @@ class Error {
     if (octalStr.length < lengthMin && octalStr.length > lengthMax)
       return `Octal string must have ${lengthMin} or ${lengthMax} characters`;
 
+    let numbersAsStrings = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => i.toString());
+    for (let i = 0; i < octalStr.length; ++i) {
+      let char = octalStr.charAt(i);
+      if (!numbersAsStrings.includes(char))
+        return 'Octal string contains non-numeric characters';
+    }
+
     let valMin = 0;
     let valMax = 7;
 
-    octalStr.forEach(char => {
+    octalStr.split('').forEach(char => {
       try {
         let i = parseInt(char);
         if (i < valMin && i > valMax)
           return `Octal string numeric values must be between ${valMin} and ${valMax} `;
       } catch (error) {
-        return `Octal string contains non- numeric characters`;
+        return `Could not parse char to int: ${error}`;
       }
     });
-
     return null;
   }
 
@@ -596,35 +603,54 @@ class Error {
     });
 
     if (
-      !Permissions.ValidExecuteChars.includes(obj.u.xchar) ||
-      !Permissions.ValidExecuteChars.includes(obj.g.xchar) ||
-      !Permissions.ValidExecuteChars.includes(obj.o.xchar)
+      !Permissions.ValidExecuteChars().includes(obj.u.xchar) ||
+      !Permissions.ValidExecuteChars().includes(obj.g.xchar) ||
+      !Permissions.ValidExecuteChars().includes(obj.o.xchar)
     )
       return `${prefix} values for xchar are not valid characters`;
 
     if (isPseudo)
-      return true;
+      return null;
 
     if (
-      obj.octal.string != '' &&
-      obj.octal.string.trim() &&
-      Number.isInteger(obj.octal.special) &&
-      Number.isInteger(obj.octal.user) &&
-      Number.isInteger(obj.octal.group) &&
-      Number.isInteger(obj.octal.others)
+      obj.octal.string == '' ||
+      !obj.octal.string.trim() ||
+      !Number.isInteger(obj.octal.special) ||
+      !Number.isInteger(obj.octal.user) ||
+      !Number.isInteger(obj.octal.group) ||
+      !Number.isInteger(obj.octal.others)
     )
       return `${prefix} values for octal are incorrect types`;
 
     if (
-      obj.owner != '' && obj.owner.trim() &&
-      obj.group != '' && obj.group.trim() &&
-      obj.string != '' && obj.string.trim()
+      obj.owner === undefined ||
+      obj.group === undefined ||
+      obj.string === undefined
     )
       return `${prefix} values for owner, group, string are empty or whitespace`;
 
     return null;
   }
 }
+
+//---------------------------------
+// TEST
+
+let validOctalStr = '1770';
+let invalidOctalStr = '11A';
+
+let results = Permissions.CreatePermissionsObjectUsingOctalString(validOctalStr);
+
+if (results.error)
+  console.log(`ERROR: ${results.error}`);
+else
+  console.log('OCTAL STRING is OK!');
+
+let error = Error.ObjectError(results.obj, true);
+if (error)
+  console.log(`ERROR: ${error}`);
+else
+  console.log(`OBJECT: ${JSON.stringify(results.obj)}`);
 
 //---------------------------------
 // EXPORTS
