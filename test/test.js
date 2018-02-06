@@ -24,6 +24,8 @@ mocha.addFile(PATH.join(testPathDir, 'test_path.js'));
 let testLsDir = PATH.join(testDir, 'ls');
 mocha.addFile(PATH.join(testLsDir, 'test_ls.js'));
 
+let testCopyDir = PATH.join(testDir, 'copy');
+mocha.addFile(PATH.join(testCopyDir, 'test_copy.js'));
 
 let testPermissionsDir = PATH.join(testDir, 'permissions');
 mocha.addFile(PATH.join(testPermissionsDir, 'test_permissions.js'));
@@ -42,8 +44,9 @@ function importTest(name, path) {
 //-------------------------------
 // TESTS
 
-importTest('execute.js', PATH.join(__dirname, '..', 'execute.js'));
-importTest('timestamp.js', PATH.join(__dirname, '..', 'timestamp.js'));
-importTest('path.js', PATH.join(__dirname, '..', 'path.js'));
-importTest('ls.js', PATH.join(__dirname, '..', 'ls.js'));
-importTest('permissions.js', PATH.join(__dirname, '..', 'permissions.js'));
+importTest('execute.js', PATH.join(rootDir, 'execute.js'));
+importTest('timestamp.js', PATH.join(rootDir, 'timestamp.js'));
+importTest('path.js', PATH.join(rootDir, 'path.js'));
+importTest('ls.js', PATH.join(rootDir, 'ls.js'));
+importTest('permissions.js', PATH.join(rootDir, 'permissions.js'));
+importTest('copy.js', PATH.join(rootDir, 'copy.js'));
