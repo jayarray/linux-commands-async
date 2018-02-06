@@ -371,7 +371,7 @@ class Permissions {
   static FileTypeName(char) {
     let error = Error.NullOrUndefined(char);
     if (error)
-      return { name: null, error: `Failed to get file type name. Char is ${invalidType}` };
+      return { name: null, error: `Failed to get file type name. Char is ${error}` };
 
     let name = Permissions.FileTypeCharToNameDict()[char];
     if (!name)
