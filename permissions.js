@@ -634,25 +634,6 @@ class Error {
 }
 
 //---------------------------------
-// TEST
-
-let validOctalStr = '1770';
-let invalidOctalStr = '11A';
-
-let results = Permissions.CreatePermissionsObjectUsingOctalString(validOctalStr);
-
-if (results.error)
-  console.log(`ERROR: ${results.error}`);
-else
-  console.log('OCTAL STRING is OK!');
-
-let error = Error.ObjectError(results.obj, true);
-if (error)
-  console.log(`ERROR: ${error}`);
-else
-  console.log(`OBJECT: ${JSON.stringify(results.obj)}`);
-
-//---------------------------------
 // EXPORTS
 
 exports.Permissions = Permissions;
