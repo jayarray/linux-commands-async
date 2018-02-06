@@ -12,7 +12,7 @@ class Copy {
         return;
       }
 
-      let error = PATH.Error.PathError(dest);
+      error = PATH.Error.PathError(dest);
       if (error) {
         reject(`Destination error: ${error}`);
         return;
