@@ -24,11 +24,11 @@ mocha.addFile(PATH.join(testPathDir, 'test_path.js'));
 let testLsDir = PATH.join(testDir, 'ls');
 mocha.addFile(PATH.join(testLsDir, 'test_ls.js'));
 
-let testCopyDir = PATH.join(testDir, 'copy');
-mocha.addFile(PATH.join(testCopyDir, 'test_copy.js'));
-
 let testPermissionsDir = PATH.join(testDir, 'permissions');
 mocha.addFile(PATH.join(testPermissionsDir, 'test_permissions.js'));
+
+let testCopyDir = PATH.join(testDir, 'copy');
+mocha.addFile(PATH.join(testCopyDir, 'test_copy.js'));
 
 let runner = mocha.run(() => { });
 
