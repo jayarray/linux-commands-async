@@ -12,7 +12,7 @@ class Permissions {
 
         let results = Permissions.CreatePermissionsObjectUsingPermissionsString(permStr);
         if (results.error) {
-          reject({ permissions: null, error: results.error });
+          reject(results.error);
           return;
         }
 
@@ -21,7 +21,7 @@ class Permissions {
         permObj.group = info.group;
         permObj.filetype = info.filetype;
 
-        resolve({ permissions: permObj, error: null });
+        resolve(permObj);
       }).catch(reject);
     });
   }
@@ -613,3 +613,9 @@ class Error {
     return null;
   }
 }
+
+//---------------------------------
+// EXPORTS
+
+exports.Permissions = Permissions;
+exports.Error = Error;
