@@ -1,4 +1,5 @@
 let PATH = require('./path.js');
+let FS = require('fs-extra');
 
 //------------------------------------------------------
 // MOVE 
@@ -17,7 +18,7 @@ class Move {
         return;
       }
 
-      Path.exists(src).then(exists => {
+      PATH.Path.Exists(src).then(exists => {
         if (!exists) {
           reject(`Source error: Path does not exist: ${src}`);
           return;
@@ -34,6 +35,21 @@ class Move {
     });
   }
 }
+
+
+//--------------------------------
+// TEST
+
+let _path = require('path');
+
+let src = _path.join(__dirname, 'delete_me.txt');
+let dest = _path.join(__dirname, 'delete_this_moved_file.txt');
+
+Move.Move(src, dest).then(bool => {
+  console.log(`SUCCESS: ${bool}`);
+}).catch(error => {
+  console.log(`ERROR: ${error}`);
+});
 
 //----------------------------------
 // EXPORTS
