@@ -327,16 +327,6 @@ class Error {
     }
     return null;
   }
-
-  static ArgsError(args) {
-    let error = Error.NullOrUndefined(args);
-    if (error)
-      return error;
-
-    if (!Array.isArray(args))
-      return 'not an array';
-    return null;
-  }
 }
 
 //-----------------------------------
