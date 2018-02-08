@@ -284,12 +284,48 @@ class Error {
       return null;
   }
 
-  static FlagsError(flags) { // CONT HERE
-    // TO DO
+  static FlagsError(flags) {
+    let error = Error.NullOrUndefined(options);
+    if (error)
+      return `Flags is ${error}`;
+
+    if (!Array.isArray(flags))
+      return 'Flags is not an array';
+
+    // Make sure all flags are valid
+    for (let i = 0; i < flags; ++i) {
+      let currFlag = flags[i];
+
+      let strError = Error.StringError(currFlag);
+      if (strError)
+        return `Flags contains an element that is ${strError}`;
+      else if (currFlag.length != 1)
+        return 'Flags can only contain single character strings';
+    }
+    return null;
   }
 
   static OptionsError(options) {
-    // TO DO
+    let error = Error.NullOrUndefined(options);
+    if (error)
+      return `Options is ${error}`;
+
+    if (!Array.isArray(options))
+      return 'Options is not an array';
+
+    // Make sure all options are valid
+    for (let i = 0; i < options; ++i) {
+      let currOption = options[i];
+
+      let strError = Error.StringError(currOption);
+      if (strError)
+        return `Options contains an element that is ${strError}`;
+      else if (!currOption.startsWith('--'))
+        return `Options must start with '--'`;
+      else if (currOption.length < 3)  // --*
+        return `Options must start with '--' followed by 1 or more characters`;
+    }
+    return null;
   }
 
   static ArgsError(args) {
