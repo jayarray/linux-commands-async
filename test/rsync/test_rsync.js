@@ -4,39 +4,50 @@ let _path = require('path');
 let rootDir = _path.join(__dirname, '..', '..');
 
 let rsyncJs = _path.join(rootDir, 'rsync.js');
-let MOVE = require(rsyncJs);
+let RSYNC = require(rsyncJs);
 
 let FS = require('fs-extra');
 
 //------------------------------------------
 
-describe('*** move.js ***', () => {
-  describe('Move', () => {
-    describe('Move(path)', () => {
-      it('Returns an error if path is invalid.', () => {
-        MOVE.Move(undefined).then(success => EXPECT(false))
-          .catch(error => EXPECT(true));
-      });
+describe('*** rsync.js ***', () => {
+  describe('Error', () => {
+    describe('NullOrUndefined(o)', () => {
+      // TO DO
+    });
 
-      it('Actually moves a file.', () => {
-        // Write a test file
-        let src = _path.join(rootDir, 'delete_me.txt');
-        let text = 'Delete me!';
+    describe('StringError(s)', () => {
+      // TO DO
+    });
 
-        FS.writeFile(src, text, (err) => {
-          if (err)
-            EXPECT(false);
+    describe('FlagsError(flags)', () => {
+      // TO DO
+    });
 
-          // Move it
-          let dest = _path.join(rootDir, 'delete_this_moved_file.txt');
-          MOVE.Move(src, dest).then(bool => {
-            // Delete it
-            FS.unlink(dest, (err) => {
-              EXPECT(true);
-            });
-          }).catch(error => EXPECT(false));
-        });
-      });
+    describe('OptionsError(options)', () => {
+      // TO DO
+    });
+  });
+
+  describe('Rsync', () => {
+    describe('Rsync(user, host, src, dest)', () => {
+      // TO DO
+    });
+
+    describe('Update(user, host, src, dest)', () => {
+      // TO DO
+    });
+
+    describe('Match(user, host, src, dest)', () => {
+      // TO DO
+    });
+
+    describe('Manual(user, host, src, dest)', () => {
+      // TO DO
+    });
+
+    describe('DryRun(user, host, src, dest)', () => {
+      // TO DO
     });
   });
 });
