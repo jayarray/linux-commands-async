@@ -36,21 +36,6 @@ class Move {
   }
 }
 
-
-//--------------------------------
-// TEST
-
-let _path = require('path');
-
-let src = _path.join(__dirname, 'delete_me.txt');
-let dest = _path.join(__dirname, 'delete_this_moved_file.txt');
-
-Move.Move(src, dest).then(bool => {
-  console.log(`SUCCESS: ${bool}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
-
 //----------------------------------
 // EXPORTS
 
