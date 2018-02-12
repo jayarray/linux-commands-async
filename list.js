@@ -171,6 +171,9 @@ class List {
     if (error)
       return ({ info: null, error: `Failed to parse ls string: ${error}` });
 
+    if (!List.LsStringIsFormattedCorrectly(string))
+      return ({ info: null, error: `Ls string is not formatted correctly. Format is: <permString> <hardlinks> <user> <group> <size> <month> <day> <'HH:MM'|year> <filename>` });
+
     // PERMS
     let permStr = '';
     let startIndex = 0;
@@ -362,19 +365,6 @@ class List {
     };
     return { info: info, error: null };
   }
-}
-
-//----------------------------------------
-// ERROR
-
-class Error {
-  static LsStringError(s) {
-    // Check if undefined
-    let error = ERROR.StringError(s);
-    if (error)
-      return `Ls string is ${error}`;
-    return null;
-  }
 
   static LsStringIsFormattedCorrectly(s) {
     /* Check if it has 7 parts: 
@@ -397,7 +387,7 @@ class Error {
     let endIndex = 0;
     let spaceDelimitedStrings = 5;
 
-    // Check permissions string
+    // Check permissions string, hard links, user, group, and size
     for (let i = 0; i < spaceDelimitedStrings; ++i) {
       for (let j = startIndex; j < s.length; ++j) {
         let currChar = s.charAt(j);
@@ -457,6 +447,19 @@ class Error {
 
     parts.push(s.substring(startIndex));
     return parts.length == expectedTotal;
+  }
+}
+
+//----------------------------------------
+// ERROR
+
+class Error {
+  static LsStringError(s) {
+    // Check if undefined
+    let error = ERROR.StringError(s);
+    if (error)
+      return `Ls string is ${error}`;
+    return null;
   }
 }
 
