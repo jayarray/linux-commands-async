@@ -628,4 +628,3 @@ class Error {
 // EXPORTS
 
 exports.Permissions = Permissions;
-exports.Error = Error;
