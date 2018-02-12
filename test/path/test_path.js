@@ -10,22 +10,6 @@ let PATH = require(pathJs);
 
 describe('*** path.js ***', () => {
   describe('Error', () => {
-    describe('NullOrUndefined(o)', () => {
-      it(`Returns 'undefined' if o is undefined.`, () => {
-        EXPECT(PATH.Error.NullOrUndefined(undefined)).to.equal('undefined');
-      });
-
-      it(`Returns 'null' if o is null.`, () => {
-        EXPECT(PATH.Error.NullOrUndefined(null)).to.equal('null');
-      });
-
-      it('Returns null if o is defined.', () => {
-        EXPECT(PATH.Error.NullOrUndefined(1)).to.equal(null);
-        EXPECT(PATH.Error.NullOrUndefined('Hai')).to.equal(null);
-        EXPECT(PATH.Error.NullOrUndefined([])).to.equal(null);
-      });
-    });
-
     describe('PathError(p)', () => {
       it(`Returns 'undefined' if p is undefined.`, () => {
         EXPECT(PATH.Error.PathError(undefined)).to.equal('Path is undefined');
@@ -81,8 +65,7 @@ describe('*** path.js ***', () => {
       it('Returns error if path is invalid.', () => {
         PATH.Path.IsFile(invalidPath).then(o => EXPECT(false))
           .catch(error => {
-            let invalidType = PATH.Error.PathError(invalidPath);
-            EXPECT(error).to.equal(`Path is ${invalidType}`);
+            EXPECT(error).to.equal(`Path is empty`);
           });
       });
     });
@@ -91,8 +74,7 @@ describe('*** path.js ***', () => {
       it('Returns error if path is invalid.', () => {
         PATH.Path.IsDir(invalidPath).then(o => EXPECT(false))
           .catch(error => {
-            let invalidType = PATH.Error.PathError(invalidPath);
-            EXPECT(error).to.equal(`Path is ${invalidType}`);
+            EXPECT(error).to.equal(`Path is empty`);
           });
       });
     });
@@ -165,10 +147,9 @@ describe('*** path.js ***', () => {
 
     describe('Escape(path)', () => {
       it('Returns error if path is invalid.', () => {
-        let invalidType = PATH.Error.PathError(invalidPath);
         let o = PATH.Path.Escape(invalidPath);
         if (o.error)
-          EXPECT(o.error).to.equal(`Path is ${invalidType}`);
+          EXPECT(o.error).to.equal(`Path is empty`);
         EXPECT(false);
       });
 
@@ -182,10 +163,9 @@ describe('*** path.js ***', () => {
 
     describe('ContainsWhitespace(path)', () => {
       it('Returns error if path is invalid.', () => {
-        let invalidType = PATH.Error.PathError(invalidPath);
         let o = PATH.Path.ContainsWhitespace(invalidPath);
         if (o.error)
-          EXPECT(o.error).to.equal(`Path is ${invalidType}`);
+          EXPECT(o.error).to.equal(`Path is empty`);
         EXPECT(false);
       });
 
