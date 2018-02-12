@@ -1,6 +1,5 @@
 //-------------------------------------
 // ERROR
-
 class Error {
   static NullOrUndefined(o) {
     if (o === undefined)
