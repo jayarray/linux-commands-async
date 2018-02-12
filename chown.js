@@ -5,7 +5,7 @@ let ERROR = require('./error.js').Error;
 //-----------------------------------------------
 // CHOWN
 class Chown {
-  static chown(path, uid, gid) { // uid, gid are integers
+  static Chown(path, uid, gid) { // uid, gid are integers
     return new Promise((resolve, reject) => {
       PATH.Exists(path).then(exists => {
         if (!exists) {
