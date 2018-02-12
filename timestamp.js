@@ -1,3 +1,7 @@
+let ERROR = require('./error.js').Error;
+
+//-------------------------------------
+
 class Timestamp {
   static Timestamp() {
     let d = new Date();
@@ -165,7 +169,7 @@ class Timestamp {
   }
 
   static MonthIndex(name) {
-    let error = Error.StringError(name);
+    let error = ERROR.StringError(name);
     if (error)
       return { index: null, error: `MONTH_NAME_ERROR: Name is ${error}` };
 
@@ -179,7 +183,7 @@ class Timestamp {
   }
 
   static DayOfTheWeekIndex(name) {
-    let error = Error.StringError(name);
+    let error = ERROR.StringError(name);
     if (error)
       return { index: null, error: `DAY_OF_WEEK_INDEX_ERROR: Name is ${error}` };
 
@@ -193,32 +197,8 @@ class Timestamp {
 // ERROR
 
 class Error {
-  static NullOrUndefined(o) {
-    if (o === undefined)
-      return 'undefined';
-    else if (o == null)
-      return 'null';
-    else
-      return null;
-  }
-
-  static StringError(s) {
-    let error = Error.NullOrUndefined(s);
-    if (error)
-      return error;
-
-    if (typeof s != 'string')
-      return 'not a string';
-    else if (s == '')
-      return 'empty';
-    else if (s.trim() == '')
-      return 'whitespace'
-    else
-      return null;
-  }
-
   static MeridiemTimeStringError(string) {
-    let error = Error.StringError(string);
+    let error = ERROR.StringError(string);
     if (error)
       return `Time string is ${error}`;
 
@@ -290,7 +270,7 @@ class Error {
   }
 
   static MilitaryTimeStringError(string) {
-    let error = Error.StringError(string);
+    let error = ERROR.StringError(string);
     if (error)
       return `Time string is ${error}`;
 
@@ -359,7 +339,7 @@ class Error {
   }
 
   static DateObjectError(dateObj) {
-    let error = Error.NullOrUndefined(dateObj);
+    let error = ERROR.NullOrUndefined(dateObj);
     if (error)
       return `Date object is ${error}`;
 
@@ -430,4 +410,3 @@ class Error {
 // EXPORTS
 
 exports.Timestamp = Timestamp;
-exports.Error = Error;
