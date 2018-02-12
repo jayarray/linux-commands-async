@@ -1,4 +1,4 @@
-var CHILD_PROCESS = require('child_process');
+let CHILD_PROCESS = require('child_process');
 let ERROR = require('./error.js').Error;
 
 //---------------------------------------------
