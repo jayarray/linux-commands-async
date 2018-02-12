@@ -51,8 +51,12 @@ mocha.addFile(PATH.join(testMoveDir, 'test_move.js'));*/
 let testRsyncDir = PATH.join(testDir, 'rsync');
 mocha.addFile(PATH.join(testRsyncDir, 'test_rsync.js'));*/
 
+/*
 let testAdminDir = PATH.join(testDir, 'admin');
-mocha.addFile(PATH.join(testAdminDir, 'test_admin.js'));
+mocha.addFile(PATH.join(testAdminDir, 'test_admin.js'));*/
+
+let testUserinfoDir = PATH.join(testDir, 'userinfo');
+mocha.addFile(PATH.join(testUserinfoDir, 'test_userinfo.js'));
 
 let runner = mocha.run(() => { });
 
@@ -78,4 +82,5 @@ function importTest(name, path) {
 //importTest('mkdir.js', PATH.join(rootDir, 'mkdir.js'));
 //importTest('move.js', PATH.join(rootDir, 'move.js'));
 //importTest('rsync.js', PATH.join(rootDir, 'rsync.js'));
-importTest('admin.js', PATH.join(rootDir, 'admin.js'));
+//importTest('admin.js', PATH.join(rootDir, 'admin.js'));
+importTest('userinfo.js', PATH.join(rootDir, 'userinfo.js'));
