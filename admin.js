@@ -58,7 +58,24 @@ class Groups {
   }
 
   static Get(id) {
-    // Return group obj
+    return new Promise((resolve, reject) => {
+      Groups.Exists(id).then(exists => {
+        if (!exists) {
+          reject('group does not exist');
+          return;
+        }
+
+        Groups.All().then(groups => {
+          for (let i = 0; i < groups.length; ++i) {
+            let currGroup = groups[i];
+            if ((typeof id == 'string' && currGroup.name == id) || (Number.isInteger(id) && currGroup.id == id)) {
+              resolve(currGroup);
+              return;
+            }
+          }
+        }).catch(reject);
+      }).catch(reject);
+    });
   }
 }
 
@@ -115,7 +132,24 @@ class Users {
   }
 
   static Get(id) {
-    // Return user obj
+    return new Promise((resolve, reject) => {
+      Users.Exists(id).then(exists => {
+        if (!exists) {
+          reject('user does not exist');
+          return;
+        }
+
+        Users.All().then(users => {
+          for (let i = 0; i < groups.length; ++i) {
+            let currUser = users[i];
+            if ((typeof id == 'string' && currUser.name == id) || (Number.isInteger(id) && currUser.id == id)) {
+              resolve(currUser);
+              return;
+            }
+          }
+        }).catch(reject);
+      }).catch(reject);
+    });
   }
 }
 
