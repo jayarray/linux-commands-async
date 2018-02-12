@@ -1,5 +1,6 @@
 let PATH = require('./path.js');
 let LIST = require('./list.js').List;
+let ERROR = require('./error.js').Error;
 
 //--------------------------------------------
 // PERMISSIONS
@@ -369,7 +370,7 @@ class Permissions {
   }
 
   static FileTypeName(char) {
-    let error = Error.NullOrUndefined(char);
+    let error = ERROR.NullOrUndefined(char);
     if (error)
       return { name: null, error: `Failed to get file type name. Char is ${error}` };
 
@@ -446,32 +447,22 @@ class Permissions {
 //----------------------------------------
 // ERROR
 class Error {
-  static NullOrUndefined(o) {
-    if (o === undefined)
-      return 'undefined';
-    else if (o == null)
-      return 'null';
-    else
-      return null;
-  }
-
   static IntegerError(i) {
-    let error = Error.NullOrUndefined(i);
+    let error = ERROR.IntegerError(i);
     if (error)
       return `is ${error}`;
 
-    if (!Number.isInteger(i))
-      return `is not an integer`;
+    let min = 0;
+    let max = 7;
 
-    let iMin = 0;
-    let iMax = 7;
-    if (i < iMin && i > iMax)
-      return `must be a value between ${iMin} and ${iMax}`;
+    error = ERROR.BoundIntegerError(i, min, max);
+    if (error)
+      return error;
     return null;
   }
 
   static PermissionsStringError(string) {
-    let error = Error.NullOrUndefined(string);
+    let error = ERROR.NullOrUndefined(string);
     if (error)
       return `Permissions string is ${error} `;
 
@@ -532,7 +523,7 @@ class Error {
   }
 
   static OctalStringError(octalStr) {
-    let error = Error.NullOrUndefined(octalStr);
+    let error = ERROR.NullOrUndefined(octalStr);
     if (error)
       return `Octal string is ${error} `;
 
@@ -565,7 +556,7 @@ class Error {
   }
 
   static ObjectError(obj, isPseudo) {
-    let error = Error.NullOrUndefined(obj);
+    let error = ERROR.NullOrUndefined(obj);
     if (error)
       return `Object is ${error} `;
 
