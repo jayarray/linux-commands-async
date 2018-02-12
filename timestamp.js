@@ -12,19 +12,21 @@ class Timestamp {
     let seconds = d.getSeconds();  // 0-59
     let milliseconds = d.getMilliseconds();  // 0-999 
 
-    let militaryTime = {  // 24-hour format
-      hours: hours,
-      minutes: minutes,
-      seconds: seconds,
-      milliseconds: milliseconds,
-      string: `${hours}:${minutes}:${seconds}`
-    }
+    let hoursStr = `00${hours}`.slice(-2);
 
     let minutesStr = `00${minutes}`;
     minutesStr = minutesStr.slice(-2);
 
     let secondsStr = `00${seconds}`;
     secondsStr = secondsStr.slice(-2);
+
+    let militaryTime = {  // 24-hour format
+      hours: hours,
+      minutes: minutes,
+      seconds: seconds,
+      milliseconds: milliseconds,
+      string: `${hoursStr}:${minutesStr}:${secondsStr}`
+    }
 
     let adjustedHours = null;
     let suffix = null;
@@ -46,7 +48,9 @@ class Timestamp {
       suffix = 'AM';
     }
 
-    let timeStr = `${adjustedHours}:${minutesStr}:${secondsStr} ${suffix}`;
+    hoursStr = `00${adjustedHours}`.slice(-2);
+
+    let timeStr = `${hoursStr}:${minutesStr}:${secondsStr} ${suffix}`;
 
     let meridiemTime = {  // 12-hour format (AM | PM)
       hours: adjustedHours,
@@ -121,7 +125,7 @@ class Timestamp {
   }
 
   static MeridiemToMilitaryTime(meridiemTime) {
-    let error = Error.MeridiemTimeStringError(meridiemTime); i
+    let error = Error.MeridiemTimeStringError(meridiemTime);
     if (error)
       return { string: null, error: error };
 
@@ -133,7 +137,7 @@ class Timestamp {
     let minutesStr = parts[1];
     let minutesVal = parseInt(minutesStr);
 
-    let secondsStr = parts[2];
+    let secondsStr = parts[2].split(' ')[0].trim();
     let secondsVal = parseInt(secondsStr);
 
     let adjustedHours = null;
@@ -158,9 +162,9 @@ class Timestamp {
     if (error)
       return { milliseconds: null, error: `DATE2_OBJ_ERROR: ${error}` };
 
-    let date1 = new Date(d1.year, d1.month_number, d1.day_of_month, d1.hours, d1.minutes, d1.seconds, d1.milliseconds);
-    let date2 = new Date(d2.year, d2.month_number, d2.day_of_month, d2.hours, d2.minutes, d2.seconds, d2.milliseconds);
-    return ({ milliseconds: date1.getTime() - d2.getTime(), error: null });
+    let date1 = new Date(d1.year, d1.month, d1.day, d1.hours, d1.minutes, d1.seconds, d1.milliseconds);
+    let date2 = new Date(d2.year, d2.month, d2.day, d2.hours, d2.minutes, d2.seconds, d2.milliseconds);
+    return ({ milliseconds: date2.getTime() - date1.getTime(), error: null });
   }
 
   static Months() {
@@ -344,25 +348,25 @@ class Error {
 
     // Check if obj missing values
     if (
-      !(dateObj.year === undefined) &&
-      !(dateObj.month_number === undefined) &&
-      !(dateObj.day_of_month === undefined) &&
-      !(dateObj.hours === undefined) &&
-      !(dateObj.minutes === undefined) &&
-      !(dateObj.seconds === undefined) &&
-      !(dateObj.milliseconds === undefined)
+      dateObj.year === undefined ||
+      dateObj.month === undefined ||
+      dateObj.day === undefined ||
+      dateObj.hours === undefined ||
+      dateObj.minutes === undefined ||
+      dateObj.seconds === undefined ||
+      dateObj.milliseconds === undefined
     )
       return 'Date object is missing required values';
 
     // Check if obj values are all integers and in range
     if (
-      Number.isInteger(dateObj.year) &&
-      Number.isInteger(dateObj.month_number) &&
-      Number.isInteger(dateObj.day) &&
-      Number.isInteger(dateObj.hours) &&
-      Number.isInteger(dateObj.minutes) &&
-      Number.isInteger(dateObj.seconds) &&
-      Number.isInteger(dateObj.milliseconds)
+      !Number.isInteger(dateObj.year) ||
+      !Number.isInteger(dateObj.month) ||
+      !Number.isInteger(dateObj.day) ||
+      !Number.isInteger(dateObj.hours) ||
+      !Number.isInteger(dateObj.minutes) ||
+      !Number.isInteger(dateObj.seconds) ||
+      !Number.isInteger(dateObj.milliseconds)
     )
       return 'Date object values must all be integers';
 
@@ -383,7 +387,7 @@ class Error {
     if (dateObj.year < 0)
       return 'Year must be integer greater than or equal to 0';
 
-    if (dateObj.month_number < monthMin || dateObj.month_number > monthMax)
+    if (dateObj.month < monthMin || dateObj.month > monthMax)
       return `Month must be integer between ${monthMin} and ${monthMax}`;
 
     if (dateObj.day < dayMin || dateObj.day > dayMax)
