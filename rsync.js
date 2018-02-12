@@ -41,7 +41,7 @@ class Rsync {
         let args = ['-a', src, `${user.trim()}@${host.trim()}:${dest}`];
         EXECUTE.Local('rsync', args).then(output => {
           if (output.stderr) {
-            reject(`Rsync failed: Exit code (${output.exitCode}): ${output.stderr}`);
+            reject(`Rsync failed: ${output.stderr}`);
             return;
           }
           resolve(output.stdout);
@@ -85,7 +85,7 @@ class Rsync {
         let args = ['-a', '--update', src, `${user.trim()}@${host.trim()}:${dest}`];
         EXECUTE.local('rsync', args).then(output => {
           if (output.stderr) {
-            reject(`Rsync failed: Exit code (${output.exitCode}): ${output.stderr}`);
+            reject(`Rsync failed: ${output.stderr}`);
             return;
           }
           resolve(output.stdout);
@@ -129,7 +129,7 @@ class Rsync {
         let args = ['-a', '--delete-after', sTrimmed, `${user.trim()}@${host.trim()}:${dest.trim()}`];
         EXECUTE.Local('rsync', args).then(output => {
           if (output.stderr) {
-            reject(`Rsync failed: Exit code (${output.exitCode}): ${output.stderr}`);
+            reject(`Rsync failed: ${output.stderr}`);
             return;
           }
           resolve(output.stdout);
@@ -188,7 +188,7 @@ class Rsync {
         let args = [flagStr, optionStr, src, `${user.trim()}@${host.trim()}:${dest}`];
         EXECUTE.Local('rsync', args).then(output => {
           if (output.stderr) {
-            reject(`Rsync failed: Exit code (${output.exitCode}): ${output.stderr}`);
+            reject(`Rsync failed: ${output.stderr}`);
             return;
           }
           resolve(output.stdout);
@@ -247,12 +247,12 @@ class Rsync {
         let args = [flagStr, '--dry-run', optionStr, sTrimmed, `${user}@${host}:${dest}`];
         EXECUTE.Local('rsync', args).then(output => {
           if (output.stderr) {
-            reject(`Rsync failed: Exit code (${output.exitCode}): ${output.stderr}`);
+            reject(`Rsync failed: ${output.stderr}`);
             return;
           }
           resolve(output.stdout);
-        }).catch(fatalFail);
-      }).catch(fatalFail);
+        }).catch(reject);
+      }).catch(reject);
     });
   }
 }
@@ -304,4 +304,3 @@ class Error {
 // EXPORTS
 
 exports.Rsync = Rsync;
-exports.Error = Error;
