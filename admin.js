@@ -64,7 +64,6 @@ class Groups {
 
 //-------------------------------------
 // USERS
-
 class Users {
   static All() {
     return new Promise((resolve, reject) => {
@@ -527,9 +526,50 @@ class Commands {
 
         // mem str
         let memStr = lines[3].split(':')[1].trim();
+        let memParts = memStr.split(',');
+
+        let mem = {};
+        memParts.forEach(part => {
+          let parts = part.split(' ').map(p => p.trim());
+          let float = parseInt(parts[0].trim());
+
+          let name = parts[1].trim();
+          if (name.includes('/'))
+            name = name.replace('/', '');
+
+          mem[name] = float
+        });
 
         // swap str
-        let memStr = lines[4].split(':')[1].trim();
+        let swapStr = lines[4].split(':')[1].trim();
+        let swapParts = swapStr.split(',');
+
+        let swap = {};
+        for (let i = 0; i < 2; ++i) {
+          let currSwapPart = swapParts[i];
+          let parts = currSwapPart.split(' ');
+          let int = parseInt(parts[0].trim());
+          let name = parts[1].trim();
+          swap[name] = int;
+        }
+
+        let otherParts = swapParts[2].split('.');
+
+        // swap: used
+        let currPart = otherParts[0].trim();
+        let parts = currPart.split(' ');
+        let int = parseInt(parts[0].trim());
+        let name = parts[1].trim();
+        swap[name] = int;
+
+        // swap: avail Mem
+        currPart = otherParts[1].trim();
+        parts = currPart.split(' ');
+        int = parseInt(parts[0].trim());
+        firstWord = parts[1].trim();
+        secondWord = parts[2].trim().toLowerCase();
+        name = firstWord + secondWord;
+        swap[name] = int;
 
         // headers
         let headersStr = lines[5].trim();
@@ -572,7 +612,17 @@ class Commands {
           };
           processes.push(process);
         });
-        resolve(processes);
+
+        let result = {
+          uptime: uptimeObj,
+          tasks: tasks,
+          cpu: cpu,
+          mem: mem,
+          swap: swap,
+          processes: process
+        };
+
+        resolve(result);
       }).catch(reject);
     });
   }
@@ -664,8 +714,46 @@ class Admin {
     return Commands.Ps();
   }
 
+  static ProcessExists(pid) {
+    return new Promise((resolve, reject) => {
+      let error = ERROR.IntegerError(pid);
+      if (error) {
+        reject(`pid is ${error}`);
+        return;
+      }
+
+      let min = 0;
+      error = ERROR.BoundIntegerError(pid, min, null);
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      Processes().then(processes => {
+        for (let i = 0; i < processes.length; ++i) {
+          let currProcess = processes[i];
+          if (currProcess.pid == pid) {
+            resolve(true);
+            return;
+          }
+        }
+        resolve(false);
+      }).catch(reject);
+    });
+  }
+
   static Kill(pid) {
-    return Commands.Kill(pid);
+    return new Promise((resolve, reject) => {
+      Admin.ProcessExists(pid).then(exists => {
+        if (!exists) {
+          reject(`pid does not exist`);
+        }
+
+        Commands.Kill(pid).then(success => {
+          resolve(true);
+        }).catch(reject);
+      }).catch(reject);
+    });
   }
 
   static WhoAmI() {
@@ -676,7 +764,7 @@ class Admin {
     return Commands.Free();
   }
 
-  static MonitorProcesses() {
+  static Processes() {
     return Commands.Top();
   }
 
