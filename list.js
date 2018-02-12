@@ -141,7 +141,7 @@ class List {
 
           let infos = [];
           lines.forEach(line => {
-            let results = List.ParseLsString(line.trim()); // CONT HERE
+            let results = List.ParseLsString(line.trim());
             infos.push(results.info);
           });
           resolve(infos);
@@ -464,4 +464,3 @@ class Error {
 // EXPORTS
 
 exports.List = List;
-exports.Error = Error;
