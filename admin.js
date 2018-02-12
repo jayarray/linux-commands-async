@@ -22,7 +22,7 @@ class Groups {
         lines.forEach(line => {
           let parts = line.split(':');
           let name = parts[0];
-          let id = parts[2];
+          let id = parseInt(parts[2]);
 
           let users = [];
           if (parts[3])
@@ -99,7 +99,7 @@ class Users {
         lines.forEach(line => {
           let parts = line.split(':');
           let name = parts[0];
-          let id = parts[2];
+          let id = parseInt(parts[2]);
           let info = line.substring(3); // Other info
 
           let user = { name: name, id: id, info: info };
