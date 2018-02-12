@@ -1,5 +1,6 @@
 let PATH = require('./path.js');
 let EXECUTE = require('./execute.js').Execute;
+let ERROR = require('./error.js').Error;
 
 //------------------------------------------------
 // RSYNC
@@ -7,13 +8,13 @@ let EXECUTE = require('./execute.js').Execute;
 class Rsync {
   static Rsync(user, host, src, dest) {
     return new Promise((resolve, reject) => {
-      let error = Error.StringError(user);
+      let error = ERROR.StringError(user);
       if (error) {
         reject(`user is ${error}`);
         return;
       }
 
-      error = Error.StringError(host);
+      error = ERROR.StringError(host);
       if (error) {
         reject(`host is ${error}`);
         return;
@@ -51,13 +52,13 @@ class Rsync {
 
   static Update(user, host, src, dest) { // Update dest if src was updated
     return new Promise((resolve, reject) => {
-      let error = Error.StringError(user);
+      let error = ERROR.StringError(user);
       if (error) {
         reject(`user is ${error}`);
         return;
       }
 
-      error = Error.StringError(host);
+      error = ERROR.StringError(host);
       if (error) {
         reject(`host is ${error}`);
         return;
@@ -95,13 +96,13 @@ class Rsync {
 
   static Match(user, host, src, dest) { // Copy files and then delete those NOT in src (Match dest to src)
     return new Promise((resolve, reject) => {
-      let error = Error.StringError(user);
+      let error = ERROR.StringError(user);
       if (error) {
         reject(`user is ${error}`);
         return;
       }
 
-      error = Error.StringError(host);
+      error = ERROR.StringError(host);
       if (error) {
         reject(`host is ${error}`);
         return;
@@ -139,13 +140,13 @@ class Rsync {
 
   static Manual(user, host, src, dest, flags, options) {  // flags: [chars], options: [strings]
     return new Promise((resolve, reject) => {
-      let error = Error.StringError(user);
+      let error = ERROR.StringError(user);
       if (error) {
         reject(`user is ${error}`);
         return;
       }
 
-      error = Error.StringError(host);
+      error = ERROR.StringError(host);
       if (error) {
         reject(`host is ${error}`);
         return;
@@ -198,13 +199,13 @@ class Rsync {
 
   static DryRun(user, host, src, dest, flags, options) { // Will execute without making changes (for testing command)
     return new Promise((resolve, reject) => {
-      let error = Error.StringError(user);
+      let error = ERROR.StringError(user);
       if (error) {
         reject(`user is ${error}`);
         return;
       }
 
-      error = Error.StringError(host);
+      error = ERROR.StringError(host);
       if (error) {
         reject(`host is ${error}`);
         return;
@@ -260,43 +261,16 @@ class Rsync {
 // ERROR
 
 class Error {
-  static NullOrUndefined(o) {
-    if (o === undefined)
-      return 'undefined';
-    else if (o == null)
-      return 'null';
-    else
-      return null;
-  }
-
-  static StringError(s) {
-    let error = Error.NullOrUndefined(s);
-    if (error)
-      return error;
-
-    if (typeof s != 'string')
-      return 'not a string';
-    else if (s == '')
-      return 'empty';
-    else if (s.trim() == '')
-      return 'whitespace'
-    else
-      return null;
-  }
-
   static FlagsError(flags) {
-    let error = Error.NullOrUndefined(options);
+    let error = ERROR.ArrayError(options);
     if (error)
       return `Flags is ${error}`;
-
-    if (!Array.isArray(flags))
-      return 'Flags is not an array';
 
     // Make sure all flags are valid
     for (let i = 0; i < flags; ++i) {
       let currFlag = flags[i];
 
-      let strError = Error.StringError(currFlag);
+      let strError = ERROR.StringError(currFlag);
       if (strError)
         return `Flags contains an element that is ${strError}`;
       else if (currFlag.length != 1)
@@ -306,18 +280,15 @@ class Error {
   }
 
   static OptionsError(options) {
-    let error = Error.NullOrUndefined(options);
+    let error = ERROR.ArrayError(options);
     if (error)
       return `Options is ${error}`;
-
-    if (!Array.isArray(options))
-      return 'Options is not an array';
 
     // Make sure all options are valid
     for (let i = 0; i < options; ++i) {
       let currOption = options[i];
 
-      let strError = Error.StringError(currOption);
+      let strError = ERROR.StringError(currOption);
       if (strError)
         return `Options contains an element that is ${strError}`;
       else if (!currOption.startsWith('--'))
