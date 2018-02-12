@@ -1,5 +1,6 @@
 let PATH = require('path');
 let FS = require('fs-extra');
+let ERROR = require('./error.js').Error;
 
 //-----------------------------------
 // PATH
@@ -104,28 +105,11 @@ class Path {
 // ERROR
 
 class Error {
-  static NullOrUndefined(o) {
-    if (o === undefined)
-      return 'undefined';
-    else if (o == null)
-      return 'null';
-    else
-      return null;
-  }
-
   static PathError(p) {
-    let error = Error.NullOrUndefined(p);
+    let error = ERROR.StringError(p);
     if (error)
       return `Path is ${error}`;
-
-    if (typeof p != 'string')
-      return 'Path is not a string';
-    else if (p == '')
-      return 'Path is empty';
-    else if (p.trim() == '')
-      return 'Path is whitespace'
-    else
-      return null;
+    return null;
   }
 }
 
