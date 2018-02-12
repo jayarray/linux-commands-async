@@ -3539,7 +3539,6 @@ class Find {
 
 //------------------------------------
 // DISK USAGE
-
 class DiskUsage {
   static list_all_items(dirPath) {
     return new Promise((resolve, reject) => {
