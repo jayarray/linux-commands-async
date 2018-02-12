@@ -87,14 +87,14 @@ class Path {
   }
 
   static Escape(path) {
-    let error = Error.NullOrUndefined(path);
+    let error = ERROR.NullOrUndefined(path);
     if (error)
       return { string: null, error: `Path is ${error}` };
     return { string: escape(path), error: null };
   }
 
   static ContainsWhitespace(path) {
-    let error = Error.NullOrUndefined(path);
+    let error = ERROR.NullOrUndefined(path);
     if (error)
       return { hasWhitespace: null, error: `Path is ${error}` };
     return { hasWhitespace: path.includes(' '), error: null };
