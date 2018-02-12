@@ -84,4 +84,4 @@ class Execute {
 //----------------------------------
 // EXPORTS
 
-exports.Error = Error;
+exports.Execute = Execute;
