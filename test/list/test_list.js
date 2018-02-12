@@ -9,62 +9,6 @@ let LIST = require(listJs);
 //------------------------------------------
 
 describe('*** list.js ***', () => {
-  describe('Error', () => {
-    describe('NullOrUndefined(o)', () => {
-      it(`Returns 'undefined' if o is undefined.`, () => {
-        EXPECT(LIST.Error.NullOrUndefined(undefined)).to.equal('undefined');
-      });
-
-      it(`Returns 'null' if o is null.`, () => {
-        EXPECT(LIST.Error.NullOrUndefined(null)).to.equal('null');
-      });
-
-      it('Returns null if o is defined.', () => {
-        EXPECT(LIST.Error.NullOrUndefined(1)).to.equal(null);
-        EXPECT(LIST.Error.NullOrUndefined('Hai')).to.equal(null);
-        EXPECT(LIST.Error.NullOrUndefined([])).to.equal(null);
-      });
-    });
-
-    describe('LsStringError(s)', () => {
-      it(`Returns 'undefined' if s is undefined.`, () => {
-        EXPECT(LIST.Error.LsStringError(undefined)).to.equal('Ls string is undefined');
-      });
-
-      it(`Returns 'null' if s is null.`, () => {
-        EXPECT(LIST.Error.LsStringError(null)).to.equal('Ls string is null');
-      });
-
-      it(`Returns 'not a string' if s is not string type.`, () => {
-        EXPECT(LIST.Error.LsStringError(1)).to.equal('Ls string is not a string');
-        EXPECT(LIST.Error.LsStringError([])).to.equal('Ls string is not a string');
-        EXPECT(LIST.Error.LsStringError(true)).to.equal('Ls string is not a string');
-      });
-
-      it(`Returns 'empty' if s is empty.`, () => {
-        EXPECT(LIST.Error.LsStringError('')).to.equal('Ls string is empty');
-      });
-
-      it(`Returns 'whitespace' if s is all whitespace.`, () => {
-        EXPECT(LIST.Error.LsStringError(' ')).to.equal('Ls string is whitespace');
-        EXPECT(LIST.Error.LsStringError('\t')).to.equal('Ls string is whitespace');
-        EXPECT(LIST.Error.LsStringError('\n  \t   ')).to.equal('Ls string is whitespace');
-      });
-
-      it(`Returns error if s is not formatted correctly.`, () => {
-        EXPECT(LIST.Error.LsStringError('hai')).to.equal('Ls string is not formatted correctly');
-        EXPECT(LIST.Error.LsStringError('-r--r--r-- is invalid')).to.equal('Ls string is not formatted correctly');
-        EXPECT(LIST.Error.LsStringError('cr--r--r-- 1 root 4096 Jan 1 14:30 file.txt')).to.equal('Ls string is not formatted correctly');
-      });
-
-      it(`Returns null if s is formatted correctly.`, () => {
-        EXPECT(LIST.Error.LsStringError('-r--r--r-- 1 root root 4096 Jan 1 14:30 file.txt')).to.equal(null);
-        EXPECT(LIST.Error.LsStringError('cr--r--r-- 1 root root 4096 Jan 1 14:30 file.txt')).to.equal(null);
-        EXPECT(LIST.Error.LsStringError('dr--r--r-- 1 root root 4096 Jan 1 14:30 file.txt')).to.equal(null);
-      });
-    });
-  });
-
   describe('Ls', () => {
     let invalidPath = '';
     let validPath = rootDir;
