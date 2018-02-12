@@ -1,6 +1,8 @@
 let PATH = require('./path.js');
 let EXECUTE = require('./execute.js').Execute;
-let FS = require('fs-extra')
+let ERROR = require('./error.js').Error;
+let FS = require('fs-extra');
+
 //---------------------------------------------
 // List (ls)
 class List {
@@ -366,32 +368,12 @@ class List {
 // ERROR
 
 class Error {
-  static NullOrUndefined(o) {
-    if (o === undefined)
-      return 'undefined';
-    else if (o == null)
-      return 'null';
-    else
-      return null;
-  }
-
   static LsStringError(s) {
     // Check if undefined
-    let error = Error.NullOrUndefined(s);
+    let error = ERROR.StringError(s);
     if (error)
       return `Ls string is ${error}`;
-
-    // Check if string and non-empty
-    if (typeof s != 'string')
-      return 'Ls string is not a string';
-    else if (s == '')
-      return 'Ls string is empty';
-    else if (s.trim() == '')
-      return 'Ls string is whitespace';
-    else if (!Error.LsStringIsFormattedCorrectly(s))
-      return `Ls string is not formatted correctly`
-    else
-      return null;
+    return null;
   }
 
   static LsStringIsFormattedCorrectly(s) {
