@@ -1,4 +1,5 @@
 var CHILD_PROCESS = require('child_process');
+let ERROR = require('./error.js').Error;
 
 //---------------------------------------------
 // SAVING DATA (to string)
@@ -19,19 +20,19 @@ class SavedData {
 class Execute {
   static Local(cmd, args) {
     return new Promise((resolve, reject) => {
-      let error = Error.StringError(cmd);
+      let error = ERROR.StringError(cmd);
       if (error) {
         reject(`cmd is ${error}`);
         return;
       }
 
-      error = Error.ArgsError(args);
+      error = ERROR.ArrayError(args);
       if (error) {
         reject(`args is ${error}`);
         return;
       }
 
-      let childProcess = CHILD_PROCESS.spawn(cmd.trim(), args);
+      let childProcess = CHILD_PROCESS.spawn(cmd, args);
       let errors = new SavedData(childProcess.stderr);
       let outputs = new SavedData(childProcess.stdout);
 
@@ -47,25 +48,25 @@ class Execute {
 
   static Remote(user, host, cmd) {
     return new Promise((resolve, reject) => {
-      let error = Error.StringError(user);
+      let error = ERROR.StringError(user);
       if (error) {
         reject(`user is ${error}`);
         return;
       }
 
-      error = Error.StringError(host);
+      error = ERROR.StringError(host);
       if (error) {
         reject(`host is ${error}`);
         return;
       }
 
-      error = Error.StringError(cmd);
+      error = ERROR.StringError(cmd);
       if (error) {
         reject(`cmd is ${error}`);
         return;
       }
 
-      let args = [`${user.trim()}@${host.trim()}`, `${cmd.trim()}`];
+      let args = [`${user}@${host}`, `${cmd}`];
       let childProcess = CHILD_PROCESS.spawn('ssh', args);
       let errors = new SavedData(childProcess.stderr);
       let outputs = new SavedData(childProcess.stdout);
@@ -81,46 +82,7 @@ class Execute {
   }
 }
 
-//---------------------------------------
-// ERROR
-class Error {
-  static NullOrUndefined(o) {
-    if (o === undefined)
-      return 'undefined';
-    else if (o == null)
-      return 'null';
-    else
-      return null;
-  }
-
-  static StringError(s) {
-    let error = Error.NullOrUndefined(s);
-    if (error)
-      return error;
-
-    if (typeof s != 'string')
-      return 'not a string';
-    else if (s == '')
-      return 'empty';
-    else if (s.trim() == '')
-      return 'whitespace'
-    else
-      return null;
-  }
-
-  static ArgsError(args) {
-    let error = Error.NullOrUndefined(args);
-    if (error)
-      return error;
-
-    if (!Array.isArray(args))
-      return 'not an array';
-    return null;
-  }
-}
-
 //----------------------------------
 // EXPORTS
 
-exports.Execute = Execute;
 exports.Error = Error;
