@@ -61,7 +61,7 @@ class Groups {
     return new Promise((resolve, reject) => {
       Groups.Exists(id).then(exists => {
         if (!exists) {
-          reject('group does not exist');
+          reject(`group does not exist: ${id}`);
           return;
         }
 
@@ -135,7 +135,7 @@ class Users {
     return new Promise((resolve, reject) => {
       Users.Exists(id).then(exists => {
         if (!exists) {
-          reject('user does not exist');
+          reject(`user does not exist: ${id}`);
           return;
         }
 
