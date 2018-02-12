@@ -1,4 +1,5 @@
 let EXECUTE = require('./execute.js').Execute;
+let ERROR = require('./error.js').Error;
 
 //-------------------------------------
 // GROUPS
@@ -28,7 +29,7 @@ class Groups {
             users = parts[3].split(',');
 
           let group = { name: name, id: id, users: users };
-          groups.append(group);
+          groups.push(group);
         });
         resolve(groups);
       }).catch(reject);
@@ -83,12 +84,12 @@ class Users {
           let parts = line.split(':');
           let name = parts[0];
           let id = parts[2];
-          let info = line.slice(3).join(''); // Other info
+          let info = line.substring(3); // Other info
 
           let user = { name: name, id: id, info: info };
-          users.append(user);
+          users.push(user);
         });
-        resolve(groups);
+        resolve(users);
       }).catch(reject);
     });
   }
@@ -119,9 +120,194 @@ class Users {
   }
 }
 
+//-----------------------------------
+// HELPERS
+
+// UPTIME (helper functions)
+
+function parseUptimeString(string) {
+  // System info
+  let firstParts = string.split(',')[0].split(' ')
+    .filter(part => part && part != '' && part.trim() != '')
+    .map(part => part.trim());
+
+  let timestamp = firstParts[0];
+  let uptime = firstParts[2];
+
+  // Number of users
+  let secondParts = string.split(',')[1].split(' ')
+    .filter(part => part && part != '' && part.trim() != '')
+    .map(part => part.trim());
+  let userCount = parseInt(secondParts[0]);
+
+  let thirdParts = string.split(',')
+    .slice(2).join(',')
+    .split(':')[1]
+    .split(',')
+    .filter(part => part && part != '' && part.trim() != '')
+    .map(part => part.trim());
+
+  // Load averages
+  let loadAverages = [];
+  thirdParts.forEach(part => loadAverages.push(parseFloat(part)));
+
+  let obj = {
+    timestamp: timestamp,
+    uptime: uptime,
+    userCount: userCount,
+    loadAverages: loadAverages
+  };
+  return obj;
+}
+
+// FREE (helper functions)
+
+function getHeaders(string) {
+  let headers = {};
+
+  let startIndex = 0;
+  let endIndex = 0;
+  let char = string.charAt(endIndex);
+  let str = '';
+
+  while (startIndex < string.length && endIndex < string.length) {
+    if (char.trim() == '') {
+      let strTrimmed = str.trim();
+      if (strTrimmed) {
+        headers[string.substring(startIndex, endIndex)] = { start: startIndex, end: endIndex - 1 };
+        startIndex = endIndex;
+        str = '';
+      }
+      else {
+        startIndex += 1;
+        endIndex += 1;
+      }
+    }
+    else {
+      str += char;
+      endIndex += 1;
+    }
+    char = string.charAt(endIndex);
+  }
+
+  if (str)
+    headers[string.substring(startIndex, endIndex)] = { start: startIndex, end: endIndex - 1 };
+  return headers;
+}
+
+function freeOutputHasValues(line, headers) {
+  let hasValues = {};
+
+  Object.keys(headers).forEach(key => {
+    let indexes = headers[key];
+    let string = getStringFromEndIndex(line, indexes.end);
+
+    if (!string)
+      hasValues[key] = false;
+    else
+      hasValues[key] = true;
+  });
+  return hasValues;
+}
+
+function getStringFromEndIndex(line, endIndex) {
+  let startIndex = endIndex;
+
+  let char = line.charAt(startIndex);
+  while (char.trim() != '') {
+    startIndex -= 1;
+    char = line.charAt(startIndex);
+  }
+  return line.substring(startIndex, endIndex + 1);
+}
+
+function getStringFromStartIndex(line, startIndex) {
+  let endIndex = startIndex;
+
+  let char = line.charAt(endIndex);
+  while (char.trim() != '') {
+    endIndex += 1;
+    char = line.charAt(endIndex);
+  }
+  return line.substring(startIndex, endIndex + 1);
+}
+
+function getFreeObject(line, headers) {
+  let name = line.split(':')[0].trim();
+
+  let hasValues = freeOutputHasValues(line, headers);
+
+  let parts = line.split(' ')
+    .filter(part => part && part != '' && part.trim() != '')
+    .map(part => part.trim());
+
+  let partIndex = 1;
+  let freeObj = { name: name };
+
+  Object.keys(headers).forEach(field => {
+    let name = field;
+    if (field.includes('/'))
+      name = field.replace('/', '');
+
+    if (hasValues[field])
+      freeObj[name] = parseInt(parts[partIndex]);
+    else
+      freeObj[name] = null;
+    partIndex += 1;
+  });
+  return freeObj;
+}
+
+// LSOF (helper functions)
+
+function lsofOutputHasValues(line, headers) {
+  let hasValues = {};
+
+  Object.keys(headers).forEach(key => {
+    let indexes = headers[key];
+
+    let string = '';
+    if (key == 'NAME')
+      string = line.substring(indexes.startIndex);
+    else
+      string = getStringFromEndIndex(line, indexes.end);
+
+    if (!string)
+      hasValues[key] = false;
+    else
+      hasValues[key] = true;
+  });
+  return hasValues;
+}
+
+function getLsofObject(line, headers) {
+  let name = line.split(':')[0].trim();
+
+  let hasValues = lsofOutputHasValues(line, headers);
+
+  let parts = line.split(' ')
+    .filter(part => part && part != '' && part.trim() != '')
+    .map(part => part.trim());
+
+  let partIndex = 0;
+  let lsofObj = {};
+
+  Object.keys(headers).forEach(field => {
+    let name = field;
+    if (field.includes('/'))
+      name = field.replace('/', '').toLowerCase();
+
+    if (hasValues[field])
+      freeObj[name] = parseInt(parts[partIndex]);
+    else
+      freeObj[name] = null;
+    partIndex += 1;
+  });
+  return freeObj;
+}
+
 //-------------------------------------
 // COMMANDS
-
 class Commands {
   static W() { // displays users currently logged in and their process along with load averages.
     return new Promise((resolve, reject) => {
@@ -135,45 +321,13 @@ class Commands {
           .filter(line => line && line != '' && line.trim() != '')
           .map(line => line.trim());
 
-        // System info
-        let sysLine = lines[0];
-        let firstParts = sysLine.split(',')[0].split(' ')
-          .filter(part => part && part != '' && part.trim() != '')
-          .map(part => part.trim());
-
-        let i = 0;
-        let timestamp = firstParts[0];
-        let uptime = firstParts[2];
-
-        // Number of users
-        let secondParts = sysLine.split(',')[1].split(' ')
-          .filter(part => part && part != '' && part.trim() != '')
-          .map(part => part.trim());
-        let userCount = parseInt(secondParts[0]);
-
-        let thirdParts = sysLine.split(',')
-          .slice(2).join(',')
-          .split(':')[1]
-          .split(',')
-          .filter(part => part && part != '' && part.trim() != '')
-          .map(part => part.trim());
-
-        let loadAverages = [];
-        thirdParts.forEach(part => loadAverages.push(parseFloat(part)));
-
-        let info = {
-          timestamp: timestamp,
-          uptime: uptime,
-          userCount: userCount,
-          loadAverages: loadAverages
-        };
+        // Uptime info
+        let uptimeStr = lines[0];
+        let uptimeObj = parseUptimeString(uptimeStr);
 
         // Headers
         let headersLine = lines[1];
-
-        let headers = headersLine.split(' ')
-          .filter(part => part && part != '' && part.trim() != '')
-          .map(part => part.trim());
+        let headers = getHeaders(headersLine);
 
         // User info
         let users = [];
@@ -231,9 +385,8 @@ class Commands {
           .filter(line => line && line != '' && line.trim() != '')
           .map(line => line.trim());
 
-        let headers = lines[0].split(' ')
-          .filter(line => line && line != '' && line.trim() != '')
-          .map(line => line.trim());
+        // Get headers
+        let headers = getHeaders(lines[0]);
 
         // Parse lines into process objects
         let processes = [];
@@ -287,38 +440,8 @@ class Commands {
         }
 
         // System info
-        let line = output.stdout.trim();
-        let firstParts = line.split(',')[0].split(' ')
-          .filter(part => part && part != '' && part.trim() != '')
-          .map(part => part.trim());
-
-        let i = 0;
-        let timestamp = firstParts[0];
-        let uptime = firstParts[2];
-
-        // Number of users
-        let secondParts = line.split(',')[1].split(' ')
-          .filter(part => part && part != '' && part.trim() != '')
-          .map(part => part.trim());
-        let userCount = parseInt(secondParts[0]);
-
-        let thirdParts = line.split(',')
-          .slice(2).join(',')
-          .split(':')[1]
-          .split(',')
-          .filter(part => part && part != '' && part.trim() != '')
-          .map(part => part.trim());
-
-        let loadAverages = [];
-        thirdParts.forEach(part => loadAverages.push(parseFloat(part)));
-
-        let info = {
-          timestamp: timestamp,
-          uptime: uptime,
-          userCount: userCount,
-          loadAverages: loadAverages
-        };
-        resolve(info);
+        let uptimeObj = parseUptimeString(output.stdout);
+        resolve(uptimeObj);
       }).catch(reject);
     });
   }
@@ -337,119 +460,180 @@ class Commands {
 
   static Free() { // Displays info regarding memory and resources (i.e. memory, swap, etc)
     return new Promise((resolve, reject) => {
-      EXECUTE.Local('free', []).then(output => {
+      EXECUTE.Local('free', ['-t']).then(output => {
         if (output.stderr) {
           reject(output.stderr);
           return;
         }
 
         // Get lines
-        let lines = output.stdout.trim().split('\n')
-          .filter(line => line && line != '' && line.trim() != '')
-          .map(line => line.trim());
+        let lines = output.stdout.split('\n')
+          .filter(line => line && line != '' && line.trim() != '');
 
-        // Get info objects
-        let findIt = function (strings, prefix) {
-          for (let i = 0; i < strings.length; ++i) {
-            let currStr = strings[i];
-            if (currStr.startsWith(pattern))
-              return currStr;
-          }
-          return null;
-        };
+        // Get headers (with indexes)
+        let headerLine = lines[0];
+        let headers = getHeaders(headerLine);
 
-        // Create memory object
-        let hasBuffersCacheLine = lines.find(findIt(lines, '-/+ buffers/cache:')) != null;
-
-        let memLine = lines.find(findIt(lines, 'Mem:'));
-        let memParts = memLine.split(' ')
-          .filter(part => part && part != '' && part.trim() != '')
-          .map(part => part.trim());
-
-        let memObj = {};
-        memObj.total = parseInt(parts[1].trim());
-        memObj.used = parseInt(parts[2].trim());
-        memObj.free = parseInt(parts[3].trim());
-        memObj.shared = parseInt(parts[4].trim());
-
-        if (hasBuffersCacheLine) {
-          memObj.buffers = parseInt(parts[5].trim());
-          memObj.cached = parseInt(parts[6].trim());
-        }
-        else {
-          memObj.buffCache = parseInt(parts[5].trim());
-          memObj.available = parseInt(parts[6].trim());
-        }
-
-        // Create swap object
-        let swapLine = lines.find(findIt(lines, 'Swap:'));
-        let swapParts = swapLine.split(' ');
-
-        let swapObj = {};
-
-        let buffLine = lines.find(findIt(lines, '-/+ buffers/cache:'));
-        let buffersCache = {};
-
-
-
-        let infos = [];
-
+        // Create objects
+        let objects = [];
         lines.slice(1).forEach(line => {
-          let parts = line.split(' ')
-            .filter(part => part && part != '' && part.trim() != '')
-            .map(part => part.trim());
-
-          let name = parts[0].trim().replace(':', '');
-          let total = parseInt(parts[1].trim());
-          let used = parseInt(parts[2].trim());
-          let free = parseInt(parts[3].trim());
-          let shared = parseInt(parts[4].trim());
-          let buffcache = parseInt(parts[5].trim());
-          let available = parseInt(parts[6].trim());
-
-          let info = {
-            name: name,
-            total: total,
-            used: used,
-            free: free,
-            shared: shared,
-            buffcache: buffcache,
-            available: available
-          };
-
-          infos.push(info);
+          let o = getFreeObject(line, headers);
+          objects.push(o);
         });
-        resolve(infos);
+        resolve(objects);
       }).catch(reject);
     });
   }
 
   static Top() { // Shows CPU processes (1 iteration)
-    // top -n 1
+    return new Promise((resolve, reject) => {
+      EXECUTE.Local('top', ['-n', 1]).then(output => {
+        if (output.stderr) {
+          reject(output.stderr);
+          return;
+        }
+
+        let lines = output.stdout.split('\n')
+          .filter(line => line && line != '' && line.trim() != '')
+          .map(line => line.trim());
+
+        // Uptime str
+        let uptimeStr = lines[0].replace('top -', '');
+        let uptimeObj = parseUptimeString(uptimeStr);
+
+        // Tasks str
+        let tasksStr = lines[1].replace('Tasks:', '').trim();
+        let taskParts = tasksStr.split(',');
+
+        let tasks = {};
+        taskParts.forEach(part => {
+          let parts = part.split(' ').map(p => p.trim());
+          let int = parseInt(parts[0].trim());
+          let name = parts[1].trim();
+          tasks[name] = int;
+        });
+
+        // cpu str
+        let cpuStr = lines[2].replace('%Cpu(s):', '');
+        let cpuParts = cpuStr.split(',');
+
+        let cpu = {};
+        cpuParts.forEach(part => {
+          let parts = part.split(' ').map(p => p.trim());
+          let float = parseFloat(parts[0].trim());
+          let name = parts[1].trim();
+          cpu[name] = float
+        });
+
+        // mem str
+        let memStr = lines[3].split(':')[1].trim();
+
+        // swap str
+        let memStr = lines[4].split(':')[1].trim();
+
+        // headers
+        let headersStr = lines[5].trim();
+        let headers = getHeaders(headersStr);
+
+        // rows
+        let processes = [];
+
+        lines.slice(6).forEach(line => {
+          let parts = line.split(' ')
+            .filter(parts => part && part != '' && part.trim() != '')
+            .map(part => part.trim());
+
+          let pid = parts[0];
+          let user = parts[1];
+          let pr = parseInt(parts[2]);
+          let ni = parseInt(parts[3]);
+          let virt = parseInt(parts[4]);
+          let res = parseInt(parts[5]);
+          let shr = parseInt(parts[6]);
+          let s = parts[7];
+          let cpu = parseFloat(parts[8]);
+          let mem = parseFloat(parts[9]);
+          let time = parts[10];
+          let command = parts[11]
+
+          let process = {
+            pid: pid,
+            user: user,
+            pr: pr,
+            ni: ni,
+            virt: virt,
+            res: res,
+            shr: shr,
+            s: s,
+            cpu: cpu,
+            mem: mem,
+            time: time,
+            command: command
+          };
+          processes.push(process);
+        });
+        resolve(processes);
+      }).catch(reject);
+    });
   }
 
   static Lsof(user) { // Displays all files opened by user
-    // lsof -u user
-  }
+    return new Promise((resolve, reject) => {
+      let error = ERROR.StringError(user);
+      if (error) {
+        reject(`user is ${error}`);
+        return;
+      }
 
-  static Last(user) { // 
-    // last [username]
-  }
+      EXECUTE.Local('lsof', ['-u', user]).then(output => {
+        if (output.stderr) {
+          reject(output.stderr);
+          return;
+        }
 
-  static WhereIs(cmd) {  // Locate binary, sources and manual pages of the command
-    // whereis name
-  }
+        let lines = output.stdout.trim().split('\n')
+          .filter(line => line && line != '' && line.trim() != '')
+          .map(line => line.trim());
 
-  static Alias(name, cmdString) { // Add alias
-    // alias identifier='command';
-  }
+        // Get headers
+        let headersStr = lines[0];
+        let headers = getHeaders(headersStr);
 
-  static Unalias(name) { // Remove alias
-    // unalias name
-  }
+        // Rows
+        let results = [];
 
-  static Ifconfig() { // Check active network interfaces
-    // ifconfig
+        line.slice(1).forEach(l => {
+          let parts = l.split(' ')
+            .filter(l => l && l != '' && l.trim() != '')
+            .map(l => l.trim());
+
+          let obj = {};
+          for (let i = 0; i < parts.length; ++i) {
+            let currPart = parts[i];
+            if (i == 0)
+              obj.command = getStringFromEndIndex(l, headers['COMMAND'].endIndex);
+            else if (i == 1)
+              obj.pid = parseInt(getStringFromEndIndex(l, headers['PID'].endIndex));
+            else if (i == 2)
+              obj.user = getStringFromEndIndex(l, headers['USER'].endIndex);
+            else if (i == 3)
+              obj.fd = getStringFromEndIndex(l, headers['FD'].endIndex);
+            else if (i == 4)
+              obj.type = getStringFromEndIndex(l, headers['TYPE'].endIndex);
+            else if (i == 5)
+              obj.devices = getStringFromEndIndex(l, headers['DEVICE'].endIndex).split(',').map(p => parseIntp.trim());
+            else if (i == 6)
+              obj.sizeoff = parseInt(getStringFromEndIndex(l, headers['SIZE/OFF'].endIndex));
+            else if (i == 7)
+              obj.node = parseInt(getStringFromEndIndex(l, headers['NODE'].endIndex));
+            else if (i == 8)
+              obj.type = l.substring(headers['NAME'].startIndex);
+          }
+          results.push(obj);
+        });
+        resolve(results);
+      }).catch(reject);
+    });
   }
 }
 
@@ -492,7 +676,11 @@ class Admin {
     return Commands.Free();
   }
 
-  static LoggedIn() {  // Same as 'w' command
+  static MonitorProcesses() {
+    return Commands.Top();
+  }
+
+  static LoggedIn() {
     return Commands.W();
   }
 }
@@ -501,80 +689,49 @@ class Admin {
 // ERROR
 
 class Error {
-  static NullOrUndefined(o) {
-    if (o === undefined)
-      return 'undefined';
-    else if (o == null)
-      return 'null';
-    else
-      return null;
-  }
-
-  static StringError(s) {
-    let error = Error.NullOrUndefined(s);
+  static IdStringError(string) {
+    let error = ERROR.StringError(string);
     if (error)
-      return error;
-
-    if (typeof s != 'string')
-      return 'not a string';
-    else if (s == '')
-      return 'empty';
-    else if (s.trim() == '')
-      return 'whitespace'
-    else
-      return null;
-  }
-
-  static IdNumberError(id) {
-    let idMin = 0;
-    if (!Number.isInteger(id) || id < idMin)
-      return `must be greater than or equal to ${idMin}`;
+      return `id is ${error}`;
     return null;
   }
 
-  static IdStringError(id) {
-    let error = Error.StringError(id);
+  static IdNumberError(int) {
+    let error = ERROR.NullOrUndefined(int);
+    if (error)
+      return `id is ${error}`;
+
+    let min = 0;
+    error = ERROR.BoundIntegerError(int, min, null);
     if (error)
       return error;
     return null;
   }
 
   static IdError(id) {
-    let error = Error.NullOrUndefined(id);
+    let error = ERROR.NullOrUndefined(id);
     if (error)
-      return error;
+      return `id is ${error}`;
 
-    // Check if name string
+    // Check if string
     if (typeof id == 'string') {
-      error = Error.StringError(id);
+      error = Error.IdStringError(id);
       if (error)
         return error;
       return null;
     }
 
-    // Check if id number
-    let idMin = 0;
+    // Check if number
     if (Number.isInteger(id)) {
-      if (id < idMin)
-        return `must be greater than or equal to ${idMin}`;
+      error = Error.IdNumberError(id);
+      if (error)
+        return error;
       return null;
     }
-    return `must be a string or an integer greater than or equal to ${idMin}`;
+
+    return `id is not a valid string or integer`;
   }
 }
-
-//------------------------------------
-// TEST
-
-Admin.MemoryCheck().then(infos => {
-
-  console.log(`INFO:\n${JSON.stringify(infos)}`);
-
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-})
-return;
-
 
 //------------------------------------
 // EXPORTS
