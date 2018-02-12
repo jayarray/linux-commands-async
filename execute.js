@@ -3,7 +3,6 @@ let ERROR = require('./error.js').Error;
 
 //---------------------------------------------
 // SAVING DATA (to string)
-
 class SavedData {
   constructor(thing) {
     this.value = '';
