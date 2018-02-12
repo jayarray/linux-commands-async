@@ -28,7 +28,6 @@ class Timestamp {
 
     let adjustedHours = null;
     let suffix = null;
-    let timeStr = '';
 
     if (hours == 0) {
       adjustedHours = 12;
@@ -62,11 +61,11 @@ class Timestamp {
     let year = d.getFullYear();  // yyyy
 
     let monthNumber = d.getMonth(); // 0-11;
-    let monthName = Timestamp.month_list()[monthNumber];
+    let monthName = Timestamp.Months()[monthNumber];
     let dayOfMonth = d.getDate(); // 1-31
 
     let dayOfWeekNumber = d.getDay();  // 0-6
-    let dayOfWeekName = Timestamp.day_of_week_list()[dayOfWeekNumber];
+    let dayOfWeekName = Timestamp.DaysOfTheWeek()[dayOfWeekNumber];
 
     return {
       hours: hours,
