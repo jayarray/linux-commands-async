@@ -34,6 +34,18 @@ describe('*** admin.js ***', () => {
       });
     });
 
+    describe('GetGroup(id)', () => {
+      it('Returns error if id is invalid.', () => {
+        ADMIN.GetGroup(null).then(group => EXPECT(false))
+          .catch(error => EXPECT(error).to.not.equal(null));
+      });
+
+      it('Returns obj if id is valid.', () => {
+        ADMIN.GetGroup('root').then(group => EXPECT(group).to.not.equal(null))
+          .catch(error => EXPECT(false));
+      });
+    });
+
     describe('Users()', () => {
       it('Returns an array of objects.', () => {
         ADMIN.Users().then(users => {
@@ -55,6 +67,18 @@ describe('*** admin.js ***', () => {
           EXPECT(isBoolean).to.equal(true);
         })
           .catch(error => EXPECT(error).to.not.equal(null));
+      });
+    });
+
+    describe('GetUser(id)', () => {
+      it('Returns error if id is invalid.', () => {
+        ADMIN.GetUser(null).then(user => EXPECT(false))
+          .catch(error => EXPECT(error).to.not.equal(null));
+      });
+
+      it('Returns obj if id is valid.', () => {
+        ADMIN.GetUser('root').then(user => EXPECT(user).to.not.equal(null))
+          .catch(error => EXPECT(false));
       });
     });
 
