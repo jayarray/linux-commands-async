@@ -737,4 +737,3 @@ class Error {
 // EXPORTS
 
 exports.Admin = Admin;
-exports.Error = Error;
