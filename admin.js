@@ -732,12 +732,20 @@ class Admin {
     return Groups.Exists(gid);
   }
 
+  static GetGroup(id) {
+    return Groups.Get(id);
+  }
+
   static Users() {
     return Users.All();
   }
 
   static UserExists(uid) {
     return Users.Exists(uid);
+  }
+
+  static GetUser(id) {
+    return Users.Get(id);
   }
 
   static Uptime() {
