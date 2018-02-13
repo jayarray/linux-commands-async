@@ -4,7 +4,7 @@ let ERROR = require('./error.js').Error;
 //-----------------------------------------------
 // RENAME
 class Rename {
-  static rename(currPath, newName) {
+  static Rename(currPath, newName) {
     return new Promise((resolve, reject) => {
       let error = PATH.Error.PathError(currPath);
       if (error) {
