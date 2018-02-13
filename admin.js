@@ -1,5 +1,6 @@
 let EXECUTE = require('./execute.js').Execute;
 let ERROR = require('./error.js').Error;
+let USERINFO = require('./userinfo.js').UserInfo;
 
 //-------------------------------------
 // GROUPS
@@ -140,7 +141,7 @@ class Users {
         }
 
         Users.All().then(users => {
-          for (let i = 0; i < groups.length; ++i) {
+          for (let i = 0; i < users.length; ++i) {
             let currUser = users[i];
             if ((typeof id == 'string' && currUser.name == id) || (Number.isInteger(id) && currUser.id == id)) {
               resolve(currUser);
@@ -812,6 +813,45 @@ class Admin {
 
   static LoggedIn() {
     return Commands.W();
+  }
+
+  static UserHasRootPermissions(uid) {
+    return new Promise((resolve, reject) => {
+      Admin.GetUser(uid).then(user => {
+        if (user.name == 'root') {
+          resolve(true);
+          return;
+        }
+
+        Admin.GetGroup('root').then(group => {
+          resolve(group.users.includes(user.name));
+        }).catch(reject);
+      }).catch(reject);
+    });
+  }
+
+  static UserCanChangeGroupOwnership(uid, desiredGid) { // Must be root OR be part of the desired group to give ownership to that group.
+    return new Promise((resolve, reject) => {
+      Admin.GetUser(uid).then(user => {
+        Admin.UserHasRootPermissions(user.id).then(hasRootAccess => {
+          if (hasRootAccess) {
+            resolve(true);
+            return;
+          }
+
+          Admin.GetGroup(desiredGid).then(group => {
+            USERINFO.OtherUser(user.name).then(info => {
+              let userGroupIds = info.groups.map(group => group.gid);
+              resolve(group.users.includes(user.name) || userGroupIds.includes(group.id));
+            }).catch();
+          }).catch(reject);
+        }).catch(reject);
+      }).catch(reject);
+    });
+  }
+
+  static UserCanChangeUserOwnership(uid) { // Must have root permissions to change user ownership.
+    return Admin.UserHasRootPermissions(uid);
   }
 }
 
