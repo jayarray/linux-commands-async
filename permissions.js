@@ -8,6 +8,12 @@ let ERROR = require('./error.js').Error;
 class Permissions {
   static Permissions(path) {
     return new Promise((resolve, reject) => {
+      let error = ERROR.StringError(path);
+      if (error) {
+        reject(`Path is ${error}`);
+        return;
+      }
+
       LIST.Info(path).then(info => {
         let permStr = info.permstr.trim();
 
