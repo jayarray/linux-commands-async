@@ -49,6 +49,12 @@ class List {
 
   static FileInfo(filepath) {
     return new Promise((resolve, reject) => {
+      let error = PATH.Error.PathError(filepath);
+      if (error) {
+        reject(error);
+        return;
+      }
+
       PATH.Path.IsFile(filepath).then(isFile => {
         if (!isFile) {
           reject(`Path is not a file: ${filepath}`);
@@ -75,6 +81,12 @@ class List {
 
   static DirInfo(dirPath) {
     return new Promise((resolve, reject) => {
+      let error = PATH.Error.PathError(dirPath);
+      if (error) {
+        reject(error);
+        return;
+      }
+
       PATH.Path.IsDir(dirPath).then(isDir => {
         if (!isDir) {
           reject(`Path is not a directory: ${dirPath}`);
@@ -108,10 +120,13 @@ class List {
           resolve(dirInfo);
         }).catch((derr) => {
           let errArr = [];
-          if (ferr.error)
-            errArr.push(ferr.error);
-          if (ferr.error)
-            errArr.push(derr.error);
+          if (ferr)
+            errArr.push(ferr);
+          if (ferr)
+            errArr.push(derr);
+
+          // Dedup
+          errArr = Array.from(new Set(errArr));
           reject(`Failed to get info: ${errArr.join('; ')}`);
         });
       });
@@ -120,6 +135,12 @@ class List {
 
   static AllInfos(dirPath) {
     return new Promise((resolve, reject) => {
+      let error = PATH.Error.PathError(dirPath);
+      if (error) {
+        reject(error);
+        return;
+      }
+
       PATH.Path.IsDir(dirPath).then(isDir => {
         if (!isDir) {
           reject(`Path is not a directory: ${dirPath}`);
