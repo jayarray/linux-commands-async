@@ -1,3 +1,5 @@
+let _path = require('path');
+let FS = require('fs-extra');
 let PATH = require('./path.js');
 let ERROR = require('./error.js').Error;
 
@@ -30,7 +32,7 @@ class Rename {
           return;
         }
 
-        let updatedPath = PATH.join(parentDir.dir, newName);
+        let updatedPath = _path.join(parentDir.dir, newName);
 
         FS.rename(currPath, updatedPath, (err) => {
           if (err) {
