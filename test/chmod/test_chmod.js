@@ -9,12 +9,6 @@ let CHMOD = require(chmodJs).Chmod;
 let mkdirJs = _path.join(rootDir, 'mkdir.js');
 let MKDIR = require(mkdirJs).Mkdir;
 
-let userinfoJs = _path.join(rootDir, 'userinfo.js');
-let USERINFO = require(userinfoJs).UserInfo;
-
-let adminJs = _path.join(rootDir, 'admin.js');
-let ADMIN = require(adminJs).Admin;
-
 let removeJs = _path.join(rootDir, 'remove.js');
 let REMOVE = require(removeJs).Remove;
 
