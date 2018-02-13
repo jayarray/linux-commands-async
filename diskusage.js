@@ -12,13 +12,13 @@ class DiskUsage {
         return;
       }
 
-      PATH.Path.IsDir(dirPath).then(exists => {
+      PATH.Path.IsDir(dirPath).then(isDir => {
         if (!isDir) {
           reject(`Path is not a directory: ${dirPath}`);
           return;
         }
 
-        let args = ['-ha', '--block-size=1 --max-depth=1', dirPath];
+        let args = ['-ha', '--block-size=1', '--max-depth=1', dirPath];
         EXECUTE.Local('du', args).then(output => {
           if (output.stderr) {
             reject(`Failed to get disk usage info: ${output.stderr}`);
@@ -30,29 +30,27 @@ class DiskUsage {
           let lines = output.stdout.trim().split('\n').map(line => line.trim()).filter(line => line && line != '');
           lines.forEach(line => {
             let sizeStr = '';
-            line.split('').forEach(char => {
-              if (char.trim())
-                sizeStr += char;
+            for (let i = 0; i < line.length; ++i) {
+              let currChar = line.charAt(i);
+              if (currChar.trim())
+                sizeStr += currChar;
               else
                 break;
-            });
+            }
 
             let filepath = line.substring(sizeStr.length + 1);
-            items.push({
-              size: parseInt(sizeStr),
-              path: filepath
-            });
+            items.push({ size: parseInt(sizeStr), path: filepath });
           });
           resolve(items);
         }).catch(reject);
-      }).catch(reject);
+      });
     });
   }
 
   static ListVisibleItems(dirPath) {
     return new Promise((resolve, reject) => {
       DiskUsage.ListAllItems(dirPath).then(items => {
-        resolve(items.filter(item => !PATH.Path.Filename(item.path).startsWith('.')));
+        resolve(items.filter(item => !PATH.Path.Filename(item.path).name.startsWith('.')));
       }).catch(reject);
     });
   }
@@ -60,7 +58,7 @@ class DiskUsage {
   static ListHiddenItems(dirPath) {
     return new Promise((resolve, reject) => {
       DiskUsage.ListAllItems(dirPath).then(items => {
-        resolve(items.filter(item => PATH.Path.Filename(item.path).startsWith('.')));
+        resolve(items.filter(item => PATH.Path.Filename(item.path).name.startsWith('.')));
       }).catch(reject);
     });
   }
