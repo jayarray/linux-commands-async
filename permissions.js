@@ -80,7 +80,7 @@ class Permissions {
         string: `${permTrimmed.charAt(6)}${permTrimmed.charAt(7)}${permTrimmed.charAt(8)}`
       },
       octal: {
-        string: octalStr.string,
+        string: octalTrimmed,
         special: specialOctal,
         user: userOctal,
         group: groupOctal,
