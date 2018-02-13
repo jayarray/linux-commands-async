@@ -6,14 +6,6 @@ let FS = require('fs-extra');
 //-----------------------------------------
 // CHMOD
 class Chmod {
-  static ValidClassChars() {
-    return PERMISSIONS.ValidClassChars();
-  }
-
-  static ValidTypeChars() {
-    return ['r', 'w', 'x'];
-  }
-
   static UsingPermString(permStr, path) {
     return new Promise((resolve, reject) => {
       PATH.Exists(path).then(exists => {
@@ -200,6 +192,14 @@ class Chmod {
         });
       }).catch(reject);
     });
+  }
+
+  static ValidClassChars() {
+    return PERMISSIONS.ValidClassChars();
+  }
+
+  static ValidTypeChars() {
+    return ['r', 'w', 'x'];
   }
 }
 
