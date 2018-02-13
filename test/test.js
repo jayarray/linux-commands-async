@@ -59,8 +59,12 @@ mocha.addFile(PATH.join(testAdminDir, 'test_admin.js'));*/
 let testUserinfoDir = PATH.join(testDir, 'userinfo');
 mocha.addFile(PATH.join(testUserinfoDir, 'test_userinfo.js'));*/
 
+/*
 let testChownDir = PATH.join(testDir, 'chown');
-mocha.addFile(PATH.join(testChownDir, 'test_chown.js'));
+mocha.addFile(PATH.join(testChownDir, 'test_chown.js'));*/
+
+let testChmodDir = PATH.join(testDir, 'chmod');
+mocha.addFile(PATH.join(testChmodDir, 'test_chmod.js'));
 
 let runner = mocha.run(() => { });
 
@@ -88,4 +92,5 @@ function importTest(name, path) {
 //importTest('rsync.js', PATH.join(rootDir, 'rsync.js'));
 //importTest('admin.js', PATH.join(rootDir, 'admin.js'));
 //importTest('userinfo.js', PATH.join(rootDir, 'userinfo.js'));
-importTest('chown.js', PATH.join(rootDir, 'chown.js'));
+//importTest('chown.js', PATH.join(rootDir, 'chown.js'));
+importTest('chmod.js', PATH.join(rootDir, 'chmod.js'));
