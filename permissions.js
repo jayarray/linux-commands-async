@@ -1,4 +1,3 @@
-let PATH = require('./path.js');
 let LIST = require('./list.js').List;
 let ERROR = require('./error.js').Error;
 
