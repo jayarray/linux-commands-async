@@ -369,7 +369,7 @@ class Tar {
               return;
             }
 
-            let args = ['-czvf', dest, src];
+            let args = ['-xzvf', src, '-C', dest];
             EXECUTE.Local('tar', args).then(output => {
               if (output.stderr) {
                 reject(`Failed to compress: ${output.stderr}`);
