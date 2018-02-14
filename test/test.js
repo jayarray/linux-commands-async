@@ -83,8 +83,12 @@ mocha.addFile(PATH.join(testFileDir, 'test_file.js'));*/
 let testDirectoryDir = PATH.join(testDir, 'directory');
 mocha.addFile(PATH.join(testDirectoryDir, 'test_directory.js'));*/
 
+/*
 let testBashScriptDir = PATH.join(testDir, 'bashscript');
-mocha.addFile(PATH.join(testBashScriptDir, 'test_bashscript.js'));
+mocha.addFile(PATH.join(testBashScriptDir, 'test_bashscript.js')); */
+
+let testFindDir = PATH.join(testDir, 'find');
+mocha.addFile(PATH.join(testFindDir, 'test_find.js'));
 
 let runner = mocha.run(() => { });
 
@@ -118,4 +122,5 @@ function importTest(name, path) {
 //importTest('diskusage.js', PATH.join(rootDir, 'diskusage.js'));
 //importTest('file.js', PATH.join(rootDir, 'file.js'));
 //importTest('directory.js', PATH.join(rootDir, 'directory.js'));
-importTest('bashscript.js', PATH.join(rootDir, 'bashscript.js'));
+//importTest('bashscript.js', PATH.join(rootDir, 'bashscript.js'));
+importTest('find.js', PATH.join(rootDir, 'find.js'));
