@@ -100,7 +100,6 @@ function allSourcesAreDirs(sources) {
 
 //-------------------------------------------
 // ZIP
-
 class Zip {
   static CompressFiles(sources, dest) {
     return new Promise((resolve, reject) => {
@@ -261,6 +260,12 @@ class Gzip {
         return;
       }
 
+      error = Error.KeepOriginalError(keepOriginal);
+      if (error) {
+        reject(error);
+        return;
+      }
+
       PATH.Path.Exists(src).then(exists => {
         if (!exists) {
           reject(`Source does not exist: ${src}`);
@@ -317,7 +322,7 @@ class Tar {
         return;
       }
 
-      error = Error.DestError(src);
+      error = Error.DestError(dest);
       if (error) {
         reject(error);
         return;
