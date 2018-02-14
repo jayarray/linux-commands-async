@@ -34,7 +34,7 @@ describe('*** compression.js ***', () => {
       });
 
       it('Returns error if dest is invalid.', () => {
-        COMPRESSION.Zip.CompressFiles([], zipDest).then(success => EXPECT(false))
+        COMPRESSION.Zip.CompressFiles([], null).then(success => EXPECT(false))
           .catch(error => EXPECT(error).to.not.equal(null));
       });
 
