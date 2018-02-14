@@ -4,6 +4,47 @@ let PATH = require('./path.js').Path;
 let FS = require('fs-extra');
 
 //-----------------------------------------
+// HELPERS
+
+function getNewPermStringBasedOnModifiedPermsObj(permsObj) {
+  // u
+  let ur = permsObj.u.r ? 'r' : '-';
+  let uw = permsObj.u.w ? 'w' : '-';
+  let ux = '';
+  if (permsObj.u.x == true && permsObj.u.xchar == '-')
+    ux = 'x';
+  else if (permsObj.u.x == true && permsObj.u.xchar != '-')
+    ux = permsObj.u.xchar;
+  else
+    ux = '-';
+
+  // g
+  let gr = permsObj.g.r ? 'r' : '-';
+  let gw = permsObj.g.w ? 'w' : '-';
+  let gx = '';
+  if (permsObj.g.x == true && permsObj.g.xchar == '-')
+    gx = 'x';
+  else if (permsObj.g.x == true && permsObj.g.xchar != '-')
+    gx = permsObj.g.xchar;
+  else
+    gx = '-';
+
+  // o
+  let or = permsObj.o.r ? 'r' : '-';
+  let ow = permsObj.o.w ? 'w' : '-';
+  let ox = '';
+  if (permsObj.o.x == true && permsObj.o.xchar == '-')
+    ox = 'x';
+  else if (permsObj.o.x == true && permsObj.o.xchar != '-')
+    ox = permsObj.o.xchar;
+  else
+    ox = '-';
+
+  return `${ur}${uw}${ux}${gr}${gw}${gx}${or}${ow}${ox}`;
+}
+
+
+//-----------------------------------------
 // CHMOD
 class Chmod {
   static UsingPermString(permStr, path) {
@@ -92,33 +133,7 @@ class Chmod {
         });
 
         // Create new permStr based on modified permsObj
-        let ux = '';
-        if (permsObj.u.x == true && permsObj.u.xchar == '-')
-          ux = 'x';
-        else if (permsObj.u.x == true && permsObj.u.xchar != '-')
-          ux = permsObj.u.xchar;
-        else
-          ux = '-';
-
-        let gx = '';
-        if (permsObj.g.x == true && permsObj.g.xchar == '-')
-          gx = 'x';
-        else if (permsObj.g.x == true && permsObj.g.xchar != '-')
-          gx = permsObj.g.xchar;
-        else
-          gx = '-';
-
-        let ox = '';
-        if (permsObj.o.x == true && permsObj.o.xchar == '-')
-          ox = 'x';
-        else if (permsObj.o.x == true && permsObj.o.xchar != '-')
-          ox = permsObj.o.xchar;
-        else
-          ox = '-';
-
-        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${ux}`;
-        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${gx}`;
-        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${ox}`;
+        let newPermStr = getNewPermStringBasedOnModifiedPermsObj(permsObj);
 
         // Convert newPermStr into octal
         let octalStr = PERMISSIONS.PermissionsStringToOctalString(newPermStr);
@@ -162,33 +177,7 @@ class Chmod {
         });
 
         // Create new permStr based on modified permsObj
-        let ux = '';
-        if (permsObj.u.x == true && permsObj.u.xchar == '-')
-          ux = 'x';
-        else if (permsObj.u.x == true && permsObj.u.xchar != '-')
-          ux = permsObj.u.xchar;
-        else
-          ux = '-';
-
-        let gx = '';
-        if (permsObj.g.x == true && permsObj.g.xchar == '-')
-          gx = 'x';
-        else if (permsObj.g.x == true && permsObj.g.xchar != '-')
-          gx = permsObj.g.xchar;
-        else
-          gx = '-';
-
-        let ox = '';
-        if (permsObj.o.x == true && permsObj.o.xchar == '-')
-          ox = 'x';
-        else if (permsObj.o.x == true && permsObj.o.xchar != '-')
-          ox = permsObj.o.xchar;
-        else
-          ox = '-';
-
-        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${ux}`;
-        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${gx}`;
-        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${ox}`;
+        let newPermStr = getNewPermStringBasedOnModifiedPermsObj(permsObj);
 
         // Convert newPermStr into octal
         let octalStr = PERMISSIONS.PermissionsStringToOctalString(newPermStr);
@@ -238,33 +227,7 @@ class Chmod {
         });
 
         // Create new permStr based on modified permsObj
-        let ux = '';
-        if (permsObj.u.x == true && permsObj.u.xchar == '-')
-          ux = 'x';
-        else if (permsObj.u.x == true && permsObj.u.xchar != '-')
-          ux = permsObj.u.xchar;
-        else
-          ux = '-';
-
-        let gx = '';
-        if (permsObj.g.x == true && permsObj.g.xchar == '-')
-          gx = 'x';
-        else if (permsObj.g.x == true && permsObj.g.xchar != '-')
-          gx = permsObj.g.xchar;
-        else
-          gx = '-';
-
-        let ox = '';
-        if (permsObj.o.x == true && permsObj.o.xchar == '-')
-          ox = 'x';
-        else if (permsObj.o.x == true && permsObj.o.xchar != '-')
-          ox = permsObj.o.xchar;
-        else
-          ox = '-';
-
-        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${ux}`;
-        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${gx}`;
-        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${ox}`;
+        let newPermStr = getNewPermStringBasedOnModifiedPermsObj(permsObj);
 
         let octalStr = PERMISSIONS.PermissionsStringToOctalString(newPermStr);
         if (octalStr.error) {
