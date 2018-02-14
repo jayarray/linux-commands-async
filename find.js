@@ -158,8 +158,6 @@ class Find {
           args.push('-maxdepth', maxDepth);
         args.push('-type', 'f', '-user', user);
 
-        console.log(`COMMAND: find ${args.join(' ')}`);
-
         let parentDir = PATH.Path.ParentDir(path).dir;
         let tempFilepath = _path.join(parentDir, 'find_files_by_user.sh');
 
