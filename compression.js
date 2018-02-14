@@ -149,33 +149,35 @@ class Zip {
   }
 
   static Decompress(src, dest) {
-    let error = Error.SrcError(src);
-    if (error) {
-      reject(error);
-      return;
-    }
-
-    error = Error.DestError(dest);
-    if (error) {
-      reject(error);
-      return;
-    }
-
-    PATH.Path.Exists(src).then(exists => {
-      if (!exists) {
-        reject(`Source does not exist: ${src}`);
+    return new Promise((resolve, reject) => {
+      let error = Error.SrcError(src);
+      if (error) {
+        reject(error);
         return;
       }
 
-      let args = [src, '-d', dest];
-      EXECUTE.Local('unzip', args).then(output => {
-        if (output.stderr) {
-          reject(`Failed to decompress: ${output.stderr}`);
+      error = Error.DestError(dest);
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      PATH.Path.Exists(src).then(exists => {
+        if (!exists) {
+          reject(`Source does not exist: ${src}`);
           return;
         }
-        resolve(true);
+
+        let args = [src, '-d', dest];
+        EXECUTE.Local('unzip', args).then(output => {
+          if (output.stderr) {
+            reject(`Failed to decompress: ${output.stderr}`);
+            return;
+          }
+          resolve(true);
+        }).catch(reject);
       }).catch(reject);
-    }).catch(reject);
+    });
   }
 
   static Manual(args) {
@@ -252,33 +254,35 @@ class Gzip {
   }
 
   static Decompress(src, keepOriginal) {
-    let error = Error.SrcError(src);
-    if (error) {
-      reject(error);
-      return;
-    }
-
-    PATH.Path.Exists(src).then(exists => {
-      if (!exists) {
-        reject(`Source does not exist: ${src}`);
+    return new Promise((resolve, reject) => {
+      let error = Error.SrcError(src);
+      if (error) {
+        reject(error);
         return;
       }
 
-      let args = [];
-      if (keepOriginal)
-        args.push('-cd');
-      else
-        args.push('-d');
-      args.push(src);
-
-      EXECUTE.Local('gzip', args).then(output => {
-        if (output.stderr) {
-          reject(`Failed to decompress: ${output.stderr}`);
+      PATH.Path.Exists(src).then(exists => {
+        if (!exists) {
+          reject(`Source does not exist: ${src}`);
           return;
         }
-        resolve(true);
+
+        let args = [];
+        if (keepOriginal)
+          args.push('-cd');
+        else
+          args.push('-d');
+        args.push(src);
+
+        EXECUTE.Local('gzip', args).then(output => {
+          if (output.stderr) {
+            reject(`Failed to decompress: ${output.stderr}`);
+            return;
+          }
+          resolve(true);
+        }).catch(reject);
       }).catch(reject);
-    }).catch(reject);
+    });
   }
 
   static Manual(args) {
@@ -464,20 +468,6 @@ class Error {
     return null;
   }
 }
-
-//--------------------------
-// TEST
-
-let src = '/home/isa/Desktop/fx_assets';
-let dest = '/home/isa/Desktop/resume.zip';
-
-Zip.CompressFiles([src], dest).then(success => {
-  console.log('Success :-)');
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
-
-
 
 //--------------------------
 // EXPORTS
