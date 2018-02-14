@@ -160,8 +160,8 @@ class Find {
 
         console.log(`COMMAND: find ${args.join(' ')}`);
 
-        let parentDir = PATH.Path.ParentDir(path);
-        let tempFilepath = _path.join(parentDir, 'files_by_user.sh'); // CONT HERE
+        let parentDir = PATH.Path.ParentDir(path).dir;
+        let tempFilepath = _path.join(parentDir, 'find_files_by_user.sh');
 
         EXECUTE.Local('find', args).then(output => {
           if (output.stderr) {
@@ -205,7 +205,7 @@ class Find {
         let args = [path];
         if (maxDepth && maxDepth > 0)
           args.push('-maxdepth', maxDepth);
-        args.push('-type', 'd', '-name', `"${pattern}"`);
+        args.push('-type', 'd', '-name', pattern);
 
         EXECUTE.Local('find', args).then(output => {
           if (output.stderr) {
@@ -215,96 +215,85 @@ class Find {
 
           let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
           resolve(paths);
-        }).catch(fatalFail);
-      }).catch(fatalFail);
+        }).catch(reject);
+      }).catch(reject);
     });
   }
 
-  static empty_files(path, maxDepth) {
+  static EmptyFiles(path, maxDepth) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
+      let error = PATH.Error.PathError(path);
       if (error) {
-        reject({ results: null, error: error });
+        reject(error);
         return;
       }
 
-      if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
-        reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
+      error = Error.MaxDepthError(maxDepth);
+      if (error) {
+        reject(error);
         return;
       }
 
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ results: null, error: results.error });
+
+      PATH.Path.Exists(path).then(exists => {
+        if (!exists) {
+          reject(`Path does not exist: ${path}`);
           return;
         }
 
-        if (!results.exists) {
-          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
-          return;
-        }
-
-        let cmd = `find ${pTrimmed}`;
+        let args = [path];
         if (maxDepth && maxDepth > 0)
-          cmd += ` -maxdepth ${maxDepth}`;
-        cmd += ` -empty -type f`;
+          args.push('-maxdepth', maxDepth);
+        args.push('-empty', '-type', 'f');
 
-        let tempFilepath = PATH.join(pTrimmed, 'temp_empty_files.sh');
-        BashScript.execute(tempFilepath, cmd).then(values => {
-          if (values.error) {
-            reject({ results: null, error: values.error });
+        EXECUTE.Local('find', args).then(output => {
+          if (output.stderr) {
+            reject(output.stderr);
             return;
           }
 
-          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-          resolve({ results: lines, error: null });
-        }).catch(fatalFail);
-      }).catch(fatalFail);
+          let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+          resolve(paths);
+        }).catch(reject);
+      }).catch(reject);
     });
   }
 
-  static empty_dirs(path, maxDepth) {
+  static EmptyDirs(path, maxDepth) {
     return new Promise((resolve, reject) => {
-      let error = Path.error(path);
+      let error = PATH.Error.PathError(path);
       if (error) {
-        reject({ results: null, error: error });
+        reject(error);
         return;
       }
 
-      if (maxDepth === undefined || maxDepth == null || (Number.isInteger(maxDepth) && maxDepth > 0)) {
-        reject({ results: null, error: `maxDepth must be an integer equal to or greater than 0 and cannot be undefined or null` });
+      error = Error.MaxDepthError(maxDepth);
+      if (error) {
+        reject(error);
         return;
       }
 
-      let pTrimmed = path.trim();
-      Path.exists(pTrimmed).then(results => {
-        if (results.error) {
-          reject({ results: null, error: results.error });
+      PATH.Path.Exists(path).then(exists => {
+        if (!exists) {
+          reject(`Path does not exist: ${path}`);
           return;
         }
 
-        if (!results.exists) {
-          reject({ results: null, error: `Path does not exist: ${pTrimmed}` });
-          return;
-        }
-
-        let cmd = `find ${pTrimmed}`;
+        let args = [path];
         if (maxDepth && maxDepth > 0)
-          cmd += ` -maxdepth ${maxDepth}`;
-        cmd += ` -empty -type d`;
+          args.push('-maxdepth', maxDepth);
+        args.push('-empty', '-type', 'd');
 
-        let tempFilepath = PATH.join(pTrimmed, 'temp_empty_dirs.sh');
-        BashScript.execute(tempFilepath, cmd).then(values => {
-          if (values.error) {
-            reject({ results: null, error: values.error });
+        EXECUTE.Local('find', args).then(output => {
+          if (output.stderr) {
+            reject(output.stderr);
             return;
           }
 
-          let lines = values.output.split('\n').filter(line => line && line.trim() != '' && line != path && line != tempFilepath);
-          resolve({ results: lines, error: null });
-        }).catch(fatalFail);
-      }).catch(fatalFail);
+          let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+          resolve(paths);
+        }).catch(reject);
+      }).catch(reject);
     });
   }
 }
@@ -372,19 +361,6 @@ class Error {
     return null;
   }
 }
-
-//------------------------------
-// TEST
-
-let p = '/home/isa/nodejs-packages/filesystem-async';
-let maxdepth = 1;
-let user = `isa`;
-
-Find.FilesByUser(p, user, maxdepth).then(paths => {
-  console.log(`PATHS:\n${paths.join('\n')}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-})
 
 //------------------------------
 // EXPORTS
