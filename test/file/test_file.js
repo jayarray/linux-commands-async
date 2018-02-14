@@ -70,7 +70,6 @@ describe('*** file.js ***', () => {
       });
     });
 
-    /*
     describe('Remove(path)', () => {
       it('Returns error if path is invalid.', () => {
         FILE.Remove(null).then(success => EXPECT(false))
@@ -81,6 +80,6 @@ describe('*** file.js ***', () => {
         FILE.Remove(filepath).then(success => EXPECT(true))
           .catch(error => EXPECT(error).to.not.equal(null));
       });
-    });*/
+    });
   });
 });
