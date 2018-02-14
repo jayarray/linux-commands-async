@@ -1,4 +1,5 @@
 let PATH = require('./path.js');
+let ERROR = require('./error.js').Error;
 let REMOVE = require('./remove.js').Remove;
 let CHMOD = require('./chmod.js').Chmod;
 let FS = require('fs-extra');
@@ -18,8 +19,9 @@ class File {
         return;
       }
 
-      if (text === undefined || text == null) {
-        reject(`Text cannot be undefined or null`);
+      error = ERROR.StringError(text);
+      if (error) {
+        reject(`Text is ${error}`);
         return;
       }
 
