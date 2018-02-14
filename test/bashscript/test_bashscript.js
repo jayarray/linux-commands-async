@@ -35,17 +35,17 @@ describe('*** bashscript.js ***', () => {
 
     describe('Execute(path, content)', () => {
       it('Returns error if path is invalid.', () => {
-        BASHSCRIPT.Execute(null, content).then(success => EXPECT(false))
+        BASHSCRIPT.Execute(null, content).then(output => EXPECT(false))
           .catch(error => EXPECT(error).to.not.equal(null));
       });
 
       it('Returns error if content is invalid.', () => {
-        BASHSCRIPT.Execute(filepath, null).then(success => EXPECT(false))
+        BASHSCRIPT.Execute(filepath, null).then(output => EXPECT(false))
           .catch(error => EXPECT(error).to.not.equal(null));
       });
 
       it('Creates bash script, executes it, and cleans it up.', () => {
-        BASHSCRIPT.Execute(filepath, content).then(success => EXPECT(true))
+        BASHSCRIPT.Execute(filepath, content).then(output => EXPECT(true))
           .catch(error => EXPECT(false));
       });
     });
