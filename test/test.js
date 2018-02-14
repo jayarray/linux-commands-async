@@ -71,8 +71,12 @@ mocha.addFile(PATH.join(testChmodDir, 'test_chmod.js'));*/
 let testRenameDir = PATH.join(testDir, 'rename');
 mocha.addFile(PATH.join(testRenameDir, 'test_rename.js'));*/
 
+/*
 let testDiskusageDir = PATH.join(testDir, 'diskusage');
-mocha.addFile(PATH.join(testDiskusageDir, 'test_diskusage.js'));
+mocha.addFile(PATH.join(testDiskusageDir, 'test_diskusage.js'));*/
+
+let testFileDir = PATH.join(testDir, 'file');
+mocha.addFile(PATH.join(testFileDir, 'test_file.js'));
 
 let runner = mocha.run(() => { });
 
@@ -103,4 +107,5 @@ function importTest(name, path) {
 //importTest('chown.js', PATH.join(rootDir, 'chown.js'));
 //importTest('chmod.js', PATH.join(rootDir, 'chmod.js'));
 //importTest('rename.js', PATH.join(rootDir, 'rename.js'));
-importTest('diskusage.js', PATH.join(rootDir, 'diskusage.js'));
+//importTest('diskusage.js', PATH.join(rootDir, 'diskusage.js'));
+importTest('file.js', PATH.join(rootDir, 'file.js'));
