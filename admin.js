@@ -807,7 +807,7 @@ class Admin {
     return Commands.Free();
   }
 
-  static Processes() {
+  static TopProcesses() {
     return Commands.Top();
   }
 
