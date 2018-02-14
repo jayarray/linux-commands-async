@@ -92,9 +92,33 @@ class Chmod {
         });
 
         // Create new permStr based on modified permsObj
-        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${permsObj.u.x ? permsObj.u.xchar : '-'}`;
-        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${permsObj.g.x ? permsObj.g.xchar : '-'}`;
-        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${permsObj.o.x ? permsObj.o.xchar : '-'}`;
+        let ux = '';
+        if (permsObj.u.x == true && permsObj.u.xchar == '-')
+          ux = 'x';
+        else if (permsObj.u.x == true && permsObj.u.xchar != '-')
+          ux = permsObj.u.xchar;
+        else
+          ux = '-';
+
+        let gx = '';
+        if (permsObj.g.x == true && permsObj.g.xchar == '-')
+          gx = 'x';
+        else if (permsObj.g.x == true && permsObj.g.xchar != '-')
+          gx = permsObj.g.xchar;
+        else
+          gx = '-';
+
+        let ox = '';
+        if (permsObj.o.x == true && permsObj.o.xchar == '-')
+          ox = 'x';
+        else if (permsObj.o.x == true && permsObj.o.xchar != '-')
+          ox = permsObj.o.xchar;
+        else
+          ox = '-';
+
+        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${ux}`;
+        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${gx}`;
+        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${ox}`;
 
         // Convert newPermStr into octal
         let octalStr = PERMISSIONS.PermissionsStringToOctalString(newPermStr);
@@ -138,9 +162,33 @@ class Chmod {
         });
 
         // Create new permStr based on modified permsObj
-        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${permsObj.u.x ? permsObj.u.xchar : '-'}`;
-        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${permsObj.g.x ? permsObj.g.xchar : '-'}`;
-        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${permsObj.o.x ? permsObj.o.xchar : '-'}`;
+        let ux = '';
+        if (permsObj.u.x == true && permsObj.u.xchar == '-')
+          ux = 'x';
+        else if (permsObj.u.x == true && permsObj.u.xchar != '-')
+          ux = permsObj.u.xchar;
+        else
+          ux = '-';
+
+        let gx = '';
+        if (permsObj.g.x == true && permsObj.g.xchar == '-')
+          gx = 'x';
+        else if (permsObj.g.x == true && permsObj.g.xchar != '-')
+          gx = permsObj.g.xchar;
+        else
+          gx = '-';
+
+        let ox = '';
+        if (permsObj.o.x == true && permsObj.o.xchar == '-')
+          ox = 'x';
+        else if (permsObj.o.x == true && permsObj.o.xchar != '-')
+          ox = permsObj.o.xchar;
+        else
+          ox = '-';
+
+        let newPermStr = `${permsObj.u.r ? 'r' : '-'}${permsObj.u.w ? 'w' : '-'}${ux}`;
+        newPermStr += `${permsObj.g.r ? 'r' : '-'}${permsObj.g.w ? 'w' : '-'}${gx}`;
+        newPermStr += `${permsObj.o.r ? 'r' : '-'}${permsObj.o.w ? 'w' : '-'}${ox}`;
 
         // Convert newPermStr into octal
         let octalStr = PERMISSIONS.PermissionsStringToOctalString(newPermStr);
