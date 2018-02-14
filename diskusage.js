@@ -41,7 +41,7 @@ class DiskUsage {
             let filepath = line.substring(sizeStr.length + 1);
             items.push({ size: parseInt(sizeStr), path: filepath });
           });
-          resolve(items);
+          resolve(items.filter(item => item.path != dirPath));
         }).catch(reject);
       });
     });
@@ -84,13 +84,16 @@ class DiskUsage {
             return;
           }
 
+          let outputStr = output.stdout.trim();
+
           let sizeStr = '';
-          output.stdout.trim().split('').forEach(char => {
-            if (char.trim())
-              sizeStr += char;
+          for (let i = 0; i < outputStr.length; ++i) {
+            let currChar = outputStr.charAt(i);
+            if (currChar.trim())
+              sizeStr += currChar;
             else
               break;
-          });
+          }
           resolve(parseInt(sizeStr));
         }).catch(reject);
       }).catch(reject);
