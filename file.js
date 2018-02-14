@@ -104,17 +104,6 @@ class File {
   }
 }
 
-//--------------------------------
-// TEST
-
-let p = '/home/isa/nodejs-packages/filesystem-async/delete_this_test_file.txt';
-
-File.MakeExecutable(p).then(success => {
-  console.log(`SUCCESS: ${success}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
-
 //-------------------------------
 // EXPORTS
 
