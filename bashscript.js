@@ -19,7 +19,7 @@ class BashScript {
   static Execute(path, content) {
     return new Promise((resolve, reject) => {
       BashScript.Create(path, content).then(success => {
-        EXECUTE.Local(path).then(output => {
+        EXECUTE.Local(path, []).then(output => {
           resolve(output.stdout);
           REMOVE.File(path).then(success => {
           }).catch(reject);
