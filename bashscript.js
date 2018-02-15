@@ -1,5 +1,4 @@
 let FILE = require('./file.js').File;
-let REMOVE = require('./remove.js').Remove;
 let EXECUTE = require('./execute.js').Execute;
 
 //----------------------------------------
@@ -21,7 +20,7 @@ class BashScript {
       BashScript.Create(path, content).then(success => {
         EXECUTE.Local(path, []).then(output => {
           resolve(output.stdout);
-          REMOVE.File(path).then(success => {
+          FILE.Remove(path).then(success => {
           }).catch(reject);
         }).catch(reject);
       }).catch(reject);
