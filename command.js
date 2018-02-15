@@ -18,13 +18,13 @@ class SavedData { // Nits: make |value| private and add a get() method for encap
 //-----------------------------------------
 // LOCAL
 
-class Command {
+class CommandLocal {
   constructor() {
   }
 
   /**
    * @param {string} cmd 
-   * @param {Array<string>} args 
+   * @param {Array<string|number>} args 
    */
   Execute(cmd, args) {
     return new Promise((resolve, reject) => {
@@ -58,7 +58,7 @@ class Command {
 //-----------------------------------------
 // REMOTE
 
-class CommandRemote extends Command {
+class CommandRemote extends CommandLocal {
   /**
   * @param {string} user 
   * @param {string} host 
@@ -69,7 +69,10 @@ class CommandRemote extends Command {
     this.host_ = host;
   }
 
-  /** @override */
+  /**
+  * @param {string} cmd 
+  * @param {Array<string|number>} args 
+  */
   Execute(cmd, args) {
     return new Promise((resolve, reject) => {
       let error = ERROR.StringValidator(cmd);
@@ -84,31 +87,97 @@ class CommandRemote extends Command {
         return;
       }
 
+      error = ERROR.StringValidator(this.user_);
+      if (error) {
+        reject(`Failed to execute remote command: user is ${error}`);
+        return;
+      }
+
+      error = ERROR.StringValidator(this.host_);
+      if (error) {
+        reject(`Failed to execute remote command: host is ${error}`);
+        return;
+      }
+
       let sshArgs = [`${this.user_}@${this.host_}`];
       if (args)
         sshArgs.push(`${cmd} ${args.join(' ')}`);
       else
         sshArgs.push(cmd);
 
-      Command.prototype.Execute('ssh', sshArgs).then(output => {
+      CommandLocal.prototype.Execute('ssh', sshArgs).then(output => {
+        resolve(output);
+      }).catch(reject);
+    });
+  }
+
+  static get Builder() {
+    class Builder {
+      constructor() {
+      }
+
+      /**
+      * @param {string} user 
+      */
+      user(user) {
+        this.user = user;
+        return this;
+      }
+
+      /**
+      * @param {string} host 
+      */
+      host(host) {
+        this.host = host;
+        return this;
+      }
+
+      build() {
+        if (ERROR.StringValidator(this.user) != null || ERROR.StringValidator(this.host) != null)
+          return null;
+        return new CommandRemote(this.user, this.host);
+      }
+    }
+    return Builder;
+  }
+}
+
+//-----------------------------------
+// COMMAND
+
+class Command {
+  constructor() {
+  }
+
+  /**
+  * @param {CommandLocal|CommandRemote} executor 
+  * @param {string} cmd 
+  * @param {Array<string|number>} args 
+  */
+  Execute(executor, cmd, args) {
+    return new Promise((resolve, reject) => {
+      let error = ERROR.NullOrUndefined(executor);
+      if (error) {
+        reject(`Failed to execute command: executor is ${error}`);
+        return;
+      }
+
+      let executorClassName = executor.constructor.name;
+      if (executorClassName != 'CommandLocal' && executorClassName != 'CommandRemote') {
+        reject(`Failed to execute command: executor is not valid`);
+        return;
+      }
+
+      executor.Execute(cmd, args).then(output => {
         resolve(output);
       }).catch(reject);
     });
   }
 }
 
-//----------------------------------------------
-// TEST
+//-----------------------------------
+// EXPORTS
 
-let user = 'pi';
-let host = 'teagirl';
-
-let cmd = 'ls';
-let args = [];
-
-let CMD = new CommandRemote(user, host);
-CMD.Execute(cmd, args).then(output => {
-  console.log(`OUTPUT: ${JSON.stringify(output)}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
+exports.CommandLocal = CommandLocal;
+exports.CommandRemote = CommandRemote;
+exports.Command = Command;
