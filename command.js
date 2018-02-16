@@ -1,6 +1,28 @@
 const CHILD_PROCESS = require('child_process');
 const ERROR = require('./error.js');
 
+//-----------------------------------
+// OPTIONS
+
+const OPTION_NAME_TYPE_PAIRS = [
+  { name: 'cwd', types: ['string'] },
+  { name: 'env', types: ['Object'] },
+  { name: 'argv0', types: ['string'] },
+  { name: 'stdio', types: ['Array', 'string'] },
+  { name: 'detached', types: ['boolean'] },
+  { name: 'uid', types: ['number'] },
+  { name: 'gid', types: ['number'] },
+  { name: 'shell', types: ['boolean', 'string'] },
+  { name: 'windowsVerbatimArguments', types: ['boolean'] },
+  { name: 'windowsHide', types: ['boolean'] }
+];
+
+function newOptionsObject() {
+  let obj = {};
+  OPTION_NAME_TYPE_PAIRS.forEach(pair => obj[pair.name] = null);
+  return obj;
+}
+
 //---------------------------------------------
 // SAVING DATA (to string)
 
@@ -19,7 +41,11 @@ class SavedData { // Nits: make |value| private and add a get() method for encap
 // LOCAL
 
 class LocalCommand {
-  constructor() {
+  /**
+   * @param {Object} options 
+   */
+  constructor(options) {
+    this.options_ = options;
   }
 
   /**
@@ -40,7 +66,18 @@ class LocalCommand {
         return;
       }
 
-      let childProcess = CHILD_PROCESS.spawn(cmd, args);
+      let optionsError = Error.OptionsValidator(this.options_);
+      if (optionsError) {
+        reject(`Failed to execute remote command: ${error}`);
+        return;
+      }
+
+      let childProcess = null;
+      if (options == null)
+        childProcess = CHILD_PROCESS.spawn(cmd, args);
+      else
+        childProcess = CHILD_PROCESS.spawn(cmd, args, this.options_);
+
       let stderr = new SavedData(childProcess.stderr);
       let stdout = new SavedData(childProcess.stdout);
 
@@ -62,9 +99,10 @@ class RemoteCommand extends LocalCommand {
   /**
   * @param {string} user 
   * @param {string} host 
+  * @param {Object} options 
   */
-  constructor(user, host) {
-    super();
+  constructor(user, host, options) {
+    super(options);
     this.user_ = user;
     this.host_ = host;
   }
@@ -99,6 +137,12 @@ class RemoteCommand extends LocalCommand {
         return;
       }
 
+      error = Error.OptionsValidator(this.options_);
+      if (error) {
+        reject(`Failed to execute remote command: ${error}`);
+        return;
+      }
+
       let sshArgs = [`${this.user_}@${this.host_}`];
       if (args)
         sshArgs.push(`${cmd} ${args.join(' ')}`);
@@ -119,7 +163,7 @@ class RemoteCommand extends LocalCommand {
       /**
       * @param {string} user 
       */
-      user(user) {
+      User(user) {
         this.user = user;
         return this;
       }
@@ -127,15 +171,25 @@ class RemoteCommand extends LocalCommand {
       /**
       * @param {string} host 
       */
-      host(host) {
+      Host(host) {
         this.host = host;
         return this;
       }
 
-      build() {
+      /**
+      * @param {Object} options 
+      */
+      Options(options) {
+        this.options = options;
+        return this;
+      }
+
+      Build() {
         if (ERROR.StringValidator(this.user) != null || ERROR.StringValidator(this.host) != null)
           return null;
-        return new RemoteCommand(this.user, this.host);
+        if (Error.OptionsValidator(options) != null)
+          return null;
+        return new RemoteCommand(this.user, this.host, this.options);
       }
     }
     return Builder;
@@ -172,6 +226,40 @@ class Command {
         resolve(output);
       }).catch(reject);
     });
+  }
+
+  static OptionsObject() {
+    return newOptionsObject();
+  }
+}
+
+//-----------------------------------
+// ERROR
+
+class Error {
+  static OptionsValidator(options) {
+    if (options === undefined)
+      return `Options are undefined`;
+
+    let hasAtLeastOneValidPair = false;
+    let hasInvalidVariables = false;
+
+    let variableNames = OPTION_NAME_TYPE_PAIRS.map(pair => pair.name);
+    let optionsVariableNames = Object.keys(options);
+
+    optionsVariableNames.forEach(name => {
+      if (!variableNames.includes(name))
+        return `Unknown option: ${name}`;
+      else {
+        let optionType = typeof options[name];
+
+        let validTypes = OPTION_NAME_TYPE_PAIRS.filter(pair => pair.name == name)[0].types;
+        if (!validTypes.includes(optionType))
+          return `Option '${name}' is incorrect type. Is currently ${optionType} type; Should be ${validTypes.join('|')} type.`;
+      }
+    });
+
+    return null;
   }
 }
 
