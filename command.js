@@ -18,7 +18,7 @@ class SavedData { // Nits: make |value| private and add a get() method for encap
 //-----------------------------------------
 // LOCAL
 
-class CommandLocal {
+class LocalCommand {
   constructor() {
   }
 
@@ -58,7 +58,7 @@ class CommandLocal {
 //-----------------------------------------
 // REMOTE
 
-class CommandRemote extends CommandLocal {
+class RemoteCommand extends LocalCommand {
   /**
   * @param {string} user 
   * @param {string} host 
@@ -105,7 +105,7 @@ class CommandRemote extends CommandLocal {
       else
         sshArgs.push(cmd);
 
-      CommandLocal.prototype.Execute('ssh', sshArgs).then(output => {
+      LocalCommand.prototype.Execute('ssh', sshArgs).then(output => {
         resolve(output);
       }).catch(reject);
     });
@@ -135,7 +135,7 @@ class CommandRemote extends CommandLocal {
       build() {
         if (ERROR.StringValidator(this.user) != null || ERROR.StringValidator(this.host) != null)
           return null;
-        return new CommandRemote(this.user, this.host);
+        return new RemoteCommand(this.user, this.host);
       }
     }
     return Builder;
@@ -150,7 +150,7 @@ class Command {
   }
 
   /**
-  * @param {CommandLocal|CommandRemote} executor 
+  * @param {LocalCommand|RemoteCommand} executor 
   * @param {string} cmd 
   * @param {Array<string|number>} args 
   */
@@ -163,7 +163,7 @@ class Command {
       }
 
       let executorClassName = executor.constructor.name;
-      if (executorClassName != 'CommandLocal' && executorClassName != 'CommandRemote') {
+      if (executorClassName != 'LocalCommand' && executorClassName != 'RemoteCommand') {
         reject(`Failed to execute command: executor is not valid`);
         return;
       }
@@ -178,6 +178,6 @@ class Command {
 //-----------------------------------
 // EXPORTS
 
-exports.CommandLocal = CommandLocal;
-exports.CommandRemote = CommandRemote;
+exports.LocalCommand = LocalCommand;
+exports.RemoteCommand = RemoteCommand;
 exports.Command = Command;
