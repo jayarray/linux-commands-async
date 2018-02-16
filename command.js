@@ -1,28 +1,6 @@
 const CHILD_PROCESS = require('child_process');
 const ERROR = require('./error.js');
 
-//-----------------------------------
-// OPTIONS
-
-const OPTION_NAME_TYPE_PAIRS = [
-  { name: 'cwd', types: ['string'] },
-  { name: 'env', types: ['Object'] },
-  { name: 'argv0', types: ['string'] },
-  { name: 'stdio', types: ['Array', 'string'] },
-  { name: 'detached', types: ['boolean'] },
-  { name: 'uid', types: ['number'] },
-  { name: 'gid', types: ['number'] },
-  { name: 'shell', types: ['boolean', 'string'] },
-  { name: 'windowsVerbatimArguments', types: ['boolean'] },
-  { name: 'windowsHide', types: ['boolean'] }
-];
-
-function newOptionsObject() {
-  let obj = {};
-  OPTION_NAME_TYPE_PAIRS.forEach(pair => obj[pair.name] = null);
-  return obj;
-}
-
 //---------------------------------------------
 // SAVING DATA (to string)
 
@@ -41,11 +19,7 @@ class SavedData { // Nits: make |value| private and add a get() method for encap
 // LOCAL
 
 class LocalCommand {
-  /**
-   * @param {Object} options 
-   */
-  constructor(options) {
-    this.options_ = options;
+  constructor() {
   }
 
   /**
@@ -54,29 +28,27 @@ class LocalCommand {
    */
   Execute(cmd, args) {
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringValidator(cmd);
-      if (error) {
-        reject(`Failed to execute command: command is ${error}`);
-        return;
-      }
-
-      error = ERROR.ArrayValidator(args);
-      if (error) {
-        reject(`Failed to execute command: arguments are ${error}`);
-        return;
-      }
-
-      let optionsError = Error.OptionsValidator(this.options_);
-      if (optionsError) {
-        reject(`Failed to execute remote command: ${error}`);
+      let cmdError = ERROR.StringValidator(cmd);
+      if (cmdError) {
+        reject(`Failed to execute command: command is ${cmdError}`);
         return;
       }
 
       let childProcess = null;
-      if (options == null)
-        childProcess = CHILD_PROCESS.spawn(cmd, args);
-      else
-        childProcess = CHILD_PROCESS.spawn(cmd, args, this.options_);
+
+      let argsAreOmitted = args !== undefined && args == null;
+
+      if (argsAreOmitted) // (cmd, null) ==> Execute entire string as command
+        childProcess = CHILD_PROCESS.exec(cmd);
+      else {
+        let argsError = ERROR.ArrayValidator(args);
+        if (argsError) {
+          reject(`Failed to execute command: arguments are ${argsError}`);
+          return;
+        }
+
+        childProcess = childProcess = CHILD_PROCESS.spawn(cmd, args);
+      }
 
       let stderr = new SavedData(childProcess.stderr);
       let stdout = new SavedData(childProcess.stdout);
@@ -85,7 +57,7 @@ class LocalCommand {
         resolve({
           stderr: stderr.value_,
           stdout: stdout.value_,
-          exitCode: exitCode,
+          exitCode: exitCode
         });
       });
     });
@@ -101,8 +73,8 @@ class RemoteCommand extends LocalCommand {
   * @param {string} host 
   * @param {Object} options 
   */
-  constructor(user, host, options) {
-    super(options);
+  constructor(user, host) {
+    super();
     this.user_ = user;
     this.host_ = host;
   }
@@ -113,41 +85,43 @@ class RemoteCommand extends LocalCommand {
   */
   Execute(cmd, args) {
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringValidator(cmd);
-      if (error) {
-        reject(`Failed to execute remote command: command is ${error}`);
+      let userError = ERROR.StringValidator(this.user_);
+      if (userError) {
+        reject(`Failed to execute remote command: user is ${userError}`);
         return;
       }
 
-      error = ERROR.ArrayValidator(args);
-      if (error) {
-        reject(`Failed to execute remote command: arguments are ${error}`);
+      let hostError = ERROR.StringValidator(this.host_);
+      if (hostError) {
+        reject(`Failed to execute remote command: host is ${hostError}`);
         return;
       }
 
-      error = ERROR.StringValidator(this.user_);
-      if (error) {
-        reject(`Failed to execute remote command: user is ${error}`);
-        return;
-      }
+      let cmdError = ERROR.StringValidator(cmd);
+      let cmdIsOk = cmdError == null;
 
-      error = ERROR.StringValidator(this.host_);
-      if (error) {
-        reject(`Failed to execute remote command: host is ${error}`);
-        return;
-      }
-
-      error = Error.OptionsValidator(this.options_);
-      if (error) {
-        reject(`Failed to execute remote command: ${error}`);
-        return;
-      }
+      let argsError = ERROR.ArrayValidator(args);
+      let argsAreOk = argsError == null;
+      let argsAreOmitted = args !== undefined && args == null;
 
       let sshArgs = [`${this.user_}@${this.host_}`];
-      if (args)
-        sshArgs.push(`${cmd} ${args.join(' ')}`);
-      else
-        sshArgs.push(cmd);
+
+      if (cmdIsOk) {
+        if (argsAreOmitted)
+          sshArgs.push(cmd);
+        else {
+          if (argsAreOk)
+            sshArgs.push(`${cmd} ${args.join(' ')}`);
+          else {
+            reject(`Failed to execute remote command: arguments are ${argsError}`);
+            return;
+          }
+        }
+      }
+      else {
+        reject(`Failed to execute remote command: command is ${cmdError}`);
+        return;
+      }
 
       LocalCommand.prototype.Execute('ssh', sshArgs).then(output => {
         resolve(output);
@@ -176,20 +150,10 @@ class RemoteCommand extends LocalCommand {
         return this;
       }
 
-      /**
-      * @param {Object} options 
-      */
-      Options(options) {
-        this.options = options;
-        return this;
-      }
-
       Build() {
-        if (ERROR.StringValidator(this.user) != null || ERROR.StringValidator(this.host) != null)
+        if (ERROR.StringValidator(this.user) != null || ERROR.StringValidator(this.host) != null) // User or Host are invalid
           return null;
-        if (Error.OptionsValidator(options) != null)
-          return null;
-        return new RemoteCommand(this.user, this.host, this.options);
+        return new RemoteCommand(this.user, this.host);
       }
     }
     return Builder;
@@ -198,7 +162,6 @@ class RemoteCommand extends LocalCommand {
 
 //-----------------------------------
 // COMMAND
-
 class Command {
   constructor() {
   }
@@ -227,41 +190,29 @@ class Command {
       }).catch(reject);
     });
   }
-
-  static OptionsObject() {
-    return newOptionsObject();
-  }
 }
 
-//-----------------------------------
-// ERROR
+//----------------------------------
+// TEST
 
-class Error {
-  static OptionsValidator(options) {
-    if (options === undefined)
-      return `Options are undefined`;
+let user = 'pi';
+let host = 'teagirl';
 
-    let hasAtLeastOneValidPair = false;
-    let hasInvalidVariables = false;
+let cmd = 'ls';
+let args = ['-l'];
 
-    let variableNames = OPTION_NAME_TYPE_PAIRS.map(pair => pair.name);
-    let optionsVariableNames = Object.keys(options);
+let bashCmd = `if [ -e /home/pi ]; then echo 1; else echo 0; fi;`;
 
-    optionsVariableNames.forEach(name => {
-      if (!variableNames.includes(name))
-        return `Unknown option: ${name}`;
-      else {
-        let optionType = typeof options[name];
+let localCmd = new LocalCommand();
+let remoteCmd = new RemoteCommand(user, host);
 
-        let validTypes = OPTION_NAME_TYPE_PAIRS.filter(pair => pair.name == name)[0].types;
-        if (!validTypes.includes(optionType))
-          return `Option '${name}' is incorrect type. Is currently ${optionType} type; Should be ${validTypes.join('|')} type.`;
-      }
-    });
+remoteCmd.Execute(bashCmd, null).then(output => {
+  console.log(`OUTPUT: ${JSON.stringify(output)}`);
+}).catch(error => {
+  console.log(`ERROR: ${error}`);
+});
 
-    return null;
-  }
-}
+
 
 //-----------------------------------
 // EXPORTS
