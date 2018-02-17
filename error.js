@@ -23,7 +23,7 @@ function StringValidator(s) {
     return null;
 }
 
-function NumberError(n) {
+function NumberValidator(n) {
   let error = NullOrUndefined(n);
   if (error)
     return error;
@@ -104,3 +104,4 @@ function ArrayValidator(arr) {
 exports.NullOrUndefined = NullOrUndefined;
 exports.StringValidator = StringValidator;
 exports.ArrayValidator = ArrayValidator;
+exports.NumberValidator = NumberValidator;
