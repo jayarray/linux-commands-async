@@ -30,13 +30,13 @@ class LocalCommand {
     return new Promise((resolve, reject) => {
       let cmdError = ERROR.StringValidator(cmd);
       if (cmdError) {
-        reject(`Failed to execute command: command is ${cmdError}`);
+        reject(`Failed to execute local command: command is ${cmdError}`);
         return;
       }
 
       let argsError = argsValidator(args);
       if (argsError) {
-        reject(`Failed to execute command: ${argsError}`);
+        reject(`Failed to execute local command: ${argsError}`);
         return;
       }
 
@@ -168,7 +168,7 @@ class Command {
   * @param {string} cmd 
   * @param {Array<string|number>} args 
   */
-  Execute(executor, cmd, args) {
+  static Execute(cmd, args, executor) {
     return new Promise((resolve, reject) => {
       let error = ERROR.NullOrUndefined(executor);
       if (error) {
@@ -208,26 +208,6 @@ function argsValidator(args) {
   }
   return null;
 }
-
-//----------------------------------
-// TEST
-
-let user = 'pi';
-let host = 'teagirl';
-
-let cmd = 'ls';
-let args = ['-l'];
-
-let bashCmd = `if [ -e /home/pi ]; then echo 1; else echo 0; fi;`;
-
-let localCmd = new LocalCommand();
-let remoteCmd = new RemoteCommand(user, host);
-
-remoteCmd.Execute(cmd, []).then(output => {
-  console.log(`OUTPUT: ${JSON.stringify(output)}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
 
 //-----------------------------------
 // EXPORTS
