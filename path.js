@@ -57,7 +57,7 @@ class Path {
 
           FS.lstat(path, (err, stats) => {
             if (err)
-              reject(err);
+              reject(`Failed to check if local path is a file: ${err}`);
             else
               resolve(stats.isFile() && !stats.isDirectory());
           });
@@ -103,7 +103,7 @@ class Path {
 
           FS.lstat(path, (err, stats) => {
             if (err)
-              reject(err);
+              reject(`Failed to check if local path is a directory: ${err}`);
             else
               resolve(stats.isDirectory());
           });
@@ -186,15 +186,15 @@ class Path {
 
 class CommandStringBuiler {
   static Exists(path) {
-    return `if [ -e ${path} ]; then echo 1; else echo 0; fi`;
+    return `if [ -e ${path}]; then echo 1; else echo 0; fi`;
   }
 
   static IsFile(path) {
-    return `if [ -f ${path} ]; then echo 1; else echo 0; fi`;
+    return `if [ -f ${path}]; then echo 1; else echo 0; fi`;
   }
 
   static IsDir(path) {
-    return `if [ -d ${path} ]; then echo 1; else echo 0; fi`;
+    return `if [ -d ${path}]; then echo 1; else echo 0; fi`;
   }
 }
 
