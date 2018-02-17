@@ -2,7 +2,6 @@ let PATH = require('path');
 let FS = require('fs-extra');
 let ERROR = require('./error.js');
 let COMMAND = require('./command.js').Command;
-let REMOTE_COMMAND = require('./command.js').RemoteCommand;
 
 //-----------------------------------
 // PATH
@@ -206,22 +205,6 @@ class Error {
     return null;
   }
 }
-
-//------------------------------------
-// TEST
-
-let dirPath = '/home/pi/python';
-let filePath = '/home/isa/test.txt';
-
-let user = 'pi';
-let host = 'teagirl';
-let remoteExecutor = new REMOTE_COMMAND(user, host)
-
-Path.IsDir(dirPath, remoteExecutor).then(exists => {
-  console.log(`EXISTS: ${exists}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
 
 //------------------------------------
 // EXPORTS
