@@ -34,21 +34,18 @@ class LocalCommand {
         return;
       }
 
+      let argsError = argsValidator(args);
+      if (argsError) {
+        reject(`Failed to execute command: ${argsError}`);
+        return;
+      }
+
       let childProcess = null;
 
-      let argsAreOmitted = args !== undefined && args == null;
-
-      if (argsAreOmitted) // (cmd, null) ==> Execute entire string as command
-        childProcess = CHILD_PROCESS.exec(cmd);
-      else {
-        let argsError = ERROR.ArrayValidator(args);
-        if (argsError) {
-          reject(`Failed to execute command: arguments are ${argsError}`);
-          return;
-        }
-
+      if (args.length > 0)
         childProcess = childProcess = CHILD_PROCESS.spawn(cmd, args);
-      }
+      else
+        childProcess = CHILD_PROCESS.exec(cmd);
 
       let stderr = new SavedData(childProcess.stderr);
       let stdout = new SavedData(childProcess.stdout);
@@ -100,7 +97,7 @@ class RemoteCommand extends LocalCommand {
       let cmdError = ERROR.StringValidator(cmd);
       let cmdIsOk = cmdError == null;
 
-      let argsError = ERROR.ArrayValidator(args);
+      let argsError = argsValidator(args);
       let argsAreOk = argsError == null;
       let argsAreOmitted = args !== undefined && args == null;
 
@@ -113,7 +110,7 @@ class RemoteCommand extends LocalCommand {
           if (argsAreOk)
             sshArgs.push(`${cmd} ${args.join(' ')}`);
           else {
-            reject(`Failed to execute remote command: arguments are ${argsError}`);
+            reject(`Failed to execute remote command: ${argsError}`);
             return;
           }
         }
@@ -192,6 +189,26 @@ class Command {
   }
 }
 
+//-----------------------------------
+// HELPERS
+
+function argsValidator(args) {
+  let argsError = ERROR.ArrayValidator(args);
+  if (argsError)
+    return `arguments are ${argsError}`;
+
+  for (let i = 0; i < args.length; ++i) {
+    let currArg = args[i];
+
+    let stringError = ERROR.StringValidator(currArg);
+    let numberError = ERROR.NumberValidator(currArg);
+
+    if (stringError != null && numberError != null)
+      return `arguments must be string or number type`;
+  }
+  return null;
+}
+
 //----------------------------------
 // TEST
 
@@ -206,13 +223,11 @@ let bashCmd = `if [ -e /home/pi ]; then echo 1; else echo 0; fi;`;
 let localCmd = new LocalCommand();
 let remoteCmd = new RemoteCommand(user, host);
 
-remoteCmd.Execute(bashCmd, null).then(output => {
+remoteCmd.Execute(cmd, []).then(output => {
   console.log(`OUTPUT: ${JSON.stringify(output)}`);
 }).catch(error => {
   console.log(`ERROR: ${error}`);
 });
-
-
 
 //-----------------------------------
 // EXPORTS
