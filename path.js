@@ -85,7 +85,9 @@ class Path {
           }).catch(error => {
             reject(`Failed to check if remote path is a file: ${error}`);
           });
-        }).catch();
+        }).catch(error => {
+          reject(`Failed to check if remote path is a file: ${error}`);
+        });
       }
     });
   }
@@ -129,7 +131,9 @@ class Path {
           }).catch(error => {
             reject(`Failed to check if remote path is a directory: ${error}`);
           });
-        }).catch();
+        }).catch(error => {
+          reject(`Failed to check if remote path is a directory: ${error}`);
+        });
       }
     });
   }
