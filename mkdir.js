@@ -34,28 +34,26 @@ class Mkdir {
 
   static Mkdirp(path, executor) {
     return new Promise((resolve, reject) => {
-      return new Promise((resolve, reject) => {
-        let pathError = PATH.Error.PathValidator(path);
-        if (pathError) {
-          reject(`Failed to make directory path: ${pathError}`);
+      let pathError = PATH.Error.PathValidator(path);
+      if (pathError) {
+        reject(`Failed to make directory path: ${pathError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to make directory path: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.MakeDirP(path);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to make directory path: ${output.stderr}`);
           return;
         }
-
-        let executorError = ERROR.ExecutorValidator(executor);
-        if (executorError) {
-          reject(`Failed to make directory path: Connection is ${executorError}`);
-          return;
-        }
-
-        let cmd = LINUX_COMMANDS.MakeDirP(path);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to make directory path: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => reject(`Failed to make directory path: ${error}`));
-      });
+        resolve(true);
+      }).catch(error => reject(`Failed to make directory path: ${error}`));
     });
   }
 }
