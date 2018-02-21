@@ -1,49 +1,66 @@
-let FS = require('fs-extra');
 let PATH = require('./path.js');
-let MKDIRP = require('mkdirp');
+let ERROR = require('./error.js');
+let COMMAND = require('./command.js').Command;
+let LINUX_COMMANDS = require('./linuxcommands.js');
 
 //------------------------------------------------------
 // MKDIR (mkdir)
 
 class Mkdir {
-  static Mkdir(path) {
+  static Mkdir(path, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
-      if (error) {
-        reject(error);
+      let pathError = PATH.Error.PathValidator(path);
+      if (pathError) {
+        reject(`Failed to make directory: ${pathError}`);
         return;
       }
 
-      FS.mkdir(path, (err) => {
-        if (err) {
-          reject(`Failed to create directory: ${err}`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to make directory: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.MakeDir(path);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to make directory: ${output.stderr}`);
           return;
         }
         resolve(true);
-      });
+      }).catch(error => reject(`Failed to make directory: ${error}`));
     });
   }
 
-  static Mkdirp(path) {
+  static Mkdirp(path, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      MKDIRP(path.trim(), (err) => {
-        if (err) {
-          reject(`Failed to create directory: ${err}`);
+      return new Promise((resolve, reject) => {
+        let pathError = PATH.Error.PathValidator(path);
+        if (pathError) {
+          reject(`Failed to make directory path: ${pathError}`);
           return;
         }
-        resolve(true);
+
+        let executorError = ERROR.ExecutorValidator(executor);
+        if (executorError) {
+          reject(`Failed to make directory path: Connection is ${executorError}`);
+          return;
+        }
+
+        let cmd = LINUX_COMMANDS.MakeDirP(path);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to make directory path: ${output.stderr}`);
+            return;
+          }
+          resolve(true);
+        }).catch(error => reject(`Failed to make directory path: ${error}`));
       });
     });
   }
 }
 
 //-------------------------------------
-// MKDIR
+// EXPORTS
 
 exports.Mkdir = Mkdir;
