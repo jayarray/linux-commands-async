@@ -189,28 +189,20 @@ function getLsofObject(line, headers) {
         field == 'SIZE/OFF' ||
         field == 'NODE') {
         if (isNaN(field))
-        lsofObj[name] = parts[partIndex];
+          lsofObj[name] = parts[partIndex];
         else
-        lsofObj[name] = parseInt(parts[partIndex]);
+          lsofObj[name] = parseInt(parts[partIndex]);
       }
       else if (field == 'NAME') {
         lsofObj[name] = parts.slice(partIndex).join(' ');
       }
     }
     else
-    lsofObj[name] = null;
+      lsofObj[name] = null;
 
     partIndex += 1;
   });
   return lsofObj;
-}
-
-//-------------------------------------
-// COMMANDS
-class Commands {
-  static Lsof(user, executor) { // Displays all files opened by user
-
-  }
 }
 
 //-------------------------------------
@@ -774,7 +766,7 @@ class Admin {
     });
   }
 
-  static ListOpenFilesByUser(user, executor) {
+  static ListOpenFilesByUser(user, executor) { // Displays all files opened by user
     return new Promise((resolve, reject) => {
       let userError = ERROR.StringValidator(user);
       if (userError) {
@@ -845,7 +837,7 @@ class Admin {
     return new Promise((resolve, reject) => {
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
-        reject(`Failed to check if user can change group ownership: Connection is ${executorError}`);
+        reject(`Failed to verify if user can change group ownership: Connection is ${executorError}`);
         return;
       }
 
@@ -860,10 +852,10 @@ class Admin {
             USERINFO.OtherUser(user.name, executor).then(info => {
               let userGroupIds = info.groups.map(group => group.gid);
               resolve(group.users.includes(user.name) || userGroupIds.includes(group.id));
-            }).catch(error => `Failed to check if user can change group ownership: ${error}`);
-          }).catch(error => `Failed to check if user can change group ownership: ${error}`);
-        }).catch(error => `Failed to check if user can change group ownership: ${error}`);
-      }).catch(error => `Failed to check if user can change group ownership: ${error}`);
+            }).catch(error => `Failed to verify if user can change group ownership: ${error}`);
+          }).catch(error => `Failed to verify if user can change group ownership: ${error}`);
+        }).catch(error => `Failed to verify if user can change group ownership: ${error}`);
+      }).catch(error => `Failed to verify if user can change group ownership: ${error}`);
     });
   }
 
