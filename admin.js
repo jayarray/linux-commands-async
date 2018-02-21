@@ -3,196 +3,6 @@ let ERROR = require('./error.js');
 let USERINFO = require('./userinfo.js').UserInfo;
 let LINUX_COMMANDS = require('./linuxcommands.js');
 
-//-------------------------------------
-// GROUPS
-
-class Groups {
-  static All(executor) {
-    return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to get all groups: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.AdminGetGroups();
-      COMMAND.Execute(cmd, [], executor).then(output => {
-        if (output.stderr) {
-          reject(`Failed to get all groups: ${output.stderr}`);
-          return;
-        }
-
-        let lines = output.stdout.trim()
-          .split('\n')
-          .filter(line => line && line != '' && line.trim() != '')
-          .map(line => line.trim());
-
-        let groups = [];
-        lines.forEach(line => {
-          let parts = line.split(':');
-          let name = parts[0];
-          let id = parseInt(parts[2]);
-
-          let users = [];
-          if (parts[3])
-            users = parts[3].split(',');
-
-          let group = { name: name, id: id, users: users };
-          groups.push(group);
-        });
-        resolve(groups);
-      }).catch(error => `Failed to get all groups: ${error}`);
-    });
-  }
-
-  static Exists(gid, executor) {
-    return new Promise((resolve, reject) => {
-      let gidError = Error.IdError(gid);
-      if (gidError) {
-        reject(`Failed to check if group exists: gid ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to check if group exists: Connection is ${executorError}`);
-        return;
-      }
-
-      Groups.All(executor).then(groups => {
-        for (let i = 0; i < groups.length; ++i) {
-          let currGroup = groups[i];
-          if ((typeof gid == 'string' && currGroup.name == gid) || (Number.isInteger(gid) && currGroup.id == gid)) {
-            resolve(true);
-            return;
-          }
-        }
-        resolve(false);
-      }).catch(error => `Failed to check if group exists: ${error}`);
-    });
-  }
-
-  static Get(id, executor) {
-    return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to get group: Connection is ${executorError}`);
-        return;
-      }
-
-      Groups.Exists(id, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to get group: group does not exist: ${id}`);
-          return;
-        }
-
-        Groups.All(executor).then(groups => {
-          for (let i = 0; i < groups.length; ++i) {
-            let currGroup = groups[i];
-            if ((typeof id == 'string' && currGroup.name == id) || (Number.isInteger(id) && currGroup.id == id)) {
-              resolve(currGroup);
-              return;
-            }
-          }
-        }).catch(error => `Failed to get group: ${error}`);
-      }).catch(error => `Failed to get group: ${error}`);
-    });
-  }
-}
-
-//-------------------------------------
-// USERS
-class Users {
-  static All(executor) {
-    return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to get all users: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.AdminGetUsers();
-      COMMAND.Execute(cmd, [], executor).then(output => {
-        if (output.stderr) {
-          reject(`Failed to get all users: ${output.stderr}`);
-          return;
-        }
-
-        let lines = output.stdout.trim()
-          .split('\n')
-          .filter(line => line && line != '' && line.trim() != '')
-          .map(line => line.trim());
-
-        let users = [];
-        lines.forEach(line => {
-          let parts = line.split(':');
-          let name = parts[0];
-          let id = parseInt(parts[2]);
-          let info = parts.slice(3).join(':'); // Other info
-
-          let user = { name: name, id: id, info: info };
-          users.push(user);
-        });
-        resolve(users);
-      }).catch(error => `Failed to get all users: ${error}`);
-    });
-  }
-
-  static Exists(uid, executor) {
-    return new Promise((resolve, reject) => {
-      let uidError = Error.IdError(uid);
-      if (uidError) {
-        reject(`Failed to check if user exists: uid ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to check if user exists: Connection is ${executorError}`);
-        return;
-      }
-
-      Users.All(executor).then(users => {
-        for (let i = 0; i < users.length; ++i) {
-          let currUser = users[i];
-          if ((typeof uid == 'string' && currUser.name == uid) || (Number.isInteger(uid) && currUser.id == uid)) {
-            resolve(true);
-            return;
-          }
-        }
-        resolve(false);
-      }).catch(error => `Failed to check if user exists: ${error}`);
-    });
-  }
-
-  static Get(id, executor) {
-    return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to get user: Connection is ${executorError}`);
-        return;
-      }
-
-      Users.Exists(id, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to get user: user does not exist: ${id}`);
-          return;
-        }
-
-        Users.All(executor).then(users => {
-          for (let i = 0; i < users.length; ++i) {
-            let currUser = users[i];
-            if ((typeof id == 'string' && currUser.name == id) || (Number.isInteger(id) && currUser.id == id)) {
-              resolve(currUser);
-              return;
-            }
-          }
-        }).catch(error => `Failed to get user: ${error}`);
-      }).catch(error => `Failed to get user: ${error}`);
-    });
-  }
-}
-
 //-----------------------------------
 // HELPERS
 
@@ -354,8 +164,6 @@ function lsofOutputHasValues(line, headers) {
 }
 
 function getLsofObject(line, headers) {
-  let name = line.split(':')[0].trim();
-
   let hasValues = lsofOutputHasValues(line, headers);
 
   let parts = line.split(' ')
@@ -368,89 +176,250 @@ function getLsofObject(line, headers) {
   Object.keys(headers).forEach(field => {
     let name = field;
     if (field.includes('/'))
-      name = field.replace('/', '').toLowerCase();
+      name = field.replace('/', '');
+    name = name.toLocaleLowerCase();
 
-    if (hasValues[field])
-      freeObj[name] = parseInt(parts[partIndex]);
+    if (hasValues[field]) {
+      if (field == 'COMMAND' ||
+        field == 'PID' ||
+        field == 'USER' ||
+        field == 'FD' ||
+        field == 'TYPE' ||
+        field == 'DEVICE' ||
+        field == 'SIZE/OFF' ||
+        field == 'NODE') {
+        if (isNaN(field))
+        lsofObj[name] = parts[partIndex];
+        else
+        lsofObj[name] = parseInt(parts[partIndex]);
+      }
+      else if (field == 'NAME') {
+        lsofObj[name] = parts.slice(partIndex).join(' ');
+      }
+    }
     else
-      freeObj[name] = null;
+    lsofObj[name] = null;
+
     partIndex += 1;
   });
-  return freeObj;
+  return lsofObj;
 }
 
 //-------------------------------------
 // COMMANDS
 class Commands {
-  static W(executor) { // displays users currently logged in and their process along with load averages.
+  static Lsof(user, executor) { // Displays all files opened by user
+
+  }
+}
+
+//-------------------------------------
+// ADMIN
+class Admin {
+  static ListAllGroups(executor) {
     return new Promise((resolve, reject) => {
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
-        reject(`Failed to get logged in users: Connection is ${executorError}`);
+        reject(`Failed to get all groups: Connection is ${executorError}`);
         return;
       }
 
-      let cmd = LINUX_COMMANDS.AdminWhoIsLoggedIn();
+      let cmd = LINUX_COMMANDS.AdminGetGroups();
       COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
-          reject(`Failed to get logged in users: ${output.stderr}`);
+          reject(`Failed to get all groups: ${output.stderr}`);
           return;
         }
 
-        let lines = output.stdout.trim().split('\n')
+        let lines = output.stdout.trim()
+          .split('\n')
           .filter(line => line && line != '' && line.trim() != '')
           .map(line => line.trim());
 
-        // Uptime info
-        let uptimeStr = lines[0];
-        let uptimeObj = parseUptimeString(uptimeStr);
-
-        // Headers
-        let headersLine = lines[1];
-        let headers = getHeaders(headersLine);
-
-        // User info
-        let users = [];
-
-        let userLines = lines.slice(2)
-          .filter(line => line && line != '' && line.trim() != '')
-          .map(line => line.trim());
-
-        userLines.forEach(line => {
-          let parts = line.split(' ')
-            .filter(part => part && part != '' && part.trim() != '')
-            .map(part => part.trim());
-
+        let groups = [];
+        lines.forEach(line => {
+          let parts = line.split(':');
           let name = parts[0];
-          let tty = parts[1];
-          let group = parts[2];
-          let login = parts[3];
-          let idle = parts[4];
-          let jcpu = parts[5];
-          let pcpu = parts[6];
-          let what = parts.slice(7).join(' ');
+          let id = parseInt(parts[2]);
 
-          let user = {
-            name: name,
-            tty: tty,
-            group: group,
-            login: login,
-            idle: idle,
-            jcpu: jcpu,
-            pcpu: pcpu,
-            what: what,
-          }
-          users.push(user);
+          let users = [];
+          if (parts[3])
+            users = parts[3].split(',');
+
+          let group = { name: name, id: id, users: users };
+          groups.push(group);
         });
-        resolve({
-          users: users,
-          uptimeObj: uptimeObj
-        });
-      }).catch(error => `Failed to get logged in users: ${error}`);
+        resolve(groups);
+      }).catch(error => `Failed to get all groups: ${error}`);
     });
   }
 
-  static Ps(executor) { // Gives status of running processes with a unique id called PID and other fields.
+  static GroupExists(gid, executor) {
+    return new Promise((resolve, reject) => {
+      let gidError = Error.IdError(gid);
+      if (gidError) {
+        reject(`Failed to check if group exists: gid ${error}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check if group exists: Connection is ${executorError}`);
+        return;
+      }
+
+      Admin.ListAllGroups(executor).then(groups => {
+        for (let i = 0; i < groups.length; ++i) {
+          let currGroup = groups[i];
+          if ((typeof gid == 'string' && currGroup.name == gid) || (Number.isInteger(gid) && currGroup.id == gid)) {
+            resolve(true);
+            return;
+          }
+        }
+        resolve(false);
+      }).catch(error => `Failed to check if group exists: ${error}`);
+    });
+  }
+
+  static GetGroup(id, executor) {
+    return new Promise((resolve, reject) => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get group: Connection is ${executorError}`);
+        return;
+      }
+
+      Admin.GroupExists(id, executor).then(exists => {
+        if (!exists) {
+          reject(`Failed to get group: group does not exist: ${id}`);
+          return;
+        }
+
+        Admin.ListAllGroups(executor).then(groups => {
+          for (let i = 0; i < groups.length; ++i) {
+            let currGroup = groups[i];
+            if ((typeof id == 'string' && currGroup.name == id) || (Number.isInteger(id) && currGroup.id == id)) {
+              resolve(currGroup);
+              return;
+            }
+          }
+        }).catch(error => `Failed to get group: ${error}`);
+      }).catch(error => `Failed to get group: ${error}`);
+    });
+  }
+
+  static ListAllUsers(executor) {
+    return new Promise((resolve, reject) => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get all users: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.AdminGetUsers();
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to get all users: ${output.stderr}`);
+          return;
+        }
+
+        let lines = output.stdout.trim()
+          .split('\n')
+          .filter(line => line && line != '' && line.trim() != '')
+          .map(line => line.trim());
+
+        let users = [];
+        lines.forEach(line => {
+          let parts = line.split(':');
+          let name = parts[0];
+          let id = parseInt(parts[2]);
+          let info = parts.slice(3).join(':'); // Other info
+
+          let user = { name: name, id: id, info: info };
+          users.push(user);
+        });
+        resolve(users);
+      }).catch(error => `Failed to get all users: ${error}`);
+    });
+  }
+
+  static UserExists(uid, executor) {
+    return new Promise((resolve, reject) => {
+      let uidError = Error.IdError(uid);
+      if (uidError) {
+        reject(`Failed to check if user exists: uid ${error}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check if user exists: Connection is ${executorError}`);
+        return;
+      }
+
+      Admin.ListAllUsers(executor).then(users => {
+        for (let i = 0; i < users.length; ++i) {
+          let currUser = users[i];
+          if ((typeof uid == 'string' && currUser.name == uid) || (Number.isInteger(uid) && currUser.id == uid)) {
+            resolve(true);
+            return;
+          }
+        }
+        resolve(false);
+      }).catch(error => `Failed to check if user exists: ${error}`);
+    });
+  }
+
+  static GetUser(id, executor) {
+    return new Promise((resolve, reject) => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get user: Connection is ${executorError}`);
+        return;
+      }
+
+      Admin.UserExists(id, executor).then(exists => {
+        if (!exists) {
+          reject(`Failed to get user: user does not exist: ${id}`);
+          return;
+        }
+
+        Admin.ListAllUsers(executor).then(users => {
+          for (let i = 0; i < users.length; ++i) {
+            let currUser = users[i];
+            if ((typeof id == 'string' && currUser.name == id) || (Number.isInteger(id) && currUser.id == id)) {
+              resolve(currUser);
+              return;
+            }
+          }
+        }).catch(error => `Failed to get user: ${error}`);
+      }).catch(error => `Failed to get user: ${error}`);
+    });
+  }
+
+  static Uptime(executor) { // Displays uptime info
+    return new Promise((resolve, reject) => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get uptime: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.AdminUptime();
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to get uptime: ${output.stderr}`);
+          return;
+        }
+
+        // System info
+        let uptimeObj = parseUptimeString(output.stdout);
+        resolve(uptimeObj);
+      }).catch(error => `Failed to get uptime: ${error}`);
+    });
+  }
+
+  static Processes(executor) { // Gives status of running processes with a unique id called PID and other fields.
     return new Promise((resolve, reject) => {
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
@@ -500,54 +469,60 @@ class Commands {
     });
   }
 
-  static Kill(pid, executor) { // Kills a process
+  static ProcessExists(pid, executor) {
     return new Promise((resolve, reject) => {
-      let pidError = Error.IdNumberError(pid)
+      let pidError = ERROR.IntegerValidator(pid);
       if (pidError) {
-        reject(`Failed to kill process: pid is ${pidError}`);
+        reject(`Failed to check if process exists: pid is ${pidError}`);
+        return;
+      }
+
+      let min = 0;
+      let boundError = ERROR.BoundIntegerError(pid, min, null);
+      if (boundError) {
+        reject(`Failed to check if process exists: ${boundError}`);
         return;
       }
 
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
-        reject(`Failed to kill process: Connection is ${executorError}`);
+        reject(`Failed to check if process exists: Connection is ${executorError}`);
         return;
       }
 
-      let cmd = LINUX_COMMANDS.AdminKillProcess(pid);
-      COMMAND.Execute(cmd, [], executor).then(output => {
-        if (output.stderr) {
-          reject(`Failed to kill process: ${output.stderr}`);
-          return;
+      Admin.Processes(executor).then(processes => {
+        for (let i = 0; i < processes.length; ++i) {
+          let currProcess = processes[i];
+          if (currProcess.pid == pid) {
+            resolve(true);
+            return;
+          }
         }
-        resolve(true);
+        resolve(false);
+      }).catch(error => `Failed to check if process exists: ${error}`);
+    });
+  }
+
+  static Kill(pid, executor) { // Kills a process
+    return new Promise((resolve, reject) => {
+      Admin.ProcessExists(pid, executor).then(exists => {
+        if (!exists) {
+          reject(`Failed to kill process: pid does not exist: ${pid}`);
+        }
+
+        let cmd = LINUX_COMMANDS.AdminKillProcess(pid);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to kill process: ${output.stderr}`);
+            return;
+          }
+          resolve(true);
+        }).catch(error => `Failed to kill process: ${error}`);
       }).catch(error => `Failed to kill process: ${error}`);
     });
   }
 
-  static Uptime(executor) { // Displays uptime info
-    return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to get uptime: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.AdminUptime();
-      COMMAND.Execute(cmd, [], executor).then(output => {
-        if (output.stderr) {
-          reject(`Failed to get uptime: ${output.stderr}`);
-          return;
-        }
-
-        // System info
-        let uptimeObj = parseUptimeString(output.stdout);
-        resolve(uptimeObj);
-      }).catch(error => `Failed to get uptime: ${error}`);
-    });
-  }
-
-  static Free(executor) { // Displays info regarding memory and resources (i.e. memory, swap, etc)
+  static MemoryCheck(executor) { // Displays info regarding memory and resources (i.e. memory, swap, etc)
     return new Promise((resolve, reject) => {
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
@@ -581,7 +556,7 @@ class Commands {
     });
   }
 
-  static Top(executor) { // Shows CPU processes (1 iteration)
+  static TopProcesses(executor) { // Shows CPU processes (1 iteration)
     return new Promise((resolve, reject) => {
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
@@ -590,12 +565,6 @@ class Commands {
       }
 
       let cmd = LINUX_COMMANDS.AdminTopProcesses();
-      let options = {
-        'env': {
-          'TERM': 'xterm'
-        }
-      };
-
       COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
           reject(`Failed to get top processes: ${output.stderr}`);
@@ -737,24 +706,18 @@ class Commands {
     });
   }
 
-  static Lsof(user, executor) { // Displays all files opened by user
+  static WhoIsLoggedIn(executor) { // displays users currently logged in and their process along with load averages.
     return new Promise((resolve, reject) => {
-      let userError = ERROR.StringError(user);
-      if (userError) {
-        reject(`Failed to list open files by user: user is ${userError}`);
-        return;
-      }
-
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
-        reject(`Failed to list open files by user: Connection is ${executorError}`);
+        reject(`Failed to get logged in users: Connection is ${executorError}`);
         return;
       }
 
-      let cmd = LINUX_COMMANDS.AdminListOpenFilesByUser(user);
+      let cmd = LINUX_COMMANDS.AdminWhoIsLoggedIn();
       COMMAND.Execute(cmd, [], executor).then(output => {
-        if (`Failed to list open files by user: ${output.stderr}`) {
-          reject(output.stderr);
+        if (output.stderr) {
+          reject(`Failed to get logged in users: ${output.stderr}`);
           return;
         }
 
@@ -762,141 +725,99 @@ class Commands {
           .filter(line => line && line != '' && line.trim() != '')
           .map(line => line.trim());
 
-        // Get headers
-        let headersStr = lines[0];
-        let headers = getHeaders(headersStr);
+        // Uptime info
+        let uptimeStr = lines[0];
+        let uptimeObj = parseUptimeString(uptimeStr);
 
-        // Rows
-        let results = [];
+        // Headers
+        let headersLine = lines[1];
+        let headers = getHeaders(headersLine);
 
-        line.slice(1).forEach(l => {
-          let parts = l.split(' ')
-            .filter(l => l && l != '' && l.trim() != '')
-            .map(l => l.trim());
+        // User info
+        let users = [];
 
-          let obj = {};
-          for (let i = 0; i < parts.length; ++i) {
-            let currPart = parts[i];
-            if (i == 0)
-              obj.command = getStringFromEndIndex(l, headers['COMMAND'].endIndex);
-            else if (i == 1)
-              obj.pid = parseInt(getStringFromEndIndex(l, headers['PID'].endIndex));
-            else if (i == 2)
-              obj.user = getStringFromEndIndex(l, headers['USER'].endIndex);
-            else if (i == 3)
-              obj.fd = getStringFromEndIndex(l, headers['FD'].endIndex);
-            else if (i == 4)
-              obj.type = getStringFromEndIndex(l, headers['TYPE'].endIndex);
-            else if (i == 5)
-              obj.devices = getStringFromEndIndex(l, headers['DEVICE'].endIndex).split(',').map(p => parseIntp.trim());
-            else if (i == 6)
-              obj.sizeoff = parseInt(getStringFromEndIndex(l, headers['SIZE/OFF'].endIndex));
-            else if (i == 7)
-              obj.node = parseInt(getStringFromEndIndex(l, headers['NODE'].endIndex));
-            else if (i == 8)
-              obj.type = l.substring(headers['NAME'].startIndex);
+        let userLines = lines.slice(2)
+          .filter(line => line && line != '' && line.trim() != '')
+          .map(line => line.trim());
+
+        userLines.forEach(line => {
+          let parts = line.split(' ')
+            .filter(part => part && part != '' && part.trim() != '')
+            .map(part => part.trim());
+
+          let name = parts[0];
+          let tty = parts[1];
+          let group = parts[2];
+          let login = parts[3];
+          let idle = parts[4];
+          let jcpu = parts[5];
+          let pcpu = parts[6];
+          let what = parts.slice(7).join(' ');
+
+          let user = {
+            name: name,
+            tty: tty,
+            group: group,
+            login: login,
+            idle: idle,
+            jcpu: jcpu,
+            pcpu: pcpu,
+            what: what,
           }
-          results.push(obj);
+          users.push(user);
         });
-        resolve(results);
-      }).catch(error => `Failed to list open filesby user: ${error}`);
+        resolve({
+          users: users,
+          uptimeObj: uptimeObj
+        });
+      }).catch(error => `Failed to get logged in users: ${error}`);
     });
   }
-}
 
-//-------------------------------------
-// ADMIN
-class Admin {
-  static Groups(executor) {
-    return Groups.All(executor);
-  }
-
-  static GroupExists(gid, executor) {
-    return Groups.Exists(gid, executor);
-  }
-
-  static GetGroup(id, executor) {
-    return Groups.Get(id, executor);
-  }
-
-  static Users(executor) {
-    return Users.All(executor);
-  }
-
-  static UserExists(uid, executor) {
-    return Users.Exists(uid, executor);
-  }
-
-  static GetUser(id, executor) {
-    return Users.Get(id, executor);
-  }
-
-  static Uptime(executor) {
-    return Commands.Uptime(executor);
-  }
-
-  static Processes(executor) {
-    return Commands.Ps(executor);
-  }
-
-  static ProcessExists(pid, executor) {
+  static ListOpenFilesByUser(user, executor) {
     return new Promise((resolve, reject) => {
-      let pidError = ERROR.IntegerValidator(pid);
-      if (pidError) {
-        reject(`Failed to check if process exists: pid is ${pidError}`);
-        return;
-      }
-
-      let min = 0;
-      let boundError = ERROR.BoundIntegerError(pid, min, null);
-      if (boundError) {
-        reject(`Failed to check if process exists: ${boundError}`);
+      let userError = ERROR.StringValidator(user);
+      if (userError) {
+        reject(`Failed to list open files: user is ${userError}`);
         return;
       }
 
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
-        reject(`Failed to check if process exists: Connection is ${executorError}`);
+        reject(`Failed to list open files: Connection is ${executorError}`);
         return;
       }
 
-      Admin.Processes(executor).then(processes => {
-        for (let i = 0; i < processes.length; ++i) {
-          let currProcess = processes[i];
-          if (currProcess.pid == pid) {
-            resolve(true);
-            return;
-          }
-        }
-        resolve(false);
-      }).catch(error => `Failed to check if process exists: ${error}`);
-    });
-  }
-
-  static Kill(pid, executor) {
-    return new Promise((resolve, reject) => {
-      Admin.ProcessExists(pid, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to kill process: pid does not exist: ${pid}`);
+      let cmd = LINUX_COMMANDS.AdminListOpenFilesByUser(user);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to list open files: ${output.stderr}`);
+          return;
         }
 
-        Commands.Kill(pid, executor).then(success => {
-          resolve(true);
-        }).catch(error => `Failed to kill process: ${error}`);
-      }).catch(error => `Failed to kill process: ${error}`);
+        let lines = output.stdout.trim().split('\n')
+          .filter(line => line && line != '' && line.trim() != '')
+          .map(line => line.trim());
+
+        // Headers
+        let headersLine = lines[0];
+        let headers = getHeaders(headersLine);
+
+        // Info
+        let files = []
+
+        let fileLines = lines.slice(1)
+          .filter(line => line && line != '' && line.trim() != '')
+          .map(line => line.trim());
+
+        fileLines.forEach(line => {
+          let o = getLsofObject(line, headers);
+          files.push(o);
+        });
+
+        resolve(files);
+      }).catch(error => `Failed to list open files: ${error}`);
     });
-  }
-
-  static MemoryCheck(executor) {
-    return Commands.Free(executor);
-  }
-
-  static TopProcesses(executor) {
-    return Commands.Top(executor);
-  }
-
-  static WhoIsLoggedIn(executor) {
-    return Commands.W(executor);
   }
 
   static UserHasRootPermissions(uid, executor) {
@@ -1003,10 +924,9 @@ class Error {
 
 let C = require('./command.js');
 let L = new C.LocalCommand();
-let pid = 2554;
 
-Admin.ProcessExists(pid, L).then(success => {
-  console.log(`KILLED PID (${pid}): ${success}`);
+Admin.ListOpenFilesByUser('isa', L).then(files => {
+  console.log(`OPEN_FILES : ${JSON.stringify(files)}`);
 }).catch(error => {
   console.log(`ERROR: ${error}`);
 });
