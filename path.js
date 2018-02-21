@@ -1,5 +1,4 @@
 let PATH = require('path');
-let FS = require('fs-extra');
 let ERROR = require('./error.js');
 let COMMAND = require('./command.js').Command;
 let LINUX_COMMANDS = require('./linuxcommands.js');
