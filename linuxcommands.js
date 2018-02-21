@@ -364,10 +364,6 @@ function AdminListOpenFilesByUser(user) {
   return `lsof -u ${user}`;
 }
 
-function AdminIfconfig() {
-  return `ifconfig`;
-}
-
 //-----------------------------------
 // ZIP
 
