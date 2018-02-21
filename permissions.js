@@ -1,19 +1,26 @@
 let LIST = require('./list.js').List;
-let ERROR = require('./error.js').Error;
+let ERROR = require('./error.js');
+let COMMAND = require('./command.js').Command;
 
 //--------------------------------------------
 // PERMISSIONS
 
 class Permissions {
-  static Permissions(path) {
+  static Permissions(path, executor) {
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringError(path);
-      if (error) {
-        reject(`Path is ${error}`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check permissions: Connection is ${executorError}`);
         return;
       }
 
-      LIST.Info(path).then(info => {
+      let error = ERROR.StringValidator(path);
+      if (error) {
+        reject(`Failed to check permissions: Path is ${error}`);
+        return;
+      }
+
+      LIST.Info(path, executor).then(info => {
         let permStr = info.permstr.trim();
 
         let results = Permissions.CreatePermissionsObjectUsingPermissionsString(permStr);
@@ -453,7 +460,7 @@ class Permissions {
 // ERROR
 class Error {
   static IntegerError(i) {
-    let error = ERROR.IntegerError(i);
+    let error = ERROR.IntegerValidator(i);
     if (error)
       return `is ${error}`;
 
