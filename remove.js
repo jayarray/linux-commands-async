@@ -1,13 +1,13 @@
 let PATH = require('./path.js');
-let FS = require('fs-extra');
-var RIMRAF = require('rimraf');
+let ERROR = require('./error.js');
 let COMMAND = require('./command.js').Command;
+let LINUX_COMMANDS = require('./linuxcommands.js');
 
 //-------------------------------------------------
 // REMOVE (rm)
 
 class Remove {
-  static File(path, remoteExecutor = null) {
+  static File(path, executor) {
     return new Promise((resolve, reject) => {
       let pathError = PATH.Error.PathValidator(path);
       if (pathError) {
@@ -15,63 +15,39 @@ class Remove {
         return;
       }
 
-      if (remoteExecutor === undefined) {
-        reject(`Failed to remove file: Connection is undefined`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to remove file: Connection is ${executorError}`);
         return;
       }
 
-      if (remoteExecutor == null) {
-        PATH.Path.Exists(path).then(exists => {
-          if (!exists) {
-            reject(`Failed to remove local file: Path does not exist: ${path}`);
+      PATH.Path.Exists(path, executor).then(exists => {
+        if (!exists) {
+          reject(`Failed to remove file: Path does not exist: ${path}`);
+          return;
+        }
+
+        PATH.Path.IsFile(path, executor).then(isFile => {
+          if (!isFile) {
+            reject(`Failed to remove file: Path is not a file: ${path}`);
             return;
           }
 
-          PATH.Path.IsFile(path).then(isFile => {
-            if (!isFile) {
-              reject(`Failed to remove local file: Path is not a file: ${path}`);
+          let cmd = LINUX_COMMANDS.RemoveFile(path);
+          COMMAND.Execute(cmd, [], executor).then(output => {
+            if (output.stderr) {
+              reject(`Failed to remove file: ${output.stderr}`);
               return;
             }
+            resolve(true);
+          }).catch(error => reject(`Failed to remove file: ${error}`));
+        }).catch(error => reject(`Failed to remove file: ${error}`));
+      }).catch(error => reject(`Failed to remove file: ${error}`));
 
-            FS.unlink(path, (err) => {
-              if (err) {
-                reject(`Failed to remove local file: ${err}`);
-                return;
-              }
-              resolve(true);
-            });
-          }).catch(error => reject(`Failed to remove local file: ${error}`));
-        }).catch(error => reject(`Failed to remove local file: ${error}`));
-      }
-      else {
-        PATH.Path.Exists(path, remoteExecutor).then(exists => {
-          if (!exists) {
-            reject(`Failed to remove remote file: Path does not exist: ${path}`);
-            return;
-          }
-
-          PATH.Path.IsFile(path, remoteExecutor).then(isFile => {
-            if (!isFile) {
-              reject(`Failed to remove remote file: Path is not a file: ${path}`);
-              return;
-            }
-
-            let cmdStr = CommandStringBuiler.RemoveFile(path);
-
-            COMMAND.Execute(cmdStr, [], remoteExecutor).then(output => {
-              if (output.stderr) {
-                reject(`Failed to remove remote file: ${output.stderr}`);
-                return;
-              }
-              resolve(true);
-            }).catch(error => reject(`Failed to remove remote file: ${error}`));
-          }).catch(error => reject(`Failed to remove remote file: Path does not exist: ${path}`));
-        }).catch(error => reject(`Failed to remove remote file: ${error}`));
-      }
     });
   }
 
-  static Directory(path, remoteExecutor = null) {
+  static Directory(path, executor) {
     return new Promise((resolve, reject) => {
       let pathError = PATH.Error.PathValidator(path);
       if (pathError) {
@@ -79,72 +55,35 @@ class Remove {
         return;
       }
 
-      if (remoteExecutor === undefined) {
-        reject(`Failed to remove directory: Connection is undefined`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to remove directory: Connection is ${executorError}`);
         return;
       }
 
-      if (remoteExecutor == null) {
-        PATH.Path.Exists(path).then(exists => {
-          if (!exists) {
-            reject(`Failed to remove local directory: Path does not exist: ${path}`);
+      PATH.Path.Exists(path, executor).then(exists => {
+        if (!exists) {
+          reject(`Failed to remove directory: Path does not exist: ${path}`);
+          return;
+        }
+
+        PATH.Path.IsDir(path, executor).then(isDir => {
+          if (!isDir) {
+            reject(`Failed to remove directory: Path is not a directory: ${path}`);
             return;
           }
 
-          PATH.Path.IsDir(path).then(isDir => {
-            if (!isDir) {
-              reject(`Failed to remove local directory: Path is not a directory: ${path}`);
+          let cmd = LINUX_COMMANDS.RemoveDir(path);
+          COMMAND.Execute(cmd, [], executor).then(output => {
+            if (output.stderr) {
+              reject(`Failed to remove directory: ${output.stderr}`);
               return;
             }
-
-            RIMRAF(path, (err) => {
-              if (err) {
-                reject(`Failed to remove local directory: ${err}`);
-                return;
-              }
-              resolve(true);
-            });
-          }).catch(error => reject(`Failed to remove local directory: ${error}`));
-        }).catch(error => reject(`Failed to remove local directory: ${error}`));
-      }
-      else {
-        PATH.Path.Exists(path, remoteExecutor).then(exists => {
-          if (!exists) {
-            reject(`Failed to remove remote directory: Path does not exist: ${path}`);
-            return;
-          }
-
-          PATH.Path.IsDir(path, remoteExecutor).then(isDir => {
-            if (!isDir) {
-              reject(`Failed to remove remote directory: Path is not a file: ${path}`);
-              return;
-            }
-
-            let cmdStr = CommandStringBuiler.RemoveDir(path);
-
-            COMMAND.Execute(cmdStr, [], remoteExecutor).then(output => {
-              if (output.stderr) {
-                reject(`Failed to remove remote directory: ${output.stderr}`);
-                return;
-              }
-              resolve(true);
-            }).catch(error => reject(`Failed to remove remote directory: ${error}`));
-          }).catch(error => reject(`Failed to remove remote directory: Path does not exist: ${path}`));
-        }).catch(error => reject(`Failed to remove remote directory: ${error}`));
-      }
+            resolve(true);
+          }).catch(error => reject(`Failed to remove directory: ${error}`));
+        }).catch(error => reject(`Failed to remove directory: ${error}`));
+      }).catch(error => reject(`Failed to remove directory: ${error}`));
     });
-  }
-}
-
-//---------------------------------
-// COMMAND STRING BUILDER
-class CommandStringBuiler {
-  static RemoveFile(path) {
-    return `rm -f ${path}`;
-  }
-
-  static RemoveDir(path) {
-    return `rm -rf ${path}`;
   }
 }
 
