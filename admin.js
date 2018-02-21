@@ -59,7 +59,7 @@ class Groups {
         return;
       }
 
-      Groups.All().then(groups => {
+      Groups.All(executor).then(groups => {
         for (let i = 0; i < groups.length; ++i) {
           let currGroup = groups[i];
           if ((typeof gid == 'string' && currGroup.name == gid) || (Number.isInteger(gid) && currGroup.id == gid)) {
@@ -80,13 +80,13 @@ class Groups {
         return;
       }
 
-      Groups.Exists(id).then(exists => {
+      Groups.Exists(id, executor).then(exists => {
         if (!exists) {
           reject(`Failed to get group: group does not exist: ${id}`);
           return;
         }
 
-        Groups.All().then(groups => {
+        Groups.All(executor).then(groups => {
           for (let i = 0; i < groups.length; ++i) {
             let currGroup = groups[i];
             if ((typeof id == 'string' && currGroup.name == id) || (Number.isInteger(id) && currGroup.id == id)) {
@@ -152,7 +152,7 @@ class Users {
         return;
       }
 
-      Users.All().then(users => {
+      Users.All(executor).then(users => {
         for (let i = 0; i < users.length; ++i) {
           let currUser = users[i];
           if ((typeof uid == 'string' && currUser.name == uid) || (Number.isInteger(uid) && currUser.id == uid)) {
@@ -173,13 +173,13 @@ class Users {
         return;
       }
 
-      Users.Exists(id).then(exists => {
+      Users.Exists(id, executor).then(exists => {
         if (!exists) {
           reject(`Failed to get user: user does not exist: ${id}`);
           return;
         }
 
-        Users.All().then(users => {
+        Users.All(executor).then(users => {
           for (let i = 0; i < users.length; ++i) {
             let currUser = users[i];
             if ((typeof id == 'string' && currUser.name == id) || (Number.isInteger(id) && currUser.id == id)) {
@@ -952,7 +952,7 @@ class Admin {
 
 class Error {
   static IdStringError(string) {
-    let error = ERROR.StringError(string);
+    let error = ERROR.StringValidator(string);
     if (error)
       return `id is ${error} `;
     return null;
@@ -1000,8 +1000,8 @@ class Error {
 let C = require('./command.js');
 let L = new C.LocalCommand();
 
-Admin.Users(L).then(groups => {
-  console.log(`USERS: ${JSON.stringify(groups)}`);
+Admin.GetUser('isa', L).then(u => {
+  console.log(`USER: ${JSON.stringify(u)}`);
 }).catch(error => {
   console.log(`ERROR: ${error}`);
 });
