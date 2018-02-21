@@ -841,14 +841,14 @@ class Admin {
 
   static ProcessExists(pid, executor) {
     return new Promise((resolve, reject) => {
-      let pidError = ERROR.IntegerError(pid);
+      let pidError = ERROR.IntegerValidator(pid);
       if (pidError) {
         reject(`Failed to check if process exists: pid is ${pidError}`);
         return;
       }
 
       let min = 0;
-      boundError = ERROR.BoundIntegerError(pid, min, null);
+      let boundError = ERROR.BoundIntegerError(pid, min, null);
       if (boundError) {
         reject(`Failed to check if process exists: ${boundError}`);
         return;
@@ -1003,9 +1003,10 @@ class Error {
 
 let C = require('./command.js');
 let L = new C.LocalCommand();
+let pid = 2554;
 
-Admin.WhoIsLoggedIn(L).then(u => {
-  console.log(`LOGGED_IN: ${JSON.stringify(u)}`);
+Admin.ProcessExists(pid, L).then(success => {
+  console.log(`KILLED PID (${pid}): ${success}`);
 }).catch(error => {
   console.log(`ERROR: ${error}`);
 });
