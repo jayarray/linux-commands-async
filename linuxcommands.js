@@ -2,15 +2,15 @@
 // PATH
 
 function PathExists(path) {
-  return `if [ -e ${path}]; then echo 1; else echo 0; fi`;
+  return `if [ -e ${path} ]; then echo 1; else echo 0; fi`;
 }
 
 function PathIsFile(path) {
-  return `if [ -f ${path}]; then echo 1; else echo 0; fi`;
+  return `if [ -f ${path} ]; then echo 1; else echo 0; fi`;
 }
 
 function PathIsDir(path) {
-  return `if [ -d ${path}]; then echo 1; else echo 0; fi`;
+  return `if [ -d ${path} ]; then echo 1; else echo 0; fi`;
 }
 
 //-------------------------------------
@@ -291,7 +291,7 @@ function ChmodRemovePermissions(path, classes, types, isRecursive) {
   return cmdStr;
 }
 
-function ChmodRemovePermissions(paths, classesStr, typesStr, isRecursive) {
+function ChmodRemovePermissionsMultiple(paths, classesStr, typesStr, isRecursive) {
   let cmdStr = 'chmod';
   if (isRecursive)
     cmdStr += ' -R';
@@ -418,3 +418,74 @@ function TarManual(args) {
   return `tar ${args.join(' ')}`;
 }
 
+//-------------------------------------
+// EXPORTS
+
+exports.PathExists = PathExists;
+exports.PathIsFile = PathIsFile;
+exports.PathIsDir = PathIsDir;
+exports.RemoveFile = RemoveFile;
+exports.RemoveDir = RemoveDir;
+exports.CopyFile = CopyFile;
+exports.CopyDir = CopyDir;
+exports.Move = Move;
+exports.ListAllFilenames = ListAllFilenames;
+exports.ListHiddenFilenames = ListHiddenFilenames;
+exports.ListVisibleFilenames = ListVisibleFilenames;
+exports.ListAllLongListings = ListAllLongListings;
+exports.ListFileLongListing = ListFileLongListing;
+exports.ListDirLongListing = ListDirLongListing;
+exports.MakeDir = MakeDir;
+exports.MakeDirP = MakeDirP;
+exports.DiskUsageListAllContents = DiskUsageListAllContents;
+exports.DiskUsageDirSize = DiskUsageDirSize;
+exports.FindFilesByName = FindFilesByName;
+exports.FindFilesByContent = FindFilesByContent;
+exports.FindFilesByUser = FindFilesByUser;
+exports.FindDirsByName = FindDirsByName;
+exports.FindEmptyFiles = FindEmptyFiles;
+exports.FindEmptyDirs = FindEmptyDirs;
+exports.RsyncStandard = RsyncStandard;
+exports.RsyncUpdate = RsyncUpdate;
+exports.RsyncMatch = RsyncMatch;
+exports.RsyncDryRun = RsyncDryRun;
+exports.RsyncManual = RsyncManual;
+exports.WhoAmI = WhoAmI;
+exports.CurrentUserInfo = CurrentUserInfo;
+exports.OtherUserInfo = OtherUserInfo;
+exports.ChownChangeOwner = ChownChangeOwner;
+exports.ChownChangeOwnerMultiple = ChownChangeOwnerMultiple;
+exports.ChownChangeGroup = ChownChangeGroup;
+exports.ChownChangeGroupMultiple = ChownChangeGroupMultiple;
+exports.ChownChangeOwnerAndGroup = ChownChangeOwnerAndGroup;
+exports.ChownChangeOwnerAndGroupMultiple = ChownChangeOwnerAndGroupMultiple;
+exports.ChmodUsingOctalString = ChmodUsingOctalString;
+exports.ChmodUsingOctalStringMultiple = ChmodUsingOctalStringMultiple;
+exports.ChmodAddPermissions = ChmodAddPermissions;
+exports.ChmodAddPermissionsMultiple = ChmodAddPermissionsMultiple;
+exports.ChmodRemovePermissions = ChmodRemovePermissions;
+exports.ChmodRemovePermissionsMultiple = ChmodRemovePermissionsMultiple;
+exports.ChmodSetPermissions = ChmodSetPermissions;
+exports.ChmodSetPermissionsMultiple = ChmodSetPermissionsMultiple;
+exports.CatReadFileContent = CatReadFileContent;
+exports.AdminGetGroups = AdminGetGroups;
+exports.AdminGetUsers = AdminGetUsers;
+exports.AdminWhoIsLoggedIn = AdminWhoIsLoggedIn;
+exports.AdminProcesses = AdminProcesses;
+exports.AdminKillProcess = AdminKillProcess;
+exports.AdminUptime = AdminUptime;
+exports.AdminMemoryCheck = AdminMemoryCheck;
+exports.AdminTopProcesses = AdminTopProcesses;
+exports.AdminListOpenFilesByUser = AdminListOpenFilesByUser;
+exports.AdminIfconfig = AdminIfconfig;
+exports.ZipFile = ZipFile;
+exports.ZipFiles = ZipFiles;
+exports.ZipDir = ZipDir;
+exports.ZipDirs = ZipDirs;
+exports.ZipManual = ZipManual;
+exports.ZipDecompress = ZipDecompress;
+exports.ZipDecompressManual = ZipDecompressManual;
+exports.TarCompress = TarCompress;
+exports.TarCompressMultiple = TarCompressMultiple;
+exports.TarDecompress = TarDecompress;
+exports.TarManual = TarManual;
