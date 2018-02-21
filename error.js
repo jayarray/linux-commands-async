@@ -98,6 +98,18 @@ function ArrayValidator(arr) {
   return null;
 }
 
+function ExecutorValidator(executor) {
+  let error = NullOrUndefined(executor);
+  if (error)
+    return error;
+
+  let executorClassName = executor.constructor.name;
+  if (executorClassName != 'LocalCommand' && executorClassName != 'RemoteCommand')
+    return `not valid`;
+
+  return null;
+}
+
 //-------------------------------------
 // EXPORTS
 
@@ -105,3 +117,4 @@ exports.NullOrUndefined = NullOrUndefined;
 exports.StringValidator = StringValidator;
 exports.ArrayValidator = ArrayValidator;
 exports.NumberValidator = NumberValidator;
+exports.ExecutorValidator = ExecutorValidator;
