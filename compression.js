@@ -1,5 +1,3 @@
-import { exec } from 'child_process';
-
 let COMMAND = require('./command.js').Command;
 let PATH = require('./path.js');
 let ERROR = require('./error.js');
