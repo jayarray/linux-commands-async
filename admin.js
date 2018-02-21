@@ -912,17 +912,6 @@ class Error {
   }
 }
 
-//---------------------------------
-
-let C = require('./command.js');
-let L = new C.LocalCommand();
-
-Admin.ListOpenFilesByUser('isa', L).then(files => {
-  console.log(`OPEN_FILES : ${JSON.stringify(files)}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
-
 //------------------------------------
 // EXPORTS
 
