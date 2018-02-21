@@ -357,7 +357,7 @@ function AdminMemoryCheck() {
 }
 
 function AdminTopProcesses() {
-  return 'top -n 1';
+  return 'top -b -n 1';
 }
 
 function AdminListOpenFilesByUser(user) {
