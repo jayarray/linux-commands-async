@@ -588,8 +588,14 @@ class Commands {
       }
 
       let cmd = LINUX_COMMANDS.AdminTopProcesses();
+      let options = {
+        'env': {
+          'TERM': 'xterm'
+        }
+      };
+
       COMMAND.Execute(cmd, [], executor).then(output => {
-        if (output.stderr) {
+        if (output.stderr && !output.stderr.includes('TERM environment variable not set')) {
           reject(`Failed to get top processes: ${output.stderr}`);
           return;
         }
@@ -604,7 +610,7 @@ class Commands {
 
         // Tasks str
         let tasksStr = lines[1].replace('Tasks:', '').trim();
-        let taskParts = tasksStr.split(',');
+        let taskParts = tasksStr.split(',').map(part => part.trim());
 
         let tasks = {};
         taskParts.forEach(part => {
@@ -616,7 +622,7 @@ class Commands {
 
         // cpu str
         let cpuStr = lines[2].replace('%Cpu(s):', '');
-        let cpuParts = cpuStr.split(',');
+        let cpuParts = cpuStr.split(',').map(part => part.trim());
 
         let cpu = {};
         cpuParts.forEach(part => {
@@ -628,7 +634,7 @@ class Commands {
 
         // mem str
         let memStr = lines[3].split(':')[1].trim();
-        let memParts = memStr.split(',');
+        let memParts = memStr.split(',').map(part => part.trim());
 
         let mem = {};
         memParts.forEach(part => {
@@ -644,7 +650,7 @@ class Commands {
 
         // swap str
         let swapStr = lines[4].split(':')[1].trim();
-        let swapParts = swapStr.split(',');
+        let swapParts = swapStr.split(',').map(part=> part.trim());
 
         let swap = {};
         for (let i = 0; i < 2; ++i) {
@@ -668,8 +674,8 @@ class Commands {
         currPart = otherParts[1].trim();
         parts = currPart.split(' ');
         int = parseInt(parts[0].trim());
-        firstWord = parts[1].trim();
-        secondWord = parts[2].trim().toLowerCase();
+        let firstWord = parts[1].trim();
+        let secondWord = parts[2].trim().toLowerCase();
         name = firstWord + secondWord;
         swap[name] = int;
 
@@ -682,7 +688,7 @@ class Commands {
 
         lines.slice(6).forEach(line => {
           let parts = line.split(' ')
-            .filter(parts => part && part != '' && part.trim() != '')
+            .filter(part => part && part != '' && part.trim() != '')
             .map(part => part.trim());
 
           let pid = parts[0];
@@ -721,7 +727,7 @@ class Commands {
           cpu: cpu,
           mem: mem,
           swap: swap,
-          processes: process
+          processes: processes
         };
 
         resolve(result);
@@ -879,10 +885,6 @@ class Admin {
     });
   }
 
-  static WhoAmI(executor) {
-    return Commands.WhoAmI(executor);
-  }
-
   static MemoryCheck(executor) {
     return Commands.Free(executor);
   }
@@ -1000,8 +1002,8 @@ class Error {
 let C = require('./command.js');
 let L = new C.LocalCommand();
 
-Admin.GetUser('isa', L).then(u => {
-  console.log(`USER: ${JSON.stringify(u)}`);
+Admin.TopProcesses(L).then(u => {
+  console.log(`CHECK: ${JSON.stringify(u)}`);
 }).catch(error => {
   console.log(`ERROR: ${error}`);
 });
