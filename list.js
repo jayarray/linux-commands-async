@@ -1,68 +1,112 @@
 let PATH = require('./path.js');
-let EXECUTE = require('./execute.js').Execute;
-let ERROR = require('./error.js').Error;
-let FS = require('fs-extra');
+let COMMAND = require('./command.js').Command;
+let ERROR = require('./error.js');
+let LINUX_COMMAND = require('./linuxcommands.js');
 
 //---------------------------------------------
 // List (ls)
 class List {
-  static AllFilenames(path) {
+  static AllFilenames(dirPath, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(dirPath);
       if (error) {
-        reject(error);
+        reject(`Failed to list all filenames: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(path).then(exists => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to list all filenames: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.Exists(dirPath, executor).then(exists => {
         if (!exists) {
-          reject(`Path does not exist: ${path}`);
+          reject(`Failed to list all filenames: Path does not exist: ${dirPath}`);
           return;
         }
 
-        FS.readdir(path, (err, files) => {
-          if (err) {
-            reject(`Failed to read filenames: ${err}`);
+        PATH.Path.IsDir(dirPath, executor).then(isDir => {
+          if (!isDir) {
+            reject(`Failed to list all filenames: Path is not a directory: ${dirPath}`);
             return;
           }
-          resolve(filenames);
-        });
-      }).catch(reject);
+
+          let cmd = LINUX_COMMAND.ListAllFilenames(dirPath);
+          COMMAND.Execute(cmd, [], executor).then(output => {
+            if (output.stderr) {
+              reject(`Failed to list all filenames: ${output.stderr}`);
+              return;
+            }
+            resolve(output.stdout.split('\n'));
+          }).catch(error => `Failed to list all filenames: ${error}`);
+        }).catch(error => `Failed to list all filenames: ${error}`);
+      }).catch(error => `Failed to list all filenames: ${error}`);
     });
   }
 
-  static VisibleFilenames(path) {
+  static VisibleFilenames(dirPath, executor) {
     return new Promise((resolve, reject) => {
-      List.AllFilenames(path).then(filenames => {
-        resolve(filenames.filter(x => !x.startsWith('.')));
-      }).catch(reject);
-    });
-  }
-
-  static HiddenFilenames(path) {
-    return new Promise((resolve, reject) => {
-      List.AllFilenames(path).then(filenames => {
-        resolve(filenames.filter(x => x.startsWith('.')));
-      }).catch(reject);
-    });
-  }
-
-  static FileInfo(filepath) {
-    return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(filepath);
+      let error = PATH.Error.PathValidator(dirPath);
       if (error) {
-        reject(error);
+        reject(`Failed to list visible filenames: ${error}`);
         return;
       }
 
-      PATH.Path.IsFile(filepath).then(isFile => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to list visible filenames: Connection is ${executorError}`);
+        return;
+      }
+
+      List.AllFilenames(dirPath, executor).then(filenames => {
+        resolve(filenames.filter(x => !x.startsWith('.')));
+      }).catch(error => `Failed to list visible filenames: ${error}`);
+    });
+  }
+
+  static HiddenFilenames(dirPath, executor) {
+    return new Promise((resolve, reject) => {
+      let error = PATH.Error.PathValidator(dirPath);
+      if (error) {
+        reject(`Failed to list hidden filenames: ${error}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to list hidden filenames: Connection is ${executorError}`);
+        return;
+      }
+
+      List.AllFilenames(dirPath, executor).then(filenames => {
+        resolve(filenames.filter(x => x.startsWith('.')));
+      }).catch(error => `Failed to list hidden filenames: ${error}`);
+    });
+  }
+
+  static FileInfo(filepath, executor) {
+    return new Promise((resolve, reject) => {
+      let error = PATH.Error.PathValidator(filepath);
+      if (error) {
+        reject(`Failed to get file info: ${error}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get file info: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.IsFile(filepath, executor).then(isFile => {
         if (!isFile) {
-          reject(`Path is not a file: ${filepath}`);
+          reject(`Failed to get file info: Path is not a file: ${filepath}`);
           return;
         }
 
-        let args = ['-l', filepath];
-        EXECUTE.Local('ls', args).then(output => {
+        let cmd = LINUX_COMMAND.ListFileLongListing(filepath);
+        COMMAND.Execute(cmd, [], executor).then(output => {
           if (output.stderr) {
             reject(`Failed to get file info: ${output.stderr}`);
             return;
@@ -74,27 +118,33 @@ class List {
             return;
           }
           resolve(results.info);
-        }).catch(reject);
-      }).catch(reject);
+        }).catch(error => `Failed to get file info: ${error}`);
+      }).catch(error => `Failed to get file info: ${error}`);
     });
   }
 
-  static DirInfo(dirPath) {
+  static DirInfo(dirPath, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(dirPath);
+      let error = PATH.Error.PathValidator(dirPath);
       if (error) {
-        reject(error);
+        reject(`Failed to get directory info: ${error}`);
         return;
       }
 
-      PATH.Path.IsDir(dirPath).then(isDir => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get directory info: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.IsDir(dirPath, executor).then(isDir => {
         if (!isDir) {
-          reject(`Path is not a directory: ${dirPath}`);
+          reject(`Failed to get directory info: Path is not a directory: ${dirPath}`);
           return;
         }
 
-        let args = ['-ld', dirPath];
-        EXECUTE.Local('ls', args).then(output => {
+        let cmd = LINUX_COMMAND.ListDirLongListing(dirPath);
+        COMMAND.Execute(cmd, [], executor).then(output => {
           if (output.stderr) {
             reject(`Failed to get directory info: ${output.stderr}`);
             return;
@@ -106,17 +156,17 @@ class List {
             return;
           }
           resolve(results.info);
-        }).catch(reject);
-      }).catch(reject);
+        }).catch(error => `Failed to get directory info: ${error}`);
+      }).catch(error => `Failed to get directory info: ${error}`);
     });
   }
 
-  static Info(path) {
+  static Info(path, executor) {
     return new Promise((resolve, reject) => {
-      List.FileInfo(path).then(fileInfo => {
+      List.FileInfo(path, executor).then(fileInfo => {
         resolve(fileInfo);
       }).catch((ferr) => {
-        List.DirInfo(path).then(dirInfo => {
+        List.DirInfo(path, executor).then(dirInfo => {
           resolve(dirInfo);
         }).catch((derr) => {
           let errArr = [];
@@ -133,22 +183,28 @@ class List {
     });
   }
 
-  static AllInfos(dirPath) {
+  static AllInfos(dirPath, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(dirPath);
+      let error = PATH.Error.PathValidator(dirPath);
       if (error) {
-        reject(error);
+        reject(`Failed to get all infos: ${error}`);
         return;
       }
 
-      PATH.Path.IsDir(dirPath).then(isDir => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get all infos: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.IsDir(dirPath, executor).then(isDir => {
         if (!isDir) {
-          reject(`Path is not a directory: ${dirPath}`);
+          reject(`Failed to get all infos: Path is not a directory: ${dirPath}`);
           return;
         }
 
-        let args = ['-la', dirPath];
-        EXECUTE.Local('ls', args).then(output => {
+        let cmd = LINUX_COMMAND.ListAllLongListings(dirPath);
+        COMMAND.Execute(cmd, [], executor).then(output => {
           if (output.stderr) {
             reject(`Failed to get all infos: ${output.stderr}`);
             return;
@@ -166,24 +222,36 @@ class List {
             infos.push(results.info);
           });
           resolve(infos);
-        }).catch(reject);
-      }).catch(reject);
+        }).catch(error => `Failed to get all infos: ${error}`);
+      }).catch(error => `Failed to get all infos: ${error}`);
     });
   }
 
-  static VisibleInfos(dirPath) {
+  static VisibleInfos(dirPath, executor) {
     return new Promise((resolve, reject) => {
-      List.AllInfos(dirPath).then(infos => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get all visible infos: Connection is ${executorError}`);
+        return;
+      }
+
+      List.AllInfos(dirPath, executor).then(infos => {
         resolve(infos.filter(item => !item.name.startsWith('.')));
-      }).catch(reject);
+      }).catch(error => `Failed to get visible infos: ${error}`);
     });
   }
 
-  static HiddenInfos(dirPath) {
+  static HiddenInfos(dirPath, executor) {
     return new Promise((resolve, reject) => {
-      List.AllInfos(dirPath).then(infos => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get hidden infos: Connection is ${executorError}`);
+        return;
+      }
+
+      List.AllInfos(dirPath, executor).then(infos => {
         resolve(infos.filter(item => item.name.startsWith('.')));
-      }).catch(reject);
+      }).catch(error => `Failed to get all hidden infos: ${error}`);
     });
   }
 
@@ -477,7 +545,7 @@ class List {
 class Error {
   static LsStringError(s) {
     // Check if undefined
-    let error = ERROR.StringError(s);
+    let error = ERROR.StringValidator(s);
     if (error)
       return `Ls string is ${error}`;
     return null;
