@@ -26,7 +26,7 @@ class LocalCommand {
    * @param {string} cmd 
    * @param {Array<string|number>} args 
    */
-  Execute(cmd, args) {
+  Execute(cmd, args, options = null) {
     return new Promise((resolve, reject) => {
       let cmdError = ERROR.StringValidator(cmd);
       if (cmdError) {
@@ -42,10 +42,18 @@ class LocalCommand {
 
       let childProcess = null;
 
-      if (args.length > 0)
-        childProcess = childProcess = CHILD_PROCESS.spawn(cmd, args);
-      else
-        childProcess = CHILD_PROCESS.exec(cmd);
+      if (args.length > 0) {
+        if (options)
+          childProcess = childProcess = CHILD_PROCESS.spawn(cmd, args, options);
+        else
+          childProcess = childProcess = CHILD_PROCESS.spawn(cmd, args);
+      }
+      else {
+        if (options)
+          childProcess = CHILD_PROCESS.exec(cmd, options);
+        else
+          childProcess = CHILD_PROCESS.exec(cmd);
+      }
 
       let stderr = new SavedData(childProcess.stderr);
       let stdout = new SavedData(childProcess.stdout);
@@ -80,7 +88,7 @@ class RemoteCommand extends LocalCommand {
   * @param {string} cmd 
   * @param {Array<string|number>} args 
   */
-  Execute(cmd, args) {
+  Execute(cmd, args, options = null) {
     return new Promise((resolve, reject) => {
       let userError = ERROR.StringValidator(this.user_);
       if (userError) {
@@ -120,9 +128,16 @@ class RemoteCommand extends LocalCommand {
         return;
       }
 
-      LocalCommand.prototype.Execute('ssh', sshArgs).then(output => {
-        resolve(output);
-      }).catch(reject);
+      if (options) {
+        LocalCommand.prototype.Execute('ssh', sshArgs, options).then(output => {
+          resolve(output);
+        }).catch(reject);
+      }
+      else {
+        LocalCommand.prototype.Execute('ssh', sshArgs).then(output => {
+          resolve(output);
+        }).catch(reject);
+      }
     });
   }
 
@@ -168,7 +183,7 @@ class Command {
   * @param {string} cmd 
   * @param {Array<string|number>} args 
   */
-  static Execute(cmd, args, executor) {
+  static Execute(cmd, args, executor, options = null) {
     return new Promise((resolve, reject) => {
       let error = ERROR.NullOrUndefined(executor);
       if (error) {
@@ -182,9 +197,16 @@ class Command {
         return;
       }
 
-      executor.Execute(cmd, args).then(output => {
-        resolve(output);
-      }).catch(reject);
+      if (options) {
+        executor.Execute(cmd, args, options).then(output => {
+          resolve(output);
+        }).catch(reject)
+      }
+      else {
+        executor.Execute(cmd, args).then(output => {
+          resolve(output);
+        }).catch(reject);
+      }
     });
   }
 }
