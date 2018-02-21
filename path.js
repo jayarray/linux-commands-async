@@ -64,12 +64,8 @@ class Path {
 
           let value = parseInt(output.stdout.trim());
           resolve(value == 1); // 1 is true, 0 is false
-        }).catch(error => {
-          reject(`Failed to check if path is a file: ${error}`);
-        });
-      }).catch(error => {
-        reject(`Failed to check if path is a file: ${error}`);
-      });
+        }).catch(error => reject(`Failed to check if path is a file: ${error}`));
+      }).catch(error => reject(`Failed to check if path is a file: ${error}`));
     });
   }
 
@@ -102,12 +98,8 @@ class Path {
 
           let value = parseInt(output.stdout.trim());
           resolve(value == 1); // 1 is true, 0 is false
-        }).catch(error => {
-          reject(`Failed to check if path is a directory: ${error}`);
-        });
-      }).catch(error => {
-        reject(`Failed to check if path is a directory: ${error}`);
-      });
+        }).catch(error => reject(`Failed to check if path is a directory: ${error}`));
+      }).catch(error => reject(`Failed to check if path is a directory: ${error}`));
     });
   }
 
