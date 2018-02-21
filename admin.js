@@ -1,5 +1,5 @@
 let COMMAND = require('./command.js').Command;
-let ERROR = require('./error.js').Error;
+let ERROR = require('./error.js');
 let USERINFO = require('./userinfo.js').UserInfo;
 let LINUX_COMMANDS = require('./linuxcommands.js');
 
@@ -128,7 +128,7 @@ class Users {
           let parts = line.split(':');
           let name = parts[0];
           let id = parseInt(parts[2]);
-          let info = line.substring(3); // Other info
+          let info = parts.slice(3).join(':'); // Other info
 
           let user = { name: name, id: id, info: info };
           users.push(user);
@@ -994,6 +994,17 @@ class Error {
     return `id is not a valid string or integer`;
   }
 }
+
+//---------------------------------
+
+let C = require('./command.js');
+let L = new C.LocalCommand();
+
+Admin.Users(L).then(groups => {
+  console.log(`USERS: ${JSON.stringify(groups)}`);
+}).catch(error => {
+  console.log(`ERROR: ${error}`);
+});
 
 //------------------------------------
 // EXPORTS
