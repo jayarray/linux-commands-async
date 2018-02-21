@@ -1,27 +1,35 @@
 let PATH = require('./path.js');
-let EXECUTE = require('./execute.js').Execute;
+let ERROR = require('./error.js');
+let COMMAND = require('./command.js').Command;
+let LINUX_COMMANDS = require('./linuxcommands.js');
 
 //------------------------------------
 // DISK USAGE
 class DiskUsage {
-  static ListAllItems(dirPath) {
+  static ListAllItems(dirPath, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(dirPath);
-      if (error) {
-        reject(error);
+      let dirPathError = PATH.Error.PathValidator(dirPath);
+      if (dirPathError) {
+        reject(`Failed to list all disk usage items: Directory path is ${dirPathError}`);
         return;
       }
 
-      PATH.Path.IsDir(dirPath).then(isDir => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to list all disk usage items: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.IsDir(dirPath, executor).then(isDir => {
         if (!isDir) {
-          reject(`Path is not a directory: ${dirPath}`);
+          reject(`Failed to list all disk usage items: Path is not a directory: ${dirPath}`);
           return;
         }
 
-        let args = ['-ha', '--block-size=1', '--max-depth=1', dirPath];
-        EXECUTE.Local('du', args).then(output => {
+        let cmd = LINUX_COMMANDS.DiskUsageListAllContents(dirPath);
+        COMMAND.Execute(cmd, [], executor).then(output => {
           if (output.stderr) {
-            reject(`Failed to get disk usage info: ${output.stderr}`);
+            reject(`Failed to list all disk usage items: ${output.stderr}`);
             return;
           }
 
@@ -42,8 +50,8 @@ class DiskUsage {
             items.push({ size: parseInt(sizeStr), path: filepath });
           });
           resolve(items.filter(item => item.path != dirPath));
-        }).catch(reject);
-      });
+        }).catch(error => reject(`Failed to list all disk usage items: ${error}`));
+      }).catch(error => reject(`Failed to list all disk usage items: ${error}`));
     });
   }
 
@@ -51,7 +59,7 @@ class DiskUsage {
     return new Promise((resolve, reject) => {
       DiskUsage.ListAllItems(dirPath).then(items => {
         resolve(items.filter(item => !PATH.Path.Filename(item.path).name.startsWith('.')));
-      }).catch(reject);
+      }).catch(error => `Failed to list visible disk usage items: ${error}`);
     });
   }
 
@@ -59,26 +67,32 @@ class DiskUsage {
     return new Promise((resolve, reject) => {
       DiskUsage.ListAllItems(dirPath).then(items => {
         resolve(items.filter(item => PATH.Path.Filename(item.path).name.startsWith('.')));
-      }).catch(reject);
+      }).catch(error => `Failed to list hidden disk usage items: ${error}`);
     });
   }
 
-  static DirSize(path) {
+  static DirSize(dirPath, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
-      if (error) {
-        reject(error);
+      let dirPathError = PATH.Error.PathValidator(dirPath);
+      if (dirPathError) {
+        reject(`Failed to get directory size: Directory path is ${dirPathError}`);
         return;
       }
 
-      PATH.Path.IsDir(path).then(isDir => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get directory size: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.IsDir(dirPath, executor).then(isDir => {
         if (!isDir) {
-          reject(`Path is not a directory: ${path}`);
+          reject(`Failed to get directory size: Path is not a directory: ${dirPath}`);
           return;
         }
 
-        let args = ['-sh', '--block-size=1', path];
-        EXECUTE.Local('du', args).then(output => {
+        let cmd = LINUX_COMMANDS.DiskUsageDirSize(dirPath);
+        COMMAND.Execute(cmd, [], executor).then(output => {
           if (output.stderr) {
             reject(`Failed to get directory size: ${output.stderr}`);
             return;
