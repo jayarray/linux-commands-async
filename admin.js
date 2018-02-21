@@ -439,11 +439,13 @@ class Commands {
             jcpu: jcpu,
             pcpu: pcpu,
             what: what,
-            info: info
           }
           users.push(user);
         });
-        resolve(users);
+        resolve({
+          users: users,
+          uptimeObj: uptimeObj
+        });
       }).catch(error => `Failed to get logged in users: ${error}`);
     });
   }
@@ -595,7 +597,7 @@ class Commands {
       };
 
       COMMAND.Execute(cmd, [], executor).then(output => {
-        if (output.stderr && !output.stderr.includes('TERM environment variable not set')) {
+        if (output.stderr) {
           reject(`Failed to get top processes: ${output.stderr}`);
           return;
         }
@@ -650,7 +652,7 @@ class Commands {
 
         // swap str
         let swapStr = lines[4].split(':')[1].trim();
-        let swapParts = swapStr.split(',').map(part=> part.trim());
+        let swapParts = swapStr.split(',').map(part => part.trim());
 
         let swap = {};
         for (let i = 0; i < 2; ++i) {
@@ -893,7 +895,7 @@ class Admin {
     return Commands.Top(executor);
   }
 
-  static LoggedIn(executor) {
+  static WhoIsLoggedIn(executor) {
     return Commands.W(executor);
   }
 
@@ -1002,8 +1004,8 @@ class Error {
 let C = require('./command.js');
 let L = new C.LocalCommand();
 
-Admin.TopProcesses(L).then(u => {
-  console.log(`CHECK: ${JSON.stringify(u)}`);
+Admin.WhoIsLoggedIn(L).then(u => {
+  console.log(`LOGGED_IN: ${JSON.stringify(u)}`);
 }).catch(error => {
   console.log(`ERROR: ${error}`);
 });
