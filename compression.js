@@ -1,19 +1,28 @@
-let EXECUTE = require('./execute.js').Execute;
+import { exec } from 'child_process';
+
+let COMMAND = require('./command.js').Command;
 let PATH = require('./path.js');
-let ERROR = require('./error.js').Error;
+let ERROR = require('./error.js');
+let LINUX_COMMANDS = require('./linuxcommands.js');
 
 //------------------------------------------
 // HELPERS
 
-function allSourcesExist(sources) {
+function allSourcesExist(sources, executor) {
   return new Promise((resolve, reject) => {
-    let error = Error.SourcesError(sources);
-    if (error) {
-      reject(error);
+    let sourcesError = Error.SourcesValidator(sources);
+    if (sourcesError) {
+      reject(`Failed to verify if all sources exist: ${sourcesError}`);
       return;
     }
 
-    let sourcesExistActions = sources.map(PATH.Path.Exists);
+    let executorError = ERROR.ExecutorValidator(executor);
+    if (executorError) {
+      reject(`Failed to verify if all sources exist: Connection is ${executorError}`);
+      return;
+    }
+
+    let sourcesExistActions = sources.map(src => PATH.Path.Exists(src, executor));
     Promise.all(sourcesExistActions).then(existsResults => {
 
       let nonExistantPaths = [];
@@ -32,16 +41,15 @@ function allSourcesExist(sources) {
         reject(errorStr);
         return;
       }
-
       resolve(true);
-    }).catch(reject);
+    }).catch(error => `Failed to verify if all sources exist: ${error}`);
   });
 }
 
-function allSourcesAreFiles(sources) {
+function allSourcesAreFiles(sources, executor) {
   return new Promise((resolve, reject) => {
-    allSourcesExist(sources).then(success => {
-      let sourcesAreFilesActions = sources.map(PATH.Path.IsFile);
+    allSourcesExist(sources, executor).then(success => {
+      let sourcesAreFilesActions = sources.map(src => PATH.Path.IsFile(src, executor));
 
       Promise.all(sourcesAreFilesActions).then(isFileResults => {
 
@@ -52,26 +60,26 @@ function allSourcesAreFiles(sources) {
         }
 
         if (nonFilePaths.length > 0) {
-          let error = '';
+          let errorStr = '';
           if (nonFilePaths.length == 1)
-            error = `This path is not a file: ${nonFilePaths[0]}`;
+            errorStr = `This path is not a file: ${nonFilePaths[0]}`;
           else
-            error = `The following (${nonFilePaths.length}) paths are not files:\n${nonFilePaths.join('\n')}`;
+            errorStr = `The following (${nonFilePaths.length}) paths are not files:\n${nonFilePaths.join('\n')}`;
 
-          reject(error);
+          reject(errorStr);
           return;
         }
 
         resolve(true);
-      }).catch(reject);
-    }).catch(reject);
+      }).catch(error => `Failed to verify if all sources are files: ${error}`);
+    }).catch(error => `Failed to verify if all sources are files: ${error}`);
   });
 }
 
-function allSourcesAreDirs(sources) {
+function allSourcesAreDirs(sources, executor) {
   return new Promise((resolve, reject) => {
-    allSourcesExist(sources).then(success => {
-      let sourcesAreDirsActions = sources.map(PATH.Path.IsDir);
+    allSourcesExist(sources, executor).then(success => {
+      let sourcesAreDirsActions = sources.map(src => PATH.Path.IsDir(src, executor));
 
       Promise.all(sourcesAreDirsActions).then(isDirResults => {
 
@@ -82,331 +90,225 @@ function allSourcesAreDirs(sources) {
         }
 
         if (nonDirPaths.length > 0) {
-          let error = '';
+          let errorStr = '';
           if (nonDirPaths.length == 1)
-            error = `This path is not a directory: ${nonDirPaths[0]}`;
+            errorStr = `This path is not a directory: ${nonDirPaths[0]}`;
           else
-            error = `The following (${nonDirPaths.length}) paths are not directories:\n${nonDirPaths.join('\n')}`;
+            errorStr = `The following (${nonDirPaths.length}) paths are not directories:\n${nonDirPaths.join('\n')}`;
 
-          reject(error);
+          reject(errorStr);
           return;
         }
-
         resolve(true);
-      }).catch(reject);
-    }).catch(reject);
+      }).catch(error => `Failed to verify if all sources are directories: ${error}`);
+    }).catch(error => `Failed to verify if all sources are directories: ${error}`);
   });
 }
 
 //-------------------------------------------
 // ZIP
 class Zip {
-  static CompressFiles(sources, dest) {
+  static CompressFiles(sources, dest, executor) {
     return new Promise((resolve, reject) => {
-      allSourcesExist(sources).then(success => {
-        allSourcesAreFiles(sources).then(success => {
-          let error = Error.DestError(dest);
+      allSourcesExist(sources, executor).then(success => {
+        allSourcesAreFiles(sources, executor).then(success => {
+          let error = Error.DestValidator(dest);
           if (error) {
+            reject(`Failed to zip files: ${error}`);
+            return;
+          }
+
+          let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
+          COMMAND.Execute(cmd, [], executor).then(output => {
+            if (output.stderr) {
+              reject(`Failed to zip files: ${output.stderr}`);
+              return;
+            }
+            resolve(true);
+          }).catch(error => `Failed to zip files: ${error}`);
+        }).catch(error => `Failed to zip files: ${error}`);
+      }).catch(error => `Failed to zip files: ${error}`);
+    });
+  }
+
+  static CompressDirs(sources, dest, executor) {
+    return new Promise((resolve, reject) => {
+      allSourcesExist(sources, executor).then(success => {
+        allSourcesAreDirs(sources, executor).then(success => {
+          let error = Error.DestValidator(dest);
+          if (`Failed to zip directories: ${error}`) {
             reject(error);
             return;
           }
 
-          let args = [dest].concat(sources);
-          EXECUTE.Local('zip', args).then(output => {
+          let cmd = LINUX_COMMANDS.ZipDirs(sources, dest);
+          COMMAND.Execute(cmd, [], executor).then(output => {
             if (output.stderr) {
-              reject(`Failed to compress files: ${output.stderr}`);
+              reject(`Failed to zip directories: ${output.stderr}`);
               return;
             }
             resolve(true);
-          }).catch(reject);
-        }).catch(reject);
-      }).catch(reject);
+          }).catch(error => `Failed to zip directories: ${error}`);
+        }).catch(error => `Failed to zip directories: ${error}`);
+      }).catch(error => `Failed to zip directories: ${error}`);
     });
   }
 
-  static CompressDirs(sources, dest) {
+  static Decompress(src, dest, executor) {
     return new Promise((resolve, reject) => {
-      allSourcesExist(sources).then(success => {
-        allSourcesAreDirs(sources).then(success => {
-          let error = Error.DestError(dest);
-          if (error) {
-            reject(error);
-            return;
-          }
-
-          let args = ['-r', dest].concat(sources);
-          EXECUTE.Local('zip', args).then(output => {
-            if (output.stderr) {
-              reject(`Failed to compress directories: ${output.stderr}`);
-              return;
-            }
-            resolve(true);
-          }).catch(reject);
-        }).catch(reject);
-      }).catch(reject);
-    });
-  }
-
-  static Decompress(src, dest) {
-    return new Promise((resolve, reject) => {
-      let error = Error.SrcError(src);
+      let error = Error.SrcValidator(src);
       if (error) {
-        reject(error);
+        reject(`Failed to unzip: ${error}`);
         return;
       }
 
-      error = Error.DestError(dest);
+      error = Error.DestValidator(dest);
       if (error) {
-        reject(error);
+        reject(`Failed to unzip: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(src).then(exists => {
+      PATH.Path.Exists(src, executor).then(exists => {
         if (!exists) {
-          reject(`Source does not exist: ${src}`);
+          reject(`Failed to unzip: source does not exist: ${src}`);
           return;
         }
 
-        let args = [src, '-d', dest];
-        EXECUTE.Local('unzip', args).then(output => {
+        let cmd = LINUX_COMMANDS.ZipDecompress(src, dest);
+        COMMAND.Execute(cmd, [], executor).then(output => {
           if (output.stderr) {
-            reject(`Failed to decompress: ${output.stderr}`);
+            reject(`Failed to unzip: ${output.stderr}`);
             return;
           }
           resolve(true);
-        }).catch(reject);
-      }).catch(reject);
+        }).catch(error => `Failed to unzip: ${error}`);
+      }).catch(error => `Failed to unzip: ${error}`);
     });
   }
 
-  static Manual(args) {
+  static Manual(args, executor) {
     return new Promise((resolve, reject) => {
-      error = Error.ArgsError(args);
+      error = Error.ArgsValidator(args);
       if (error) {
         reject(error);
         return;
       }
 
-      EXECUTE.Local('zip', args).then(output => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to execute zip command: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.ZipManual(args);
+      COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
-          reject(`Failed to compress: ${output.stderr}`);
+          reject(`Failed to execute zip command: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(reject);
+      }).catch(error => `Failed to execute zip command: ${error}`);
     });
   }
 }
-
-
-//--------------------------------------------
-// GZIP
-
-class Gzip {
-  static CompressFile(src, dest, keepOriginal) {
-    return new Promise((resolve, reject) => {
-      let error = Error.SrcError(src);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      error = Error.DestError(dest);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      error = Error.KeepOriginalError(keepOriginal);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      PATH.Path.Exists(src).then(exists => {
-        if (!exists) {
-          reject(`Source does not exist: ${src}`);
-          return;
-        }
-
-        PATH.Path.IsFile(src).then(isFile => {
-          if (!isFile) {
-            reject(`Source is not a file: ${src}`);
-            return;
-          }
-
-          let args = [];
-          if (keepOriginal)
-            args.push('-c');
-          args.push(src, '>', dest);
-
-          EXECUTE.Local('gzip', args).then(output => {
-            if (output.stderr) {
-              reject(`Failed to compress file: ${output.stderr}`);
-              return;
-            }
-            resolve(true);
-          }).catch(reject);
-        }).catch(reject);
-      }).catch(reject);
-    });
-  }
-
-  static Decompress(src, keepOriginal) {
-    return new Promise((resolve, reject) => {
-      let error = Error.SrcError(src);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      error = Error.KeepOriginalError(keepOriginal);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      PATH.Path.Exists(src).then(exists => {
-        if (!exists) {
-          reject(`Source does not exist: ${src}`);
-          return;
-        }
-
-        let args = [];
-        if (keepOriginal)
-          args.push('-cd');
-        else
-          args.push('-d');
-        args.push(src);
-
-        EXECUTE.Local('gzip', args).then(output => {
-          if (output.stderr) {
-            reject(`Failed to decompress: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(reject);
-      }).catch(reject);
-    });
-  }
-
-  static Manual(args) {
-    return new Promise((resolve, reject) => {
-      error = Error.ArgsError(args);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      EXECUTE.Local('gzip', args).then(output => {
-        if (output.stderr) {
-          reject(`Failed to compress: ${output.stderr}`);
-          return;
-        }
-        resolve(true);
-      }).catch(reject);
-    });
-  }
-}
-
 
 //-------------------------------------------
 // TAR
 
 class Tar {
-  static Compress(src, dest) {
+  static Compress(sources, dest, executor) {
     return new Promise((resolve, reject) => {
-      let error = Error.SrcError(src);
+      let error = Error.SourcesValidator(src);
       if (error) {
-        reject(error);
+        reject(`Failed to tar: ${error}`);
         return;
       }
 
-      error = Error.DestError(dest);
+      error = Error.DestValidator(dest);
       if (error) {
-        reject(error);
+        reject(`Failed to tar: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(src).then(exists => {
-        if (!exists) {
-          reject(`Source does not exist: ${src}`);
-          return;
-        }
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to tar: Connection is ${executorError}`);
+        return;
+      }
 
-        let args = ['-czvf', dest, src];
-        EXECUTE.Local('tar', args).then(output => {
+      allSourcesExist(sources, executor).then(success => {
+        let cmd = LINUX_COMMANDS.TarCompressMultiple(sources, dest);
+        COMMAND.Execute(cmd, [], executor).then(output => {
           if (output.stderr) {
-            reject(`Failed to compress: ${output.stderr}`);
+            reject(`Failed to tar: ${output.stderr}`);
             return;
           }
           resolve(true);
-        }).catch(reject);
-      }).catch(reject);
+        }).catch(error => `Failed to tar: ${error}`);
+      }).catch(error => `Failed to tar: ${error}`);
     });
   }
 
-  static Decompress(src, dest) {  // dest is a directory
+  static Decompress(src, dest, executor) {
     return new Promise((resolve, reject) => {
-      let error = Error.SrcError(src);
+      let error = Error.SrcValidator(src);
       if (error) {
-        reject(error);
+        reject(`Failed to untar: source is ${error}`);
         return;
       }
 
-      error = Error.DestError(src);
+      error = Error.DestValidator(dest);
       if (error) {
-        reject(error);
+        reject(`Failed to untar: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(src).then(exists => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to untar: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.Exists(src, executor).then(exists => {
         if (!exists) {
-          reject(`Source does not exist: ${src}`);
+          reject(`Failed to untar: source does not exist: ${src}`);
           return;
         }
 
-        PATH.Path.Exists(dest).then(exists => {
-          if (!exists) {
-            reject(`Destination does not exist: ${dest}`);
+        let cmd = LINUX_COMMANDS.TarDecompress(src, dest);
+        EXECUTE.Local(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to untar: ${output.stderr}`);
             return;
           }
-
-          PATH.Path.IsDir(dest).then(isDir => {
-            if (!isDir) {
-              reject(`Destination is not a directory: ${dest}`);
-              return;
-            }
-
-            let args = ['-xzvf', src, '-C', dest];
-            EXECUTE.Local('tar', args).then(output => {
-              if (output.stderr) {
-                reject(`Failed to compress: ${output.stderr}`);
-                return;
-              }
-              resolve(true);
-            }).catch(reject);
-          }).catch(reject);
-        }).catch(reject);
-      }).catch(reject);
+          resolve(true);
+        }).catch(error => `Failed to untar: ${error}`);
+      }).catch(error => `Failed to untar: ${error}`);
     });
   }
 
-  static Manual(args) {
+  static Manual(args, executor) {
     return new Promise((resolve, reject) => {
-      error = Error.ArgsError(args);
+      error = Error.ArgsValidator(args);
       if (error) {
-        reject(error);
+        reject(`Failed to execute tar command: ${error}`);
         return;
       }
 
-      EXECUTE.Local('tar', args).then(output => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to execute tar command: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.TarManual(args);
+      COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
-          reject(`Failed to compress: ${output.stderr}`);
+          reject(`Failed to execute tar command: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(reject);
+      }).catch(error => `Failed to execute tar command: ${error}`);
     });
   }
 }
@@ -416,28 +318,28 @@ class Tar {
 // ERROR
 
 class Error {
-  static SrcError(dest) {
-    let error = ERROR.StringError(dest);
+  static SrcValidator(dest) {
+    let error = ERROR.StringValidator(dest);
     if (error)
-      return `src is ${error}`;
+      return `source is ${error}`;
     return null;
   }
 
-  static DestError(dest) {
-    let error = ERROR.StringError(dest);
+  static DestValidator(dest) {
+    let error = ERROR.StringValidator(dest);
     if (error)
-      return `dest is ${error}`;
+      return `destination is ${error}`;
     return null;
   }
 
-  static SourcesError(sources) {
-    let error = ERROR.ArrayError(sources);
+  static SourcesValidator(sources) {
+    let error = ERROR.ArrayValidator(sources);
     if (error)
-      return `sources is ${error}`;
+      return `sources are ${error}`;
 
     for (let i = 0; i < sources.length; ++i) {
       let currSrc = sources[i];
-      let invalidType = ERROR.StringError(currSrc);
+      let invalidType = ERROR.StringValidator(currSrc);
       if (invalidType)
         return `sources contains a path that is ${invalidType}`;
     }
@@ -445,7 +347,7 @@ class Error {
     return null;
   }
 
-  static KeepOriginalError(bool) {
+  static KeepOriginalValidator(bool) {
     let error = ERROR.NullOrUndefined(bool);
     if (error)
       return `keepOriginal is ${error}`;
@@ -456,14 +358,14 @@ class Error {
     return null;
   }
 
-  static ArgsError(args) {
-    let error = ERROR.ArrayError(args);
+  static ArgsValidator(args) {
+    let error = ERROR.ArrayValidator(args);
     if (error)
-      return `args is ${error}`;
+      return `arguments are ${error}`;
 
     for (let i = 0; i < args.length; ++i) {
       let currArg = args[i];
-      let argIsValidString = ERROR.StringError(currArg) == null;
+      let argIsValidString = ERROR.StringValidator(currArg) == null;
       let argIsValidNumber = !isNaN(currArg);
 
       if (!argIsValidString && !argIsValidNumber)
