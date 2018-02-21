@@ -1,37 +1,45 @@
 let PATH = require('./path.js');
-let ERROR = require('./error.js').Error;
+let ERROR = require('./error.js');
 let REMOVE = require('./remove.js').Remove;
 let CHMOD = require('./chmod.js').Chmod;
-let FS = require('fs-extra');
+let COMMAND = require('./command.js').Command;
+let LINUX_COMMANDS = require('./linuxcommands.js');
 
 //---------------------------------------------------
 // FILE
 class File {
-  static Remove(path) {
-    return REMOVE.File(path);
+  static Remove(path, executor) {
+    return REMOVE.File(path, executor);
   }
 
-  static Create(path, text) {
+  static Create(path, text, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
-        reject(error);
+        reject(`Failed to create file: ${error}`);
         return;
       }
 
-      error = ERROR.StringError(text);
+      error = ERROR.StringValidator(text);
       if (error) {
-        reject(`Text is ${error}`);
+        reject(`Failed to create file: text is ${error}`);
         return;
       }
 
-      FS.writeFile(path, text, (err) => {
-        if (err) {
-          reject(`Failed to write file: ${err}`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to create file: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = `echo "${text}" > ${path}`;
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to create file: ${output.stderr}`);
           return;
         }
-        resolve(true)
-      });
+        resolve(true);
+      }).catch(error => `Failed to create file: ${error}`);
     });
   }
 
@@ -63,46 +71,67 @@ class File {
     });
   }
 
-  static Read(path) {
+  static Read(path, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
-        reject(error);
+        reject(`Failed to read file: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(path).then(exists => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to read file: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.Exists(path, executor).then(exists => {
         if (!exists) {
-          reject(`Path does not exist: ${path}`);
+          reject(`Failed to read file: Path does not exist: ${path}`);
           return;
         }
 
-        PATH.Path.IsFile(path).then(isFile => {
+        PATH.Path.IsFile(path, executor).then(isFile => {
           if (!isFile) {
-            reject(`Path is not a file: ${path}`);
+            reject(`Failed to read file: Path is not a file: ${path}`);
             return;
           }
 
-          FS.readFile(path, (err, data) => {
-            if (err) {
-              reject(`Failed to read file: ${err}`);
+          let cmd = LINUX_COMMANDS.CatReadFileContent(path);
+          COMMAND.Execute(cmd, [], executor).then(output => {
+            if (output.stderr) {
+              reject(`Failed to read file: ${output.stderr}`);
               return;
             }
-            resolve(data.toString());
-          });
-        }).catch(reject);
-      }).catch(reject);
+            resolve(output.stdout);
+          }).catch(error => `Failed to read file: ${error}`);
+        }).catch(error => `Failed to read file: ${error}`);
+      }).catch(error => `Failed to read file: ${error}`);
     });
   }
 
-  static ReadLines(path) {
+  static ReadLines(path, executor) {
     return new Promise((resolve, reject) => {
-      File.Read(path).then(data => {
-        resolve(data.split('\n'));
-      }).catch(reject);
+      File.Read(path, executor).then(string => {
+        resolve(string.split('\n'));
+      }).catch(error => `Failed to read lines: ${error}`);
     });
   }
 }
+
+//-------------------------------
+
+let p = '/home/isa/sample.txt';
+let text = 'Hello world!\n\tWhats Good!!!';
+
+let C = require('./command.js');
+let L = new C.LocalCommand();
+
+File.Create(p, text, L).then(success => {
+  console.log(`Success :-)`);
+}).catch(error => {
+  console.log(`ERROR: ${error}`);
+});
 
 //-------------------------------
 // EXPORTS
