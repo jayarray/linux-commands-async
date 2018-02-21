@@ -14,7 +14,7 @@ class Directory {
 
   static Create(path, executor) {
     return new Promise((resolve, reject) => {
-      let pathError = PATH.Error.PathError(path);
+      let pathError = PATH.Error.PathValidator(path);
       if (pathError) {
         reject(`Failed to create directory: ${pathError}`);
         return;
@@ -34,7 +34,7 @@ class Directory {
 
   static Size(path, executor) {
     return new Promise((resolve, reject) => {
-      let pathError = PATH.Error.PathError(path);
+      let pathError = PATH.Error.PathValidator(path);
       if (pathError) {
         reject(`Failed to get directory size: ${pathError}`);
         return;
