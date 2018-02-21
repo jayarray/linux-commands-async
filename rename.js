@@ -1,47 +1,48 @@
 let _path = require('path');
-let FS = require('fs-extra');
 let PATH = require('./path.js');
-let ERROR = require('./error.js').Error;
+let ERROR = require('./error.js');
+let MOVE = require('./move.js').Move;
 
 //-----------------------------------------------
 // RENAME
 class Rename {
-  static Rename(currPath, newName) {
+  static Rename(src, newName, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(currPath);
-      if (error) {
-        reject(error);
+      let srcError = PATH.Error.PathValidator(src);
+      if (srcError) {
+        reject(`Failed to rename: Source is ${srcError}`);
         return;
       }
 
-      error = ERROR.StringError(newName);
-      if (error) {
-        reject(`newName is ${error}`);
+      let newNameIsValid = typeof newName == 'string' && newName != '';
+      if (!newNameIsValid) {
+        reject(`Failed to rename: New name must be a string type and cannot be empty`);
         return;
       }
 
-      PATH.Path.Exists(currPath).then(exists => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to rename: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.Exists(src, executor).then(exists => {
         if (!exists) {
-          reject(`Path does not exist: ${currPath}`);
+          reject(`Failed to rename: Path does not exist: ${currPath}`);
           return;
         }
 
-        let parentDir = PATH.Path.ParentDir(currPath);
+        let parentDir = PATH.Path.ParentDir(src);
         if (parentDir.error) {
-          reject(parentDir.error);
+          reject(`Failed to rename: ${parentDir.error}`);
           return;
         }
 
-        let updatedPath = _path.join(parentDir.dir, newName);
-
-        FS.rename(currPath, updatedPath, (err) => {
-          if (err) {
-            reject(`Failed to rename: ${err}`);
-            return;
-          }
+        let updatedPath = _path.join(parentDir.string, newName);
+        MOVE.Move(src, updatedPath, executor).then(success => {
           resolve(true);
-        });
-      }).catch(reject);
+        }).catch(error => reject(`Failed to rename: ${error}`));
+      }).catch(error => reject(`Failed to rename: ${error}`));
     });
   }
 }
