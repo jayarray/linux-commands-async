@@ -473,7 +473,6 @@ exports.AdminUptime = AdminUptime;
 exports.AdminMemoryCheck = AdminMemoryCheck;
 exports.AdminTopProcesses = AdminTopProcesses;
 exports.AdminListOpenFilesByUser = AdminListOpenFilesByUser;
-exports.AdminIfconfig = AdminIfconfig;
 exports.ZipFile = ZipFile;
 exports.ZipFiles = ZipFiles;
 exports.ZipDir = ZipDir;
