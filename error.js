@@ -33,7 +33,7 @@ function NumberValidator(n) {
   return null;
 }
 
-function IntegerError(i) {
+function IntegerValidator(i) {
   let error = NullOrUndefined(i);
   if (error)
     return error;
@@ -47,8 +47,8 @@ function BoundIntegerError(i, min, max) {
   let minIsNull = min == null;
   let maxIsNull = max == null;
 
-  let minIsInteger = IntegerError(min) == null;
-  let maxIsInteger = IntegerError(max) == null;
+  let minIsInteger = IntegerValidator(min) == null;
+  let maxIsInteger = IntegerValidator(max) == null;
 
   let minIsDefined = !minIsNull && minIsInteger;
   let maxIsDefined = !maxIsNull && maxIsInteger;
@@ -118,3 +118,5 @@ exports.StringValidator = StringValidator;
 exports.ArrayValidator = ArrayValidator;
 exports.NumberValidator = NumberValidator;
 exports.ExecutorValidator = ExecutorValidator;
+exports.IntegerValidator = IntegerValidator;
+exports.BoundIntegerError = BoundIntegerError;
