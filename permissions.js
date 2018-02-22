@@ -10,13 +10,13 @@ class Permissions {
     return new Promise((resolve, reject) => {
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
-        reject(`Failed to check permissions: Connection is ${executorError}`);
+        reject(`Failed to get permissions: Connection is ${executorError}`);
         return;
       }
 
       let error = ERROR.StringValidator(path);
       if (error) {
-        reject(`Failed to check permissions: Path is ${error}`);
+        reject(`Failed to get permissions: Path is ${error}`);
         return;
       }
 
