@@ -56,6 +56,31 @@ class Zip {
     });
   }
 
+  static CompressManual(args, executor) {
+    return new Promise((resolve, reject) => {
+      error = Error.ArgsValidator(args);
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to execute zip command: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.ZipManual(args);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to execute zip command: ${output.stderr}`);
+          return;
+        }
+        resolve(true);
+      }).catch(error => `Failed to execute zip command: ${error}`);
+    });
+  }
+
   static Decompress(src, dest, executor) {
     return new Promise((resolve, reject) => {
       let error = Error.SrcValidator(src);
@@ -81,7 +106,7 @@ class Zip {
     });
   }
 
-  static Manual(args, executor) {
+  static DecompressManual(args, executor) {
     return new Promise((resolve, reject) => {
       error = Error.ArgsValidator(args);
       if (error) {
@@ -91,18 +116,18 @@ class Zip {
 
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
-        reject(`Failed to execute zip command: Connection is ${executorError}`);
+        reject(`Failed to execute unzip command: Connection is ${executorError}`);
         return;
       }
 
-      let cmd = LINUX_COMMANDS.ZipManual(args);
+      let cmd = LINUX_COMMANDS.ZipDecompressManual(args);
       COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
-          reject(`Failed to execute zip command: ${output.stderr}`);
+          reject(`Failed to execute unzip command: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to execute zip command: ${error}`);
+      }).catch(error => `Failed to execute unzip command: ${error}`);
     });
   }
 }
