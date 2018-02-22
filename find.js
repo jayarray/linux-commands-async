@@ -37,13 +37,26 @@ class Find {
 
       let cmd = LINUX_COMMANDS.FindFilesByName(path, pattern, maxDepth);
       COMMAND.Execute(cmd, [], executor).then(output => {
+        let deniedPaths = [];
+
         if (output.stderr) {
-          reject(`Failed to find files by name: ${output.stderr}`);
-          return;
+          if (output.stderr.includes('Permission denied')) {
+            let lines = output.stderr.split('\n').filter(line => line && line.trim() != '' && line != path);
+
+            for (let i = 0; i < lines.length; ++i) {
+              let currLine = lines[i];
+              let dPath = currLine.split(':')[1].trim();
+              deniedPaths.push(dPath);
+            }
+          }
+          else {
+            reject(`Failed to find files by name: ${output.stderr}`);
+            return;
+          }
         }
 
         let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
-        resolve(paths);
+        resolve({ paths: paths, denied: deniedPaths });
       }).catch(`Failed to find files by name: ${error}`);
     });
   }
@@ -76,35 +89,27 @@ class Find {
 
       let cmd = LINUX_COMMANDS.FindFilesByContent(path, text, maxDepth);
       COMMAND.Execute(cmd, [], executor).then(output => {
+        let deniedPaths = [];
+
         if (output.stderr) {
-          reject(`Failed to find files by content: ${output.stderr}`);
-          return;
+          if (output.stderr.includes('Permission denied')) {
+            let lines = output.stderr.split('\n').filter(line => line && line.trim() != '' && line != path);
+
+            for (let i = 0; i < lines.length; ++i) {
+              let currLine = lines[i];
+              let dPath = currLine.split(':')[1].trim();
+              deniedPaths.push(dPath);
+            }
+          }
+          else {
+            reject(`Failed to find files by content: ${output.stderr}`);
+            return;
+          }
         }
 
-        let paths = outputStr.split('\n').filter(line => line && line.trim() != '' && line != path && line != path && line != tempFilepath);
-        resolve(paths);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
+        resolve({ paths: paths, denied: deniedPaths });
       }).catch(error => `Failed to find files by content: ${error}`);
-
-      /*
-      PATH.Path.Exists(path).then(exists => {
-        if (!exists) {
-          reject(`Path does not exist: ${path}`);
-          return;
-        }
-
-        let cmd = `find ${path}`;
-        if (maxDepth && maxDepth > 0)
-          cmd += ` - maxdepth ${maxDepth}`;
-        cmd += ` - type f - exec grep - l "${text}" "{}" \\; `;
-
-        let parentDir = PATH.Path.ParentDir(path).dir;
-        let tempFilepath = _path.join(parentDir, 'find_files_by_content.sh');
-
-        BASHSCRIPT.Execute(tempFilepath, cmd).then(outputStr => {
-          let paths = outputStr.split('\n').filter(line => line && line.trim() != '' && line != path && line != path && line != tempFilepath);
-          resolve(paths);
-        }).catch(reject);
-      }).catch(reject);*/
     });
   }
 
@@ -116,7 +121,7 @@ class Find {
         return;
       }
 
-      error = ERROR.StringError(user);
+      error = ERROR.StringValidator(user);
       if (error) {
         reject(`Failed to find files by user: user is ${error} `);
         return;
@@ -136,20 +141,33 @@ class Find {
 
       let cmd = LINUX_COMMANDS.FindFilesByUser(path, user, maxDepth);
       COMMAND.Execute(cmd, [], executor).then(output => {
+        let deniedPaths = [];
+
         if (output.stderr) {
-          reject(`Failed to find files by user: ${output.stderr}`);
-          return;
+          if (output.stderr.includes('Permission denied')) {
+            let lines = output.stderr.split('\n').filter(line => line && line.trim() != '' && line != path);
+
+            for (let i = 0; i < lines.length; ++i) {
+              let currLine = lines[i];
+              let dPath = currLine.split(':')[1].trim();
+              deniedPaths.push(dPath);
+            }
+          }
+          else {
+            reject(`Failed to find files by user: ${output.stderr}`);
+            return;
+          }
         }
 
-        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve(paths);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
+        resolve({ paths: paths, denied: deniedPaths });
       }).catch(`Failed to find files by user: ${error}`);
     });
   }
 
   static DirsByName(path, pattern, maxDepth, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
         reject(`Failed to find directories by name: ${error}`);
         return;
@@ -175,20 +193,33 @@ class Find {
 
       let cmd = LINUX_COMMANDS.FindDirsByName(path, pattern, maxDepth);
       COMMAND.Execute(cmd, [], executor).then(output => {
+        let deniedPaths = [];
+
         if (output.stderr) {
-          reject(`Failed to find directories by name: ${output.stderr}`);
-          return;
+          if (output.stderr.includes('Permission denied')) {
+            let lines = output.stderr.split('\n').filter(line => line && line.trim() != '' && line != path);
+
+            for (let i = 0; i < lines.length; ++i) {
+              let currLine = lines[i];
+              let dPath = currLine.split(':')[1].trim();
+              deniedPaths.push(dPath);
+            }
+          }
+          else {
+            reject(`Failed to find directories by name: ${output.stderr}`);
+            return;
+          }
         }
 
-        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve(paths);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
+        resolve({ paths: paths, denied: deniedPaths });
       }).catch(`Failed to find directories by name: ${error}`);
     });
   }
 
   static EmptyFiles(path, maxDepth, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
         reject(`Failed to find empty files: ${error}`);
         return;
@@ -208,20 +239,33 @@ class Find {
 
       let cmd = LINUX_COMMANDS.FindEmptyFiles(path, maxDepth);
       COMMAND.Execute(cmd, [], executor).then(output => {
+        let deniedPaths = [];
+
         if (output.stderr) {
-          reject(`Failed to find empty files:: ${output.stderr}`);
-          return;
+          if (output.stderr.includes('Permission denied')) {
+            let lines = output.stderr.split('\n').filter(line => line && line.trim() != '' && line != path);
+
+            for (let i = 0; i < lines.length; ++i) {
+              let currLine = lines[i];
+              let dPath = currLine.split(':')[1].trim();
+              deniedPaths.push(dPath);
+            }
+          }
+          else {
+            reject(`Failed to find empty files: ${output.stderr}`);
+            return;
+          }
         }
 
-        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve(paths);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
+        resolve({ paths: paths, denied: deniedPaths });
       }).catch(`Failed to find empty files: ${error}`);
     });
   }
 
   static EmptyDirs(path, maxDepth, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
         reject(`Failed to find empty directories: ${error}`);
         return;
@@ -241,13 +285,26 @@ class Find {
 
       let cmd = LINUX_COMMANDS.FindEmptyDirs(path, maxDepth);
       COMMAND.Execute(cmd, [], executor).then(output => {
+        let deniedPaths = [];
+
         if (output.stderr) {
-          reject(`Failed to find empty directories:: ${output.stderr}`);
-          return;
+          if (output.stderr.includes('Permission denied')) {
+            let lines = output.stderr.split('\n').filter(line => line && line.trim() != '' && line != path);
+
+            for (let i = 0; i < lines.length; ++i) {
+              let currLine = lines[i];
+              let dPath = currLine.split(':')[1].trim();
+              deniedPaths.push(dPath);
+            }
+          }
+          else {
+            reject(`Failed to find empty directories: ${output.stderr}`);
+            return;
+          }
         }
 
-        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-        resolve(paths);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
+        resolve({ paths: paths, denied: deniedPaths });
       }).catch(`Failed to find empty directories: ${error}`);
     });
   }
@@ -256,7 +313,7 @@ class Find {
     return new Promise((resolve, reject) => {
       let error = Error.ArgsValidator(args);
       if (error) {
-        reject(`Failed to execute findm command: ${error}`);
+        reject(`Failed to execute find command: ${error}`);
         return;
       }
 
@@ -268,13 +325,26 @@ class Find {
 
       let cmd = LINUX_COMMANDS.FindManual(args);
       COMMAND.Execute(cmd, [], executor).then(output => {
+        let deniedPaths = [];
+
         if (output.stderr) {
-          reject(`Failed to execute find command: ${output.stderr}`);
-          return;
+          if (output.stderr.includes('Permission denied')) {
+            let lines = output.stderr.split('\n').filter(line => line && line.trim() != '' && line != path);
+
+            for (let i = 0; i < lines.length; ++i) {
+              let currLine = lines[i];
+              let dPath = currLine.split(':')[1].trim();
+              deniedPaths.push(dPath);
+            }
+          }
+          else {
+            reject(`Failed to execute find command: ${output.stderr}`);
+            return;
+          }
         }
 
         let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
-        resolve(paths);
+        resolve({ paths: paths, denied: deniedPaths });
       }).catch(error => `Failed to execute find command: ${error}`);
     });
   }
@@ -292,7 +362,7 @@ class Error {
     for (let i = 0; i < args.length; ++i) {
       let currArg = args[i];
 
-      let argIsValidString = ERROR.StringError(currArg) == null;
+      let argIsValidString = ERROR.StringValidator(currArg) == null;
       let argIsValidNumber = !isNaN(currArg);
 
       if (!argIsValidString && !argIsValidNumber)
@@ -303,6 +373,9 @@ class Error {
   }
 
   static MaxDepthValidator(maxDepth) {
+    if (maxDepth == null)
+      return null;
+
     let error = ERROR.IntegerValidator(maxDepth);
     if (error)
       return `MaxDepth is ${error} `;
@@ -310,7 +383,7 @@ class Error {
     let min = 0;
     error = ERROR.BoundIntegerError(maxDepth, min, null);
     if (error)
-      return `MaxDepth is ${maxDepth} `;
+      return `MaxDepth is ${error} `;
 
     return null;
   }
