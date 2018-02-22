@@ -102,7 +102,7 @@ class Chmod {
         return;
       }
 
-      let octalStrError = PERMISSIONS.Error.OctalStringError(octalStr);
+      let octalStrError = PERMISSIONS.Error.OctalStringValidator(octalStr);
       if (octalStrError.error) {
         reject(`Failed to change permissions: ${octalStrError.error}`);
         return;
@@ -128,13 +128,13 @@ class Chmod {
 
   static RemovePermissions(classes, types, path, isRecursive, executor) { // Example: classes = 'ugo',  types = 'rwx'
     return new Promise((resolve, reject) => {
-      let error = Error.ClassesStringError(classes);
+      let error = Error.ClassesStringValidator(classes);
       if (error) {
         reject(`Failed to remove permissions: ${error}`);
         return;
       }
 
-      error = Error.TypesStringError(types);
+      error = Error.TypesStringValidator(types);
       if (error) {
         reject(`Failed to remove permissions: ${error}`);
         return;
@@ -159,13 +159,13 @@ class Chmod {
 
   static AddPermissions(classes, types, path, isRecursive, executor) {
     return new Promise((resolve, reject) => {
-      let error = Error.ClassesStringError(classes);
+      let error = Error.ClassesStringValidator(classes);
       if (error) {
         reject(`Failed to add permissions: ${error}`);
         return;
       }
 
-      error = Error.TypesStringError(types);
+      error = Error.TypesStringValidator(types);
       if (error) {
         reject(`Failed to add permissions: ${error}`);
         return;
@@ -190,13 +190,13 @@ class Chmod {
 
   static SetPermissions(classes, types, path, isRecursive, executor) {
     return new Promise((resolve, reject) => {
-      let error = Error.ClassesStringError(classes);
+      let error = Error.ClassesStringValidator(classes);
       if (error) {
         reject(`Failed to set permissions: ${error}`);
         return;
       }
 
-      error = Error.TypesStringError(types);
+      error = Error.TypesStringValidator(types);
       if (error) {
         reject(`Failed to set permissions: ${error}`);
         return;
@@ -232,8 +232,8 @@ class Chmod {
 // ERROR
 
 class Error {
-  static ClassesStringError(string) {
-    let error = ERROR.StringError(string);
+  static ClassesStringValidator(string) {
+    let error = ERROR.StringValidator(string);
     if (error)
       return `Classes string is ${error}`;
 
@@ -254,8 +254,8 @@ class Error {
     return null;
   }
 
-  static TypesStringError(string) {
-    let error = ERROR.StringError(string);
+  static TypesStringValidator(string) {
+    let error = ERROR.StringValidator(string);
     if (error)
       return `Types string is ${error}`;
 
