@@ -8,11 +8,11 @@ let COMMAND = require('./command.js').Command;
 //-----------------------------------------------
 // CHOWN
 class Chown {
-  static ChangeOwner(path, newOwnerId, isRecursive, executor) { // newOwner can be string or integer
+  static ChangeOwner(paths, newOwnerId, isRecursive, executor) { // newOwner can be string or integer
     return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to change owner: Connection is ${executorError}`);
+      let pathsError = Error.PathsValidator(paths);
+      if (pathsError) {
+        reject(`Failed to change owner: ${pathsError}`);
         return;
       }
 
@@ -22,26 +22,31 @@ class Chown {
         return;
       }
 
-      PATH.Exists(path, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to change owner: path does not exist: ${path}`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to change owner: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.ChownChangeOwner(paths, newOwnerId, isRecursive);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to change owner: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.ChownChangeOwner(path, newOwnerId, isRecursive);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to change owner: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => `Failed to change owner: ${error}`);
+        resolve(true);
       }).catch(error => `Failed to change owner: ${error}`);
     });
   }
 
-  static ChangeGroup(path, newGroupId, isRecursive, executor) { // newOwner can be string or integer
+  static ChangeGroup(paths, newGroupId, isRecursive, executor) { // newOwner can be string or integer
     return new Promise((resolve, reject) => {
+      let pathsError = Error.PathsValidator(paths);
+      if (pathsError) {
+        reject(`Failed to change group: ${pathsError}`);
+        return;
+      }
+
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
         reject(`Failed to change group: Connection is ${executorError}`);
@@ -54,26 +59,25 @@ class Chown {
         return;
       }
 
-      PATH.Exists(path, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to change group: path does not exist: ${path}`);
+      let cmd = LINUX_COMMANDS.ChownChangeGroup(paths, newGroupId, isRecursive);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to change group: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.ChownChangeGroup(path, newGroupId, isRecursive);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to change group: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => `Failed to change group: ${error}`);
+        resolve(true);
       }).catch(error => `Failed to change group: ${error}`);
     });
   }
 
-  static ChangeOwnerAndGroup(path, newOwnerId, newGroupId, isRecursive, executor) { // newOwner can be string or integer
+  static ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executor) { // newOwner can be string or integer
     return new Promise((resolve, reject) => {
+      let pathsError = Error.PathsValidator(paths);
+      if (pathsError) {
+        reject(`Failed to change group: ${pathsError}`);
+        return;
+      }
+
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
         reject(`Failed to change owner and group: Connection is ${executorError}`);
@@ -92,20 +96,38 @@ class Chown {
         return;
       }
 
-      PATH.Exists(path, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to change owner and group: path does not exist: ${path}`);
+      let cmd = LINUX_COMMANDS.ChownChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to change owner and group: ${output.stderr}`);
           return;
         }
+        resolve(true);
+      }).catch(error => `Failed to change owner and group: ${error}`);
+    });
+  }
 
-        let cmd = LINUX_COMMANDS.ChownChangeOwnerAndGroup(path, newOwnerId, newGroupId, isRecursive);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to change owner and group: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => `Failed to change owner and group: ${error}`);
+  static Manual(args, executor) { // newOwner can be string or integer
+    return new Promise((resolve, reject) => {
+      let argsError = Error.ArgsValidator(args);
+      if (argsError) {
+        reject(`Failed to change group: ${argsError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to change owner and group: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.ChownManual(args);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to change owner and group: ${output.stderr}`);
+          return;
+        }
+        resolve(true);
       }).catch(error => `Failed to change owner and group: ${error}`);
     });
   }
@@ -122,6 +144,39 @@ class Error {
 
     if (typeof id != 'string' && !Number.isInteger(id))
       return `must be a string or integer`;
+
+    return null;
+  }
+
+  static PathsValidator(paths) {
+    let error = ERROR.ArrayValidator(paths);
+    if (error)
+      return `Paths are ${error}`;
+
+    for (let i = 0; i < args.length; ++i) {
+      let currArg = args[i];
+      let argIsValidString = ERROR.StringValidator(currArg) == null;
+
+      if (!argIsValidString)
+        return `All paths must be string type`;
+    }
+
+    return null;
+  }
+
+  static ArgsValidator(args) {
+    let error = ERROR.ArrayValidator(args);
+    if (error)
+      return `arguments are ${error}`;
+
+    for (let i = 0; i < args.length; ++i) {
+      let currArg = args[i];
+      let argIsValidString = ERROR.StringValidator(currArg) == null;
+      let argIsValidNumber = !isNaN(currArg);
+
+      if (!argIsValidString && !argIsValidNumber)
+        return `arg elements must be string or number type`;
+    }
 
     return null;
   }
