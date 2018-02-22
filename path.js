@@ -101,6 +101,33 @@ class Path {
     });
   }
 
+  static DoNotExist(paths, executor) {
+    return new Promise((resolve, reject) => {
+      let sourcesError = Error.SourcesValidator(paths);
+      if (sourcesError) {
+        reject(`Failed to get non-existant paths: ${sourcesError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to get non-existant paths: Connection is ${executorError}`);
+        return;
+      }
+
+      Path.ExistsDict(paths, executor).then(existsDict => {
+        let nonExistantPaths = [];
+
+        for (let i = 0; i < paths.length; ++i) {
+          let currPath = paths[i];
+          if (!existsDict[currPath])
+            nonExistantPaths.push(currPath);
+        }
+        resolve(nonExistantPaths);
+      }).catch(error => `Failed to get non-existant paths: ${error}`);
+    });
+  }
+
   static IsFile(path, executor) {
     return new Promise((resolve, reject) => {
       let pathError = Error.PathValidator(path);
