@@ -32,7 +32,7 @@ class File {
         return;
       }
 
-      let cmd = `echo "${text}" > ${path}`;
+      let cmd = LINUX_COMMANDS.EchoWriteToFile(path, text);
       COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
           reject(`Failed to create file: ${output.stderr}`);
@@ -122,13 +122,13 @@ class File {
 //-------------------------------
 
 let p = '/home/isa/sample.txt';
-let text = 'Hello world!\n\tWhats Good!!!';
+let text = 'I call it \\"THE ONE\\"';
 
 let C = require('./command.js');
 let L = new C.LocalCommand();
 
-File.Create(p, text, L).then(success => {
-  console.log(`Success :-)`);
+File.ReadLines(p, L).then(lines => {
+  console.log(`LINES: ${lines}`);
 }).catch(error => {
   console.log(`ERROR: ${error}`);
 });
