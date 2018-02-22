@@ -458,6 +458,7 @@ class Permissions {
 
 //----------------------------------------
 // ERROR
+
 class Error {
   static IntegerError(i) {
     let error = ERROR.IntegerValidator(i);
@@ -640,3 +641,4 @@ class Error {
 // EXPORTS
 
 exports.Permissions = Permissions;
+exports.Error = Error;
