@@ -337,19 +337,6 @@ class Error {
   }
 }
 
-//----------------------------------
-
-let paths = ['/home/isa', '/home/isa/xxx', '/home/isa/test.txt'];
-
-let C = require('./command.js');
-let L = new C.LocalCommand();
-
-Path.IsDirDict(paths, L).then(d => {
-  console.log(`DICT: ${JSON.stringify(d)}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
-
 //------------------------------------
 // EXPORTS
 
