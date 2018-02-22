@@ -111,24 +111,24 @@ class Chown {
     return new Promise((resolve, reject) => {
       let argsError = Error.ArgsValidator(args);
       if (argsError) {
-        reject(`Failed to change group: ${argsError}`);
+        reject(`Failed to execute chown: ${argsError}`);
         return;
       }
 
       let executorError = ERROR.ExecutorValidator(executor);
       if (executorError) {
-        reject(`Failed to change owner and group: Connection is ${executorError}`);
+        reject(`Failed to execute chown: Connection is ${executorError}`);
         return;
       }
 
       let cmd = LINUX_COMMANDS.ChownManual(args);
       COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
-          reject(`Failed to change owner and group: ${output.stderr}`);
+          reject(`Failed to execute chown: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to change owner and group: ${error}`);
+      }).catch(error => `Failed to execute chown: ${error}`);
     });
   }
 }
