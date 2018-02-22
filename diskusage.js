@@ -109,8 +109,8 @@ class DiskUsage {
               break;
           }
           resolve(parseInt(sizeStr));
-        }).catch(reject);
-      }).catch(reject);
+        }).catch(error => `Failed to get directory size: Directory path is ${error}`);
+      }).catch(error => `Failed to get directory size: Directory path is ${error}`);
     });
   }
 }
