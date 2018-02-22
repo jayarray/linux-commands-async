@@ -39,20 +39,13 @@ class Rsync {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to execute rsync: source does not exist: ${src}`);
+      let cmd = LINUX_COMMANDS.RsyncStandard(user, host, src, dest);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to execute rsync: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.RsyncStandard(user, host, src, dest);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to execute rsync: ${output.stderr}`);
-            return;
-          }
-          resolve(output.stdout);
-        }).catch(error => `Failed to execute rsync: ${error}`);
+        resolve(output.stdout);
       }).catch(error => `Failed to execute rsync: ${error}`);
     });
   }
@@ -89,20 +82,13 @@ class Rsync {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to execute rsync: source does not exist: ${src}`);
+      let cmd = LINUX_COMMANDS.RsyncUpdate(user, host, src, dest);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to execute rsync: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.RsyncUpdate(user, host, src, dest);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to execute rsync: ${output.stderr}`);
-            return;
-          }
-          resolve(output.stdout);
-        }).catch(error => `Failed to execute rsync: ${error}`);
+        resolve(output.stdout);
       }).catch(error => `Failed to execute rsync: ${error}`);
     });
   }
@@ -139,20 +125,13 @@ class Rsync {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to execute rsync: source does not exist: ${src}`);
+      let cmd = LINUX_COMMANDS.RsyncMatch(user, host, src, dest);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to execute rsync: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.RsyncMatch(user, host, src, dest);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to execute rsync: ${output.stderr}`);
-            return;
-          }
-          resolve(output.stdout);
-        }).catch(error => `Failed to execute rsync: ${error}`);
+        resolve(output.stdout);
       }).catch(error => `Failed to execute rsync: ${error}`);
     });
   }
@@ -171,21 +150,14 @@ class Rsync {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to execute rsync: source does not exist: ${src}`);
+      let cmd = LINUX_COMMANDS.RsyncManual(args);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to execute rsync: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.RsyncManual(args);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to execute rsync: ${output.stderr}`);
-            return;
-          }
-          resolve(output.stdout);
-        }).catch(error => `Failed to execute rsync: ${error}`);
-      }).catch(rejerror => `Failed to execute rsync: ${error}`);
+        resolve(output.stdout);
+      }).catch(error => `Failed to execute rsync: ${error}`);
     });
   }
 
@@ -203,20 +175,13 @@ class Rsync {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(results => {
-        if (!exists) {
-          reject(`Failed to execute rsync: source does not exist: ${src}`);
+      let cmd = LINUX_COMMANDS.RsyncDryRun(args);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to execute rsync: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.RsyncDryRun(args);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to execute rsync: ${output.stderr}`);
-            return;
-          }
-          resolve(output.stdout);
-        }).catch(error => `Failed to execute rsync: ${error}`);
+        resolve(output.stdout);
       }).catch(error => `Failed to execute rsync: ${error}`);
     });
   }
