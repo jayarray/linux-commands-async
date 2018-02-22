@@ -20,15 +20,13 @@ class Zip {
         return;
       }
 
-      PATH.AllAreFiles(sources, executor).then(success => {
-        let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to zip files: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => `Failed to zip files: ${error}`);
+      let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to zip files: ${output.stderr}`);
+          return;
+        }
+        resolve(true);
       }).catch(error => `Failed to zip files: ${error}`);
     });
   }
@@ -47,15 +45,13 @@ class Zip {
         return;
       }
 
-      PATH.AllAreDirs(sources, executor).then(success => {
-        let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to zip directories: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => `Failed to zip directories: ${error}`);
+      let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to zip directories: ${output.stderr}`);
+          return;
+        }
+        resolve(true);
       }).catch(error => `Failed to zip directories: ${error}`);
     });
   }
@@ -74,20 +70,13 @@ class Zip {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to unzip: source does not exist: ${src}`);
+      let cmd = LINUX_COMMANDS.ZipDecompress(src, dest);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to unzip: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.ZipDecompress(src, dest);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to unzip: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => `Failed to unzip: ${error}`);
+        resolve(true);
       }).catch(error => `Failed to unzip: ${error}`);
     });
   }
@@ -142,15 +131,13 @@ class Tar {
         return;
       }
 
-      PATH.AllExist(sources, executor).then(success => {
-        let cmd = LINUX_COMMANDS.TarCompressMultiple(sources, dest);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to tar: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => `Failed to tar: ${error}`);
+      let cmd = LINUX_COMMANDS.TarCompressMultiple(sources, dest);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to tar: ${output.stderr}`);
+          return;
+        }
+        resolve(true);
       }).catch(error => `Failed to tar: ${error}`);
     });
   }
@@ -175,20 +162,13 @@ class Tar {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to untar: source does not exist: ${src}`);
+      let cmd = LINUX_COMMANDS.TarDecompress(src, dest);
+      EXECUTE.Local(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to untar: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.TarDecompress(src, dest);
-        EXECUTE.Local(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to untar: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => `Failed to untar: ${error}`);
+        resolve(true);
       }).catch(error => `Failed to untar: ${error}`);
     });
   }
