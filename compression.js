@@ -45,7 +45,7 @@ class Zip {
         return;
       }
 
-      let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
+      let cmd = LINUX_COMMANDS.ZipDirs(sources, dest);
       COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
           reject(`Failed to zip directories: ${output.stderr}`);
@@ -131,7 +131,7 @@ class Tar {
         return;
       }
 
-      let cmd = LINUX_COMMANDS.TarCompressMultiple(sources, dest);
+      let cmd = LINUX_COMMANDS.TarCompress(sources, dest);
       COMMAND.Execute(cmd, [], executor).then(output => {
         if (output.stderr) {
           reject(`Failed to tar: ${output.stderr}`);
