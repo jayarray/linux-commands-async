@@ -189,16 +189,7 @@ function OtherUserInfo(usernameOrId) {
 //-----------------------------------------
 // CHOWN
 
-function ChownChangeOwner(path, newOwnerId, isRecursive) {
-  let cmdStr = 'chown'
-  if (isRecursive)
-    cmdStr += ' -R';
-  cmdStr += ` ${newOwnerId} ${path}`;
-
-  return cmdStr;
-}
-
-function ChownChangeOwnerMultiple(paths, newOwnerId, isRecursive) {
+function ChownChangeOwner(paths, newOwnerId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
@@ -207,16 +198,7 @@ function ChownChangeOwnerMultiple(paths, newOwnerId, isRecursive) {
   return cmdStr;
 }
 
-function ChownChangeGroup(path, newGroupId, isRecursive) {
-  let cmdStr = 'chown'
-  if (isRecursive)
-    cmdStr += ' -R';
-  cmdStr += ` :${newGroupId} ${path}`;
-
-  return cmdStr;
-}
-
-function ChownChangeGroupMultiple(paths, newGroupId, isRecursive) {
+function ChownChangeGroup(paths, newGroupId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
@@ -225,22 +207,17 @@ function ChownChangeGroupMultiple(paths, newGroupId, isRecursive) {
   return cmdStr;
 }
 
-function ChownChangeOwnerAndGroup(path, newOwnerId, newGroupId, isRecursive) {
-  let cmdStr = 'chown'
-  if (isRecursive)
-    cmdStr += ' -R';
-  cmdStr += ` ${newOwnerId}:${newGroupId} ${path}`;
-
-  return cmdSt
-}
-
-function ChownChangeOwnerAndGroupMultiple(paths, newOwnerId, newGroupId, isRecursive) {
+function ChownChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
   cmdStr += ` ${newOwnerId}:${newGroupId} ${paths.join(' ')}`;
 
   return cmdSt
+}
+
+function ChownManual(args) {
+  return `chown ${args.join(' ')}`;
 }
 
 //-----------------------------------------
