@@ -1,110 +1,91 @@
 let _path = require('path');
 
 let PATH = require('./path.js');
-let EXECUTE = require('./execute.js').Execute;
-let ERROR = require('./error.js').Error;
+let COMMAND = require('./command.js').Command;
+let ERROR = require('./error.js');
 let BASHSCRIPT = require('./bashscript.js').BashScript;
+let LINUX_COMMANDS = require('./linuxcommands.js');
 
 //------------------------------------
 // FIND
 class Find {
-  static Manual(path, args) {
+  static FilesByName(path, pattern, maxDepth, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
-        reject(error);
+        reject(`Failed to find files by name: ${error}`);
         return;
       }
 
-      error = Error.ArgsError(args);
+      error = Error.PatternValidator(pattern);
       if (error) {
-        reject(error);
+        reject(`Failed to find files by name: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(path).then(exists => {
-        if (!exists) {
-          reject(`Path does not exist: ${path}`);
+      error = Error.MaxDepthValidator(maxDepth);
+      if (error) {
+        reject(`Failed to find files by name: ${error}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to find files by name: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.FindFilesByName(path, pattern, maxDepth);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to find files by name: ${output.stderr}`);
           return;
         }
 
-        EXECUTE.Local('find', [path].concat(args)).then(output => {
-          if (output.stderr) {
-            reject(output.stderr);
-            return;
-          }
-
-          let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
-          resolve(paths);
-        }).catch(reject);
-      }).catch(reject);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
+        resolve(paths);
+      }).catch(`Failed to find files by name: ${error}`);
     });
   }
 
-  static FilesByPattern(path, pattern, maxDepth) {
+  static FilesByContent(path, text, maxDepth, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
-        reject(error);
+        reject(`Failed to find files by content: ${error}`);
         return;
       }
 
-      error = Error.PatternError(pattern);
+      error = Error.TextValidator(text);
       if (error) {
-        reject(error);
+        reject(`Failed to find files by content: ${error}`);
         return;
       }
 
-      error = Error.MaxDepthError(maxDepth);
+      error = Error.MaxDepthValidator(maxDepth);
       if (error) {
-        reject(error);
+        reject(`Failed to find files by content: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(path).then(exists => {
-        if (!exists) {
-          reject(`Path does not exist: ${path}`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to find files by content: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.FindFilesByContent(path, text, maxDepth);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to find files by content: ${output.stderr}`);
           return;
         }
 
-        let args = [path];
-        if (maxDepth && maxDepth > 0)
-          args.push('-maxdepth', maxDepth);
-        args.push('-type', 'f', '-name', pattern);
+        let paths = outputStr.split('\n').filter(line => line && line.trim() != '' && line != path && line != path && line != tempFilepath);
+        resolve(paths);
+      }).catch(error => `Failed to find files by content: ${error}`);
 
-        EXECUTE.Local('find', args).then(output => {
-          if (output.stderr) {
-            reject(output.stderr);
-            return;
-          }
-
-          let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
-          resolve(paths);
-        }).catch(reject);
-      }).catch(reject);
-    });
-  }
-
-  static FilesByContent(path, text, maxDepth) {
-    return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      error = Error.TextError(text);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      error = Error.MaxDepthError(maxDepth);
-      if (error) {
-        reject(error);
-        return;
-      }
-
+      /*
       PATH.Path.Exists(path).then(exists => {
         if (!exists) {
           reject(`Path does not exist: ${path}`);
@@ -113,8 +94,8 @@ class Find {
 
         let cmd = `find ${path}`;
         if (maxDepth && maxDepth > 0)
-          cmd += ` -maxdepth ${maxDepth}`;
-        cmd += ` -type f -exec grep -l "${text}" "{}" \\;`;
+          cmd += ` - maxdepth ${maxDepth}`;
+        cmd += ` - type f - exec grep - l "${text}" "{}" \\; `;
 
         let parentDir = PATH.Path.ParentDir(path).dir;
         let tempFilepath = _path.join(parentDir, 'find_files_by_content.sh');
@@ -123,175 +104,178 @@ class Find {
           let paths = outputStr.split('\n').filter(line => line && line.trim() != '' && line != path && line != path && line != tempFilepath);
           resolve(paths);
         }).catch(reject);
-      }).catch(reject);
+      }).catch(reject);*/
     });
   }
 
-  static FilesByUser(path, user, maxDepth) {
+  static FilesByUser(path, user, maxDepth, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
-        reject(error);
+        reject(`Failed to find files by user: ${error}`);
         return;
       }
 
       error = ERROR.StringError(user);
       if (error) {
-        reject(`user is ${error}`);
+        reject(`Failed to find files by user: user is ${error} `);
         return;
       }
 
-      error = Error.MaxDepthError(maxDepth);
+      error = Error.MaxDepthValidator(maxDepth);
       if (error) {
-        reject(error);
+        reject(`Failed to find files by user: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(path).then(exists => {
-        if (!exists) {
-          reject(`Path does not exist: ${path}`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to find files by user: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.FindFilesByUser(path, user, maxDepth);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to find files by user: ${output.stderr}`);
           return;
         }
 
-        let args = [path];
-        if (maxDepth && maxDepth > 0)
-          args.push('-maxdepth', maxDepth);
-        args.push('-type', 'f', '-user', user);
-
-        let parentDir = PATH.Path.ParentDir(path).dir;
-        let tempFilepath = _path.join(parentDir, 'find_files_by_user.sh');
-
-        EXECUTE.Local('find', args).then(output => {
-          if (output.stderr) {
-            reject(output.stderr);
-            return;
-          }
-
-          let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-          resolve(paths);
-        }).catch(reject);
-      }).catch(reject);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve(paths);
+      }).catch(`Failed to find files by user: ${error}`);
     });
   }
 
-  static DirsByPattern(path, pattern, maxDepth) {
+  static DirsByName(path, pattern, maxDepth, executor) {
     return new Promise((resolve, reject) => {
       let error = PATH.Error.PathError(path);
       if (error) {
-        reject(error);
+        reject(`Failed to find directories by name: ${error}`);
         return;
       }
 
-      error = Error.PatternError(pattern);
+      error = Error.PatternValidator(pattern);
       if (error) {
-        reject(error);
+        reject(`Failed to find directories by name: ${error}`);
         return;
       }
 
-      error = Error.MaxDepthError(maxDepth);
+      error = Error.MaxDepthValidator(maxDepth);
       if (error) {
-        reject(error);
+        reject(`Failed to find directories by name: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(path).then(exists => {
-        if (!exists) {
-          reject(`Path does not exist: ${path}`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to find directories by name: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.FindDirsByName(path, pattern, maxDepth);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to find directories by name: ${output.stderr}`);
           return;
         }
 
-        let args = [path];
-        if (maxDepth && maxDepth > 0)
-          args.push('-maxdepth', maxDepth);
-        args.push('-type', 'd', '-name', pattern);
-
-        EXECUTE.Local('find', args).then(output => {
-          if (output.stderr) {
-            reject(output.stderr);
-            return;
-          }
-
-          let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-          resolve(paths);
-        }).catch(reject);
-      }).catch(reject);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve(paths);
+      }).catch(`Failed to find directories by name: ${error}`);
     });
   }
 
-  static EmptyFiles(path, maxDepth) {
+  static EmptyFiles(path, maxDepth, executor) {
     return new Promise((resolve, reject) => {
       let error = PATH.Error.PathError(path);
       if (error) {
-        reject(error);
+        reject(`Failed to find empty files: ${error}`);
         return;
       }
 
-      error = Error.MaxDepthError(maxDepth);
+      error = Error.MaxDepthValidator(maxDepth);
       if (error) {
-        reject(error);
+        reject(`Failed to find empty files: ${error}`);
         return;
       }
 
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to find empty files: Connection is ${executorError}`);
+        return;
+      }
 
-      PATH.Path.Exists(path).then(exists => {
-        if (!exists) {
-          reject(`Path does not exist: ${path}`);
+      let cmd = LINUX_COMMANDS.FindEmptyFiles(path, maxDepth);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to find empty files:: ${output.stderr}`);
           return;
         }
 
-        let args = [path];
-        if (maxDepth && maxDepth > 0)
-          args.push('-maxdepth', maxDepth);
-        args.push('-empty', '-type', 'f');
-
-        EXECUTE.Local('find', args).then(output => {
-          if (output.stderr) {
-            reject(output.stderr);
-            return;
-          }
-
-          let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-          resolve(paths);
-        }).catch(reject);
-      }).catch(reject);
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve(paths);
+      }).catch(`Failed to find empty files: ${error}`);
     });
   }
 
-  static EmptyDirs(path, maxDepth) {
+  static EmptyDirs(path, maxDepth, executor) {
     return new Promise((resolve, reject) => {
       let error = PATH.Error.PathError(path);
       if (error) {
-        reject(error);
+        reject(`Failed to find empty directories: ${error}`);
         return;
       }
 
-      error = Error.MaxDepthError(maxDepth);
+      error = Error.MaxDepthValidator(maxDepth);
       if (error) {
-        reject(error);
+        reject(`Failed to find empty directories: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(path).then(exists => {
-        if (!exists) {
-          reject(`Path does not exist: ${path}`);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to find empty directories: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.FindEmptyDirs(path, maxDepth);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to find empty directories:: ${output.stderr}`);
           return;
         }
 
-        let args = [path];
-        if (maxDepth && maxDepth > 0)
-          args.push('-maxdepth', maxDepth);
-        args.push('-empty', '-type', 'd');
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
+        resolve(paths);
+      }).catch(`Failed to find empty directories: ${error}`);
+    });
+  }
 
-        EXECUTE.Local('find', args).then(output => {
-          if (output.stderr) {
-            reject(output.stderr);
-            return;
-          }
+  static Manual(args, executor) {
+    return new Promise((resolve, reject) => {
+      let error = Error.ArgsValidator(args);
+      if (error) {
+        reject(`Failed to execute findm command: ${error}`);
+        return;
+      }
 
-          let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path);
-          resolve(paths);
-        }).catch(reject);
-      }).catch(reject);
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to execute find command: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmd = LINUX_COMMANDS.FindManual(args);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to execute find command: ${output.stderr}`);
+          return;
+        }
+
+        let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
+        resolve(paths);
+      }).catch(error => `Failed to execute find command: ${error}`);
     });
   }
 }
@@ -300,10 +284,10 @@ class Find {
 // ERROR
 
 class Error {
-  static ArgsError(args) {
-    let error = ERROR.ArrayError(args);
+  static ArgsValidator(args) {
+    let error = ERROR.ArrayValidator(args);
     if (error)
-      return `args is ${error}`;
+      return `args is ${error} `;
 
     for (let i = 0; i < args.length; ++i) {
       let currArg = args[i];
@@ -318,23 +302,23 @@ class Error {
     return null;
   }
 
-  static MaxDepthError(maxDepth) {
-    let error = ERROR.IntegerError(maxDepth);
+  static MaxDepthValidator(maxDepth) {
+    let error = ERROR.IntegerValidator(maxDepth);
     if (error)
-      return `MaxDepth is ${error}`;
+      return `MaxDepth is ${error} `;
 
     let min = 0;
     error = ERROR.BoundIntegerError(maxDepth, min, null);
     if (error)
-      return `MaxDepth is ${maxDepth}`;
+      return `MaxDepth is ${maxDepth} `;
 
     return null;
   }
 
-  static PatternError(pattern) {
+  static PatternValidator(pattern) {
     let error = ERROR.NullOrUndefined(pattern);
     if (error)
-      return `Pattern is ${error}`;
+      return `Pattern is ${error} `;
 
     if (typeof pattern != 'string')
       return 'Pattern must be string type';
@@ -345,10 +329,10 @@ class Error {
     return null;
   }
 
-  static TextError(text) {
+  static TextValidator(text) {
     let error = ERROR.NullOrUndefined(text);
     if (error)
-      return `Text is ${error}`;
+      return `Text is ${error} `;
 
     if (typeof text != 'string')
       return 'Text must be string type';
