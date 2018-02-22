@@ -148,6 +148,10 @@ function FindEmptyDirs(path, pattern, maxdepth) {
   return cmdStr
 }
 
+function FindManual(args) {
+  return `find ${args.join(' ')}`;
+}
+
 //-------------------------------------------
 // RSYNC
 
@@ -381,6 +385,7 @@ exports.FindFilesByUser = FindFilesByUser;
 exports.FindDirsByName = FindDirsByName;
 exports.FindEmptyFiles = FindEmptyFiles;
 exports.FindEmptyDirs = FindEmptyDirs;
+exports.FindManual = FindManual;
 exports.RsyncStandard = RsyncStandard;
 exports.RsyncUpdate = RsyncUpdate;
 exports.RsyncMatch = RsyncMatch;
