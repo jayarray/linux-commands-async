@@ -220,7 +220,7 @@ class Chmod {
   }
 
   static ValidClassChars() {
-    return PERMISSIONS.ValidClassChars();
+    return PERMISSIONS.Permissions.ValidClassChars();
   }
 
   static ValidTypeChars() {
