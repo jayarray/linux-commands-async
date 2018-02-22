@@ -1,7 +1,8 @@
-let PERMISSIONS = require('./permissions.js').Permissions;
-let ERROR = require('./error.js').Error;
+let PERMISSIONS = require('./permissions.js');
+let ERROR = require('./error.js');
 let PATH = require('./path.js').Path;
-let FS = require('fs-extra');
+let COMMAND = require('./command.js').Command;
+let LINUX_COMMANDS = require('./linuxcommands.js');
 
 //-----------------------------------------
 // HELPERS
@@ -47,203 +48,174 @@ function getNewPermStringBasedOnModifiedPermsObj(permsObj) {
 //-----------------------------------------
 // CHMOD
 class Chmod {
-  static UsingPermString(permStr, path) {
+  static UsingPermString(permStr, path, isRecursive, executor) {
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringError(permStr);
+      let error = ERROR.StringValidator(permStr);
       if (error) {
-        reject(`Permissions string is ${error}`);
+        reject(`Failed to change permissions: Permissions string is ${error}`);
         return;
       }
 
-      PATH.Exists(path).then(exists => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to change permissions: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Exists(path, executor).then(exists => {
         if (!exists) {
-          reject(`Path does not exist: ${path}`);
+          reject(`Failed to change permissions: Path does not exist: ${path}`);
           return;
         }
 
-        let permsObj = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(permStr.trim());
+        let permsObj = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(permStr.trim());
         if (permsObj.error) {
-          reject(permsObj.error);
+          reject(`Failed to change permissions: ${permsObj.error}`);
           return;
         }
 
-        FS.chmod(path, permsObj.obj.octal.string, (err) => {
-          if (err) {
-            reject(`Failed to change permissions: ${err}`);
+        let octalStr = permsObj.obj.octal.string;
+        let cmd = LINUX_COMMANDS.ChmodUsingOctalString(path, octalStr, isRecursive);
+
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to change permissions: ${output.stderr}`);
             return;
           }
           resolve(true);
-        });
-
-      }).catch(reject);
+        }).catch(error => `Failed to change permissions: ${error}`);
+      }).catch(error => `Failed to change permissions: ${error}`);
     });
   }
 
-  static UsingOctalString(octalStr, path) {
+  static UsingOctalString(octalStr, path, isRecursive, executor) {
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringError(octalStr);
+      let error = ERROR.StringValidator(octalStr);
       if (error) {
-        reject(`Octal string is ${error}`);
+        reject(`Failed to change permissions: octal string is ${error}`);
         return;
       }
 
-      PATH.Exists(path).then(exists => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to change permissions: Connection is ${executorError}`);
+        return;
+      }
+
+      let octalStrError = PERMISSIONS.Error.OctalStringError(octalStr);
+      if (octalStrError.error) {
+        reject(`Failed to change permissions: ${octalStrError.error}`);
+        return;
+      }
+
+      PATH.Exists(path, executor).then(exists => {
         if (!exists) {
-          reject(`Path does not exist: ${path}`);
+          reject(`Failed to change permissions: Path does not exist: ${path}`);
           return;
         }
 
-        let permsObj = PERMISSIONS.CreatePermissionsObjectUsingOctalString(octalStr.trim());
-        if (permsObj.error) {
-          reject(permsObj.error);
-          return;
-        }
-
-        FS.chmod(path, permsObj.obj.octal.string, (err) => {
-          if (err) {
-            reject(`Failed to change permissions: ${err}`);
+        let cmd = LINUX_COMMANDS.ChmodUsingOctalString(path, octalStr, isRecursive);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to change permissions: ${output.stderr}`);
             return;
           }
           resolve(true);
-        });
+        }).catch(error => `Failed to change permissions: ${error}`);
       }).catch(reject);
     });
   }
 
-  static RemovePermissions(classes, types, path) { // Example: classes = 'ugo',  types = 'rwx'
+  static RemovePermissions(classes, types, path, isRecursive, executor) { // Example: classes = 'ugo',  types = 'rwx'
     return new Promise((resolve, reject) => {
       let error = Error.ClassesStringError(classes);
       if (error) {
-        reject(error);
+        reject(`Failed to remove permissions: ${error}`);
         return;
       }
 
       error = Error.TypesStringError(types);
       if (error) {
-        reject(error);
+        reject(`Failed to remove permissions: ${error}`);
         return;
       }
 
-      PERMISSIONS.Permissions(path).then(permsObj => {
-        // Modify permsObj
-        classes.split('').forEach(c => {
-          types.split('').forEach(t => {
-            permsObj[c][t] = false;
-          });
-        });
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to remove permissions: Connection is ${executorError}`);
+        return;
+      }
 
-        // Create new permStr based on modified permsObj
-        let newPermStr = getNewPermStringBasedOnModifiedPermsObj(permsObj);
-
-        // Convert newPermStr into octal
-        let octalStr = PERMISSIONS.PermissionsStringToOctalString(newPermStr);
-        if (octalStr.error) {
-          reject(octalStr.error);
+      let cmd = LINUX_COMMANDS.ChmodRemovePermissions(path, classes, types, isRecursive);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to remove permissions: ${output.stderr}`);
           return;
         }
-
-        // Change permissions
-        FS.chmod(path, octalStr.string, (err) => {
-          if (err) {
-            reject(`Failed to change permissions: ${err}`);
-            return;
-          }
-          resolve(true);
-        });
-      }).catch(reject);
+        resolve(true);
+      }).catch(error => `Failed to remove permissions: ${error}`);
     });
   }
 
-  static AddPermissions(classes, types, path) {
+  static AddPermissions(classes, types, path, isRecursive, executor) {
     return new Promise((resolve, reject) => {
       let error = Error.ClassesStringError(classes);
       if (error) {
-        reject(error);
+        reject(`Failed to add permissions: ${error}`);
         return;
       }
 
       error = Error.TypesStringError(types);
       if (error) {
-        reject(error);
+        reject(`Failed to add permissions: ${error}`);
         return;
       }
 
-      PERMISSIONS.Permissions(path).then(permsObj => {
-        // Modify permsObj
-        classes.split('').forEach(c => {
-          types.split('').forEach(t => {
-            permsObj[c][t] = true;
-          });
-        });
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to add permissions: Connection is ${executorError}`);
+        return;
+      }
 
-        // Create new permStr based on modified permsObj
-        let newPermStr = getNewPermStringBasedOnModifiedPermsObj(permsObj);
-
-        // Convert newPermStr into octal
-        let octalStr = PERMISSIONS.PermissionsStringToOctalString(newPermStr);
-        if (octalStr.error) {
-          reject(octalStr.error);
+      let cmd = LINUX_COMMANDS.ChmodAddPermissions(path, classes, types, isRecursive);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to add permissions: ${output.stderr}`);
           return;
         }
-
-        // Change permissions
-        FS.chmod(path, octalStr.string, (err) => {
-          if (err) {
-            reject(`Failed to change permissions: ${err}`);
-            return;
-          }
-          resolve(true);
-        });
-      }).catch(reject);
+        resolve(true);
+      }).catch(error => `Failed to add permissions: ${error}`);
     });
   }
 
-  static SetPermissions(classes, types, path) {
+  static SetPermissions(classes, types, path, isRecursive, executor) {
     return new Promise((resolve, reject) => {
       let error = Error.ClassesStringError(classes);
       if (error) {
-        reject(error);
+        reject(`Failed to set permissions: ${error}`);
         return;
       }
 
       error = Error.TypesStringError(types);
       if (error) {
-        reject(error);
+        reject(`Failed to set permissions: ${error}`);
         return;
       }
 
-      PERMISSIONS.Permissions(path).then(permsObj => {
-        // Modify permsObj
-        let classesList = Chmod.ValidClassChars();
-        let typesList = Chmod.ValidTypeChars();
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to set permissions: Connection is ${executorError}`);
+        return;
+      }
 
-        classesList.forEach(c => {
-          typesList.forEach(t => {
-            if (classes.includes(c) && types.includes(t))
-              permsObj[c][t] = true;
-            else
-              permsObj[c][t] = false;
-          });
-        });
-
-        // Create new permStr based on modified permsObj
-        let newPermStr = getNewPermStringBasedOnModifiedPermsObj(permsObj);
-
-        let octalStr = PERMISSIONS.PermissionsStringToOctalString(newPermStr);
-        if (octalStr.error) {
-          reject(octalStr.error);
+      let cmd = LINUX_COMMANDS.ChmodSetPermissions(path, classes, types, isRecursive);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to set permissions: ${output.stderr}`);
           return;
         }
-
-        // Change permissions
-        FS.chmod(path, octalStr.string, (err) => {
-          if (err) {
-            reject(`Failed to change permissions: ${err}`);
-            return;
-          }
-          resolve(true);
-        });
-      }).catch(reject);
+        resolve(true);
+      }).catch(error => `Failed to set permissions: ${error}`);
     });
   }
 
