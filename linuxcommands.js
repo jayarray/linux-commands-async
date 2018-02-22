@@ -163,12 +163,12 @@ function RsyncMatch(user, host, src, dest) {
   return `rsync -a --delete-after ${src} ${user}@${host}:${dest}`;
 }
 
-function RsyncDryRun(user, host, src, dest, flagsAndOptionsStr) {
-  return `rsync --dry-run ${flagsAndOptionsStr} ${src} ${user}@${host}:${dest}`;
+function RsyncDryRun(args) {
+  return `rsync --dry-run ${args.join(' ')}`;
 }
 
-function RsyncManual(user, host, src, dest, flagsAndOptionsStr) {
-  return `rsync ${flagsAndOptionsStr} ${src} ${user}@${host}:${dest}`;
+function RsyncManual(args) {
+  return `rsync ${args.join(' ')}`;
 }
 
 //------------------------------------
