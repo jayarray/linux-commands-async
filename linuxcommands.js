@@ -471,6 +471,7 @@ exports.ChmodRemovePermissionsMultiple = ChmodRemovePermissionsMultiple;
 exports.ChmodSetPermissions = ChmodSetPermissions;
 exports.ChmodSetPermissionsMultiple = ChmodSetPermissionsMultiple;
 exports.CatReadFileContent = CatReadFileContent;
+exports.EchoWriteToFile = EchoWriteToFile;
 exports.AdminGetGroups = AdminGetGroups;
 exports.AdminGetUsers = AdminGetUsers;
 exports.AdminWhoIsLoggedIn = AdminWhoIsLoggedIn;
