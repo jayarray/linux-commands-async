@@ -26,21 +26,14 @@ class Move {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to move: Source does not exist: ${src}`);
+      let cmd = LINUX_COMMANDS.Move(src, dest);
+      COMMAND.Execute(cmd, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to move: ${output.stderr}`);
           return;
         }
-
-        let cmd = LINUX_COMMANDS.Move(src, dest);
-        COMMAND.Execute(cmd, [], executor).then(output => {
-          if (output.stderr) {
-            reject(`Failed to move: ${output.stderr}`);
-            return;
-          }
-          resolve(true);
-        }).catch(error => reject(`Failed to move: ${error}`));
-      }).catch(reject);
+        resolve(true);
+      }).catch(error => reject(`Failed to move: ${error}`));
     });
   }
 }
