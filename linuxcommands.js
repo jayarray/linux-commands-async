@@ -130,7 +130,7 @@ function FindDirsByName(path, pattern, maxdepth) {
   return cmdStr
 }
 
-function FindEmptyFiles(path, pattern, maxdepth) {
+function FindEmptyFiles(path, maxdepth) {
   let cmdStr = `find ${path}`;
   if (maxdepth)
     cmdStr += ` -maxdepth ${maxdepth}`;
@@ -139,7 +139,7 @@ function FindEmptyFiles(path, pattern, maxdepth) {
   return cmdStr
 }
 
-function FindEmptyDirs(path, pattern, maxdepth) {
+function FindEmptyDirs(path, maxdepth) {
   let cmdStr = `find ${path}`;
   if (maxdepth)
     cmdStr += ` -maxdepth ${maxdepth}`;
