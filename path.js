@@ -62,8 +62,6 @@ class Path {
           return;
         }
 
-        console.log(`RAW_OUTPUT: ${output.stdout}`);
-
         let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
 
         let existsDict = {};
@@ -72,6 +70,33 @@ class Path {
           existsDict[currPath] = boolArray[i];
         }
         resolve(existsDict);
+      }).catch(error => `Failed to check if all paths exist: ${error}`);
+    });
+  }
+
+  static AllExist(paths, executor) {
+    return new Promise((resolve, reject) => {
+      let sourcesError = Error.SourcesValidator(paths);
+      if (sourcesError) {
+        reject(`Failed to check if all paths exist: ${sourcesError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check if all paths exist: Connection is ${executorError}`);
+        return;
+      }
+
+      Path.ExistsDict(paths, executor).then(existsDict => {
+        for (let i = 0; i < paths.length; ++i) {
+          let currPath = paths[i];
+          if (!existsDict[currPath]) {
+            resolve(false);
+            return;
+          }
+        }
+        resolve(true);
       }).catch(error => `Failed to check if all paths exist: ${error}`);
     });
   }
@@ -172,6 +197,33 @@ class Path {
     });
   }
 
+  static AllAreFiles(paths, executor) {
+    return new Promise((resolve, reject) => {
+      let sourcesError = Error.SourcesValidator(paths);
+      if (sourcesError) {
+        reject(`Failed to check if all paths are files: ${sourcesError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check if all paths are files: Connection is ${executorError}`);
+        return;
+      }
+
+      Path.IsFileDict(paths, executor).then(isFileDict => {
+        for (let i = 0; i < paths.length; ++i) {
+          let currPath = paths[i];
+          if (!isFileDict[currPath]) {
+            resolve(false);
+            return;
+          }
+        }
+        resolve(true);
+      }).catch(error => `Failed to check if all paths are files: ${error}`);
+    });
+  }
+
   static IsDir(path, executor) {
     return new Promise((resolve, reject) => {
       let pathError = Error.PathValidator(path);
@@ -264,6 +316,33 @@ class Path {
 
           resolve(isDirDict);
         }).catch(error => `Failed to check if all paths are directories: ${error}`);
+      }).catch(error => `Failed to check if all paths are directories: ${error}`);
+    });
+  }
+
+  static AllAreDirs(paths, executor) {
+    return new Promise((resolve, reject) => {
+      let sourcesError = Error.SourcesValidator(paths);
+      if (sourcesError) {
+        reject(`Failed to check if all paths are directories: ${sourcesError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check if all paths are directories: Connection is ${executorError}`);
+        return;
+      }
+
+      Path.IsDirDict(paths, executor).then(isDirDict => {
+        for (let i = 0; i < paths.length; ++i) {
+          let currPath = paths[i];
+          if (!isDirDict[currPath]) {
+            resolve(false);
+            return;
+          }
+        }
+        resolve(true);
       }).catch(error => `Failed to check if all paths are directories: ${error}`);
     });
   }
