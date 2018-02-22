@@ -57,21 +57,14 @@ class File {
         return;
       }
 
-      PATH.Path.Exists(path, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to make file executable: Path does not exist: ${path}`);
+      PATH.Path.IsFile(path, executor).then(isFile => {
+        if (!isFile) {
+          reject(`Failed to make file executable: Path is not a file: ${path}`);
           return;
         }
 
-        PATH.Path.IsFile(path, executor).then(isFile => {
-          if (!isFile) {
-            reject(`Failed to make file executable: Path is not a file: ${path}`);
-            return;
-          }
-
-          CHMOD.AddPermissions('ugo', 'x', path, false, executor).then(success => {
-            resolve(true);
-          }).catch(error => `Failed to make file executable: ${error}`);
+        CHMOD.AddPermissions('ugo', 'x', path, false, executor).then(success => {
+          resolve(true);
         }).catch(error => `Failed to make file executable: ${error}`);
       }).catch(error => `Failed to make file executable: ${error}`);
     });
@@ -91,26 +84,19 @@ class File {
         return;
       }
 
-      PATH.Path.Exists(path, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to read file: Path does not exist: ${path}`);
+      PATH.Path.IsFile(path, executor).then(isFile => {
+        if (!isFile) {
+          reject(`Failed to read file: Path is not a file: ${path}`);
           return;
         }
 
-        PATH.Path.IsFile(path, executor).then(isFile => {
-          if (!isFile) {
-            reject(`Failed to read file: Path is not a file: ${path}`);
+        let cmd = LINUX_COMMANDS.CatReadFileContent(path);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to read file: ${output.stderr}`);
             return;
           }
-
-          let cmd = LINUX_COMMANDS.CatReadFileContent(path);
-          COMMAND.Execute(cmd, [], executor).then(output => {
-            if (output.stderr) {
-              reject(`Failed to read file: ${output.stderr}`);
-              return;
-            }
-            resolve(output.stdout);
-          }).catch(error => `Failed to read file: ${error}`);
+          resolve(output.stdout);
         }).catch(error => `Failed to read file: ${error}`);
       }).catch(error => `Failed to read file: ${error}`);
     });
