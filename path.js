@@ -35,6 +35,47 @@ class Path {
     });
   }
 
+  static ExistsDict(paths, executor) {
+    return new Promise((resolve, reject) => {
+      let sourcesError = Error.SourcesValidator(paths);
+      if (sourcesError) {
+        reject(`Failed to check if all paths exist: ${sourcesError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check if all paths exist: Connection is ${executorError}`);
+        return;
+      }
+
+      let cmdList = [];
+      paths.forEach(path => {
+        let cmd = LINUX_COMMANDS.PathExists(path);
+        cmdList.push(cmd);
+      });
+
+      let cmdStr = cmdList.join('\n');
+      COMMAND.Execute(cmdStr, [], executor).then(output => {
+        if (output.stderr) {
+          reject(`Failed to check if all paths exist: ${output.stderr}`);
+          return;
+        }
+
+        console.log(`RAW_OUTPUT: ${output.stdout}`);
+
+        let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
+
+        let existsDict = {};
+        for (let i = 0; i < paths.length; ++i) {
+          let currPath = paths[i];
+          existsDict[currPath] = boolArray[i];
+        }
+        resolve(existsDict);
+      }).catch(error => `Failed to check if all paths exist: ${error}`);
+    });
+  }
+
   static IsFile(path, executor) {
     return new Promise((resolve, reject) => {
       let pathError = Error.PathValidator(path);
@@ -69,6 +110,68 @@ class Path {
     });
   }
 
+  static IsFileDict(paths, executor) {
+    return new Promise((resolve, reject) => {
+      let sourcesError = Error.SourcesValidator(paths);
+      if (sourcesError) {
+        reject(`Failed to check if all paths are files: ${sourcesError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check if all paths are files: Connection is ${executorError}`);
+        return;
+      }
+
+      Path.ExistsDict(paths, executor).then(existsDict => {
+
+        // Check for any missing paths
+        let nonExistantPaths = [];
+        paths.forEach(path => {
+          if (!existsDict[path])
+            nonExistantPaths.push(path);
+        });
+
+        // Report any missing paths
+        if (nonExistantPaths.length > 0) {
+          let errorStr = '';
+          if (nonExistantPaths.length == 1)
+            errorStr = `Failed to check if all paths are files: This path does not exist: ${nonExistantPaths[0]}`;
+          else
+            errorStr = `Failed to check if all paths are files: The following (${nonExistantPaths.length}) paths do not exist:\n${nonExistantPaths.join('\n')}`;
+
+          reject(errorStr);
+          return;
+        }
+
+        let cmdList = [];
+        paths.forEach(path => {
+          let cmd = LINUX_COMMANDS.PathIsFile(path);
+          cmdList.push(cmd);
+        });
+
+        let cmdStr = cmdList.join('\n');
+        COMMAND.Execute(cmdStr, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to check if all paths are files: ${output.stderr}`);
+            return;
+          }
+
+          let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
+
+          let isFileDict = {};
+          for (let i = 0; i < paths.length; ++i) {
+            let currPath = paths[i];
+            isFileDict[currPath] = boolArray[i];
+          }
+
+          resolve(isFileDict);
+        }).catch(error => `Failed to check if all paths are files: ${error}`);
+      }).catch(error => `Failed to check if all paths are files: ${error}`);
+    });
+  }
+
   static IsDir(path, executor) {
     return new Promise((resolve, reject) => {
       let pathError = Error.PathValidator(path);
@@ -100,6 +203,68 @@ class Path {
           resolve(value == 1); // 1 is true, 0 is false
         }).catch(error => reject(`Failed to check if path is a directory: ${error}`));
       }).catch(error => reject(`Failed to check if path is a directory: ${error}`));
+    });
+  }
+
+  static IsDirDict(paths, executor) {
+    return new Promise((resolve, reject) => {
+      let sourcesError = Error.SourcesValidator(paths);
+      if (sourcesError) {
+        reject(`Failed to check if all paths are directories: ${sourcesError}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to check if all paths are directories: Connection is ${executorError}`);
+        return;
+      }
+
+      Path.ExistsDict(paths, executor).then(existsDict => {
+
+        // Check for any missing paths
+        let nonExistantPaths = [];
+        paths.forEach(path => {
+          if (!existsDict[path])
+            nonExistantPaths.push(path);
+        });
+
+        // Report any missing paths
+        if (nonExistantPaths.length > 0) {
+          let errorStr = '';
+          if (nonExistantPaths.length == 1)
+            errorStr = `This path does not exist: ${nonExistantPaths[0]}`;
+          else
+            errorStr = `The following (${nonExistantPaths.length}) paths do not exist:\n${nonExistantPaths.join('\n')}`;
+
+          reject(errorStr);
+          return;
+        }
+
+        let cmdList = [];
+        paths.forEach(path => {
+          let cmd = LINUX_COMMANDS.PathIsDir(path);
+          cmdList.push(cmd);
+        });
+
+        let cmdStr = cmdList.join('\n');
+        COMMAND.Execute(cmdStr, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to check if all paths are directories: ${output.stderr}`);
+            return;
+          }
+
+          let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
+
+          let isDirDict = {};
+          for (let i = 0; i < paths.length; ++i) {
+            let currPath = paths[i];
+            isDirDict[currPath] = boolArray[i];
+          }
+
+          resolve(isDirDict);
+        }).catch(error => `Failed to check if all paths are directories: ${error}`);
+      }).catch(error => `Failed to check if all paths are directories: ${error}`);
     });
   }
 
@@ -156,7 +321,34 @@ class Error {
       return `Path is ${error}`;
     return null;
   }
+
+  static SourcesValidator(sources) {
+    let error = ERROR.ArrayValidator(sources);
+    if (error)
+      return `sources are ${error}`;
+
+    for (let i = 0; i < sources.length; ++i) {
+      let currSrc = sources[i];
+      let invalidType = ERROR.StringValidator(currSrc);
+      if (invalidType)
+        return `sources contains a path that is ${invalidType}`;
+    }
+    return null;
+  }
 }
+
+//----------------------------------
+
+let paths = ['/home/isa', '/home/isa/xxx', '/home/isa/test.txt'];
+
+let C = require('./command.js');
+let L = new C.LocalCommand();
+
+Path.IsDirDict(paths, L).then(d => {
+  console.log(`DICT: ${JSON.stringify(d)}`);
+}).catch(error => {
+  console.log(`ERROR: ${error}`);
+});
 
 //------------------------------------
 // EXPORTS
