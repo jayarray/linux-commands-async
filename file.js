@@ -43,31 +43,37 @@ class File {
     });
   }
 
-  static MakeExecutable(path) {
+  static MakeExecutable(path, executor) {
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathError(path);
+      let error = PATH.Error.PathValidator(path);
       if (error) {
-        reject(error);
+        reject(`Failed to make file executable: ${error}`);
         return;
       }
 
-      PATH.Path.Exists(path).then(exists => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to make file executable: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.Path.Exists(path, executor).then(exists => {
         if (!exists) {
-          reject(`Path does not exist: ${path}`);
+          reject(`Failed to make file executable: Path does not exist: ${path}`);
           return;
         }
 
-        PATH.Path.IsFile(path).then(isFile => {
+        PATH.Path.IsFile(path, executor).then(isFile => {
           if (!isFile) {
-            reject(`Path is not a file: ${path}`);
+            reject(`Failed to make file executable: Path is not a file: ${path}`);
             return;
           }
 
-          CHMOD.AddPermissions('ugo', 'x', path).then(success => {
+          CHMOD.AddPermissions('ugo', 'x', path, false, executor).then(success => {
             resolve(true);
-          }).catch(reject);
-        }).catch(reject);
-      }).catch(reject);
+          }).catch(error => `Failed to make file executable: ${error}`);
+        }).catch(error => `Failed to make file executable: ${error}`);
+      }).catch(error => `Failed to make file executable: ${error}`);
     });
   }
 
@@ -118,20 +124,6 @@ class File {
     });
   }
 }
-
-//-------------------------------
-
-let p = '/home/isa/sample.txt';
-let text = 'I call it \\"THE ONE\\"';
-
-let C = require('./command.js');
-let L = new C.LocalCommand();
-
-File.ReadLines(p, L).then(lines => {
-  console.log(`LINES: ${lines}`);
-}).catch(error => {
-  console.log(`ERROR: ${error}`);
-});
 
 //-------------------------------
 // EXPORTS
