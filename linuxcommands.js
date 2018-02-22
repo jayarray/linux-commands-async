@@ -319,16 +319,8 @@ function AdminListOpenFilesByUser(user) {
 //-----------------------------------
 // ZIP
 
-function ZipFile(src, dest) {
-  return `zip ${dest} ${src}`;
-}
-
 function ZipFiles(sources, dest) {
   return `zip ${dest} ${sources.join(' ')}`;
-}
-
-function ZipDir(src, dest) {
-  return `zip -r ${dest} ${src}`;
 }
 
 function ZipDirs(sources, dest) {
@@ -350,11 +342,7 @@ function ZipDecompressManual(args) {
 //-----------------------------------
 // TAR
 
-function TarCompress(src, dest) {
-  return `tar -czvf ${dest} ${src}`;
-}
-
-function TarCompressMultiple(sources, dest) {
+function TarCompress(sources, dest) {
   return `tar -czvf ${dest} ${sources.join(' ')}`;
 }
 
