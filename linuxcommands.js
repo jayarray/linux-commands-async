@@ -62,11 +62,11 @@ function ListAllLongListings(dirpath) { // permissions, hardlinks, owner, group,
 }
 
 function ListFileLongListing(filepath) {
-  return `ls -l ${path}`;
+  return `ls -l ${filepath}`;
 }
 
 function ListDirLongListing(dirpath) {
-  return `ls -ld ${path}`;
+  return `ls -ld ${dirpath}`;
 }
 
 //-----------------------------------------
@@ -282,7 +282,7 @@ function ChmodAddPermissionsMultiple(paths, classesStr, typesStr, isRecursive) {
   return cmdStr;
 }
 
-function ChmodRemovePermissions(path, classes, types, isRecursive) {
+function ChmodRemovePermissions(path, classesStr, typesStr, isRecursive) {
   let cmdStr = 'chmod';
   if (isRecursive)
     cmdStr += ' -R';
@@ -323,6 +323,13 @@ function ChmodSetPermissionsMultiple(paths, classesStr, typesStr, isRecursive) {
 
 function CatReadFileContent(path) {
   return `cat ${path}`;
+}
+
+//----------------------------------
+// ECHO
+
+function EchoWriteToFile(path, text) {
+  return `echo "${text}" > ${path}`;
 }
 
 //----------------------------------
