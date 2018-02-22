@@ -223,16 +223,7 @@ function ChownManual(args) {
 //-----------------------------------------
 // CHMOD
 
-function ChmodUsingOctalString(path, octalStr, isRecursive) {
-  let cmdStr = 'chmod';
-  if (isRecursive)
-    cmdStr += ' -R';
-  cmdStr += ` ${octalStr} ${path}`;
-
-  return cmdStr;
-}
-
-function ChmodUsingOctalStringMultiple(paths, octalStr, isRecursive) {
+function ChmodUsingOctalString(paths, octalStr, isRecursive) {
   let cmdStr = 'chmod';
   if (isRecursive)
     cmdStr += ' -R';
@@ -241,16 +232,7 @@ function ChmodUsingOctalStringMultiple(paths, octalStr, isRecursive) {
   return cmdStr;
 }
 
-function ChmodAddPermissions(path, classesStr, typesStr, isRecursive) {
-  let cmdStr = 'chmod';
-  if (isRecursive)
-    cmdStr += ' -R';
-  cmdStr += ` ${classesStr}+${typesStr} ${path}`;
-
-  return cmdStr;
-}
-
-function ChmodAddPermissionsMultiple(paths, classesStr, typesStr, isRecursive) {
+function ChmodAddPermissions(paths, classesStr, typesStr, isRecursive) {
   let cmdStr = 'chmod';
   if (isRecursive)
     cmdStr += ' -R';
@@ -259,16 +241,7 @@ function ChmodAddPermissionsMultiple(paths, classesStr, typesStr, isRecursive) {
   return cmdStr;
 }
 
-function ChmodRemovePermissions(path, classesStr, typesStr, isRecursive) {
-  let cmdStr = 'chmod';
-  if (isRecursive)
-    cmdStr += ' -R';
-  cmdStr += ` ${classesStr}-${typesStr} ${path}`;
-
-  return cmdStr;
-}
-
-function ChmodRemovePermissionsMultiple(paths, classesStr, typesStr, isRecursive) {
+function ChmodRemovePermissions(paths, classesStr, typesStr, isRecursive) {
   let cmdStr = 'chmod';
   if (isRecursive)
     cmdStr += ' -R';
@@ -277,22 +250,17 @@ function ChmodRemovePermissionsMultiple(paths, classesStr, typesStr, isRecursive
   return cmdStr;
 }
 
-function ChmodSetPermissions(path, classesStr, typesStr, isRecursive) {
-  let cmdStr = 'chmod';
-  if (isRecursive)
-    cmdStr += ' -R';
-  cmdStr += ` ${classesStr}=${typesStr} ${path}`;
-
-  return cmdStr;
-}
-
-function ChmodSetPermissionsMultiple(paths, classesStr, typesStr, isRecursive) {
+function ChmodSetPermissions(paths, classesStr, typesStr, isRecursive) {
   let cmdStr = 'chmod';
   if (isRecursive)
     cmdStr += ' -R';
   cmdStr += ` ${classesStr}=${typesStr} ${paths.join(' ')}`;
 
   return cmdStr;
+}
+
+function ChmodManual(args) {
+  return `chmod ${args.join(' ')}`;
 }
 
 //----------------------------------
