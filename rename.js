@@ -1,4 +1,5 @@
 let _path = require('path');
+
 let PATH = require('./path.js');
 let ERROR = require('./error.js');
 let MOVE = require('./move.js').Move;
@@ -26,22 +27,15 @@ class Rename {
         return;
       }
 
-      PATH.Path.Exists(src, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to rename: Path does not exist: ${currPath}`);
-          return;
-        }
+      let parentDir = PATH.Path.ParentDir(src);
+      if (parentDir.error) {
+        reject(`Failed to rename: ${parentDir.error}`);
+        return;
+      }
 
-        let parentDir = PATH.Path.ParentDir(src);
-        if (parentDir.error) {
-          reject(`Failed to rename: ${parentDir.error}`);
-          return;
-        }
-
-        let updatedPath = _path.join(parentDir.string, newName);
-        MOVE.Move(src, updatedPath, executor).then(success => {
-          resolve(true);
-        }).catch(error => reject(`Failed to rename: ${error}`));
+      let updatedPath = _path.join(parentDir.string, newName);
+      MOVE.Move(src, updatedPath, executor).then(success => {
+        resolve(true);
       }).catch(error => reject(`Failed to rename: ${error}`));
     });
   }
