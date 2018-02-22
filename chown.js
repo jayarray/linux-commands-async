@@ -1,79 +1,129 @@
 let PATH = require('./path.js').Path;
-let FS = require('fs-extra');
-let ERROR = require('./error.js').Error;
+let ERROR = require('./error.js');
 let ADMIN = require('./admin.js').Admin;
 let USERINFO = require('./userinfo.js').UserInfo;
+let LINUX_COMMANDS = require('./linuxcommands.js');
+let COMMAND = require('./command.js').Command;
 
 //-----------------------------------------------
 // CHOWN
 class Chown {
-  static Chown(path, uid, gid) { // uid, gid are integers
+  static ChangeOwner(path, newOwnerId, isRecursive, executor) { // newOwner can be string or integer
     return new Promise((resolve, reject) => {
-      PATH.Exists(path).then(exists => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to change owner: Connection is ${executorError}`);
+        return;
+      }
+
+      let idError = Error.newIdValidator(newOwnerId);
+      if (idError) {
+        reject(`Failed to change owner: new owner id ${idError}`);
+        return;
+      }
+
+      PATH.Exists(path, executor).then(exists => {
         if (!exists) {
-          reject(`Path does not exist: ${path}`);
+          reject(`Failed to change owner: path does not exist: ${path}`);
           return;
         }
 
-        let error = ERROR.IntegerError(uid);
-        if (error) {
-          reject(`uid is ${error}`);
-          return;
-        }
-
-        error = ERROR.IntegerError(gid);
-        if (error) {
-          reject(`gid is ${error}`);
-          return;
-        }
-
-        ADMIN.GetUser(uid).then(user => {
-          USERINFO.CurrentUser().then(currUser => {
-            ADMIN.GetGroup(gid).then(group => {
-              if (user.id != currUser.uid) {
-                ADMIN.UserHasRootPermissions(currUser.uid).then(hasRootPermissions => {
-                  if (!hasRootPermissions) {
-                    reject(`Failed to change owner permissions: user '${currUser.username}' does not have root permissions`);
-                    return;
-                  }
-
-                  ADMIN.UserCanChangeGroupOwnership(currUser.uid, group.id).then(canChangeOwnership => {
-                    if (!canChangeOwnership) {
-                      reject(`Failed to change group permissions: user '${currUser.username}' is not part of the group called '${group.name}'`);
-                      return
-                    }
-
-                    FS.chown(path, uid, gid, (err) => {
-                      if (err) {
-                        reject(`Failed to change owner/group permissions: ${err}`);
-                        return;
-                      }
-                      resolve(true);
-                    });
-                  }).catch(reject);
-                }).catch(reject);
-              }
-              else {
-                ADMIN.UserCanChangeGroupOwnership(currUser.uid, group.id).then(canChangeOwnership => {
-                  if (!canChangeOwnership) {
-                    reject(`Failed to change group permissions: user '${currUser.username}' is not part of group called '${group.name}'`);
-                    return
-                  }
-
-                  FS.chown(path, uid, gid, (err) => {
-                    if (err) {
-                      reject(`Failed to change owner/group permissions: ${err}`);
-                      return;
-                    }
-                    resolve(true);
-                  });
-                }).catch(reject);
-              }
-            }).catch(reject);
-          }).catch(reject);
-        }).catch(reject);
-      }).catch(reject);
+        let cmd = LINUX_COMMANDS.ChownChangeOwner(path, newOwnerId, isRecursive);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to change owner: ${output.stderr}`);
+            return;
+          }
+          resolve(true);
+        }).catch(error => `Failed to change owner: ${error}`);
+      }).catch(error => `Failed to change owner: ${error}`);
     });
+  }
+
+  static ChangeGroup(path, newGroupId, isRecursive, executor) { // newOwner can be string or integer
+    return new Promise((resolve, reject) => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to change group: Connection is ${executorError}`);
+        return;
+      }
+
+      let idError = Error.newIdValidator(newGroupId);
+      if (idError) {
+        reject(`Failed to change group: new group id ${idError}`);
+        return;
+      }
+
+      PATH.Exists(path, executor).then(exists => {
+        if (!exists) {
+          reject(`Failed to change group: path does not exist: ${path}`);
+          return;
+        }
+
+        let cmd = LINUX_COMMANDS.ChownChangeGroup(path, newGroupId, isRecursive);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to change group: ${output.stderr}`);
+            return;
+          }
+          resolve(true);
+        }).catch(error => `Failed to change group: ${error}`);
+      }).catch(error => `Failed to change group: ${error}`);
+    });
+  }
+
+  static ChangeOwnerAndGroup(path, newOwnerId, newGroupId, isRecursive, executor) { // newOwner can be string or integer
+    return new Promise((resolve, reject) => {
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to change owner and group: Connection is ${executorError}`);
+        return;
+      }
+
+      let idError = Error.newIdValidator(newOwnerId);
+      if (idError) {
+        reject(`Failed to change owner and group: new owner id ${idError}`);
+        return;
+      }
+
+      idError = Error.newIdValidator(newGroupId);
+      if (idError) {
+        reject(`Failed to change owner and group: new group id ${idError}`);
+        return;
+      }
+
+      PATH.Exists(path, executor).then(exists => {
+        if (!exists) {
+          reject(`Failed to change owner and group: path does not exist: ${path}`);
+          return;
+        }
+
+        let cmd = LINUX_COMMANDS.ChownChangeOwnerAndGroup(path, newOwnerId, newGroupId, isRecursive);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to change owner and group: ${output.stderr}`);
+            return;
+          }
+          resolve(true);
+        }).catch(error => `Failed to change owner and group: ${error}`);
+      }).catch(error => `Failed to change owner and group: ${error}`);
+    });
+  }
+}
+
+//-----------------------------------
+// ERROR
+
+class Error {
+  static newIdValidator(id) {
+    let error = ERROR.NullOrUndefined(id);
+    if (error)
+      return `is ${error}`;
+
+    if (typeof id != 'string' && !Number.isInteger(id))
+      return `must be a string or integer`;
+
+    return null;
   }
 }
 
