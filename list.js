@@ -20,26 +20,19 @@ class List {
         return;
       }
 
-      PATH.Path.Exists(dirPath, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to list all filenames: Path does not exist: ${dirPath}`);
+      PATH.Path.IsDir(dirPath, executor).then(isDir => {
+        if (!isDir) {
+          reject(`Failed to list all filenames: Path is not a directory: ${dirPath}`);
           return;
         }
 
-        PATH.Path.IsDir(dirPath, executor).then(isDir => {
-          if (!isDir) {
-            reject(`Failed to list all filenames: Path is not a directory: ${dirPath}`);
+        let cmd = LINUX_COMMAND.ListAllFilenames(dirPath);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to list all filenames: ${output.stderr}`);
             return;
           }
-
-          let cmd = LINUX_COMMAND.ListAllFilenames(dirPath);
-          COMMAND.Execute(cmd, [], executor).then(output => {
-            if (output.stderr) {
-              reject(`Failed to list all filenames: ${output.stderr}`);
-              return;
-            }
-            resolve(output.stdout.split('\n'));
-          }).catch(error => `Failed to list all filenames: ${error}`);
+          resolve(output.stdout.split('\n'));
         }).catch(error => `Failed to list all filenames: ${error}`);
       }).catch(error => `Failed to list all filenames: ${error}`);
     });
