@@ -189,56 +189,56 @@ function OtherUserInfo(usernameOrId) {
 //-----------------------------------------
 // CHOWN
 
-function ChownChangeOwner(path, newOwner, isRecursive) {
+function ChownChangeOwner(path, newOwnerId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
-  cmdStr += ` ${newOwner} ${path}`;
+  cmdStr += ` ${newOwnerId} ${path}`;
 
   return cmdStr;
 }
 
-function ChownChangeOwnerMultiple(paths, newOwner, isRecursive) {
+function ChownChangeOwnerMultiple(paths, newOwnerId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
-  cmdStr += ` ${newOwner} ${paths.join(' ')}`;
+  cmdStr += ` ${newOwnerId} ${paths.join(' ')}`;
 
   return cmdStr;
 }
 
-function ChownChangeGroup(path, newGroup, isRecursive) {
+function ChownChangeGroup(path, newGroupId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
-  cmdStr += ` :${newGroup} ${path}`;
+  cmdStr += ` :${newGroupId} ${path}`;
 
   return cmdStr;
 }
 
-function ChownChangeGroupMultiple(paths, newGroup, isRecursive) {
+function ChownChangeGroupMultiple(paths, newGroupId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
-  cmdStr += ` :${newGroup} ${paths.join(' ')}`;
+  cmdStr += ` :${newGroupId} ${paths.join(' ')}`;
 
   return cmdStr;
 }
 
-function ChownChangeOwnerAndGroup(path, newOwner, newGroup, isRecursive) {
+function ChownChangeOwnerAndGroup(path, newOwnerId, newGroupId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
-  cmdStr += ` ${newOwner}:${newGroup} ${path}`;
+  cmdStr += ` ${newOwnerId}:${newGroupId} ${path}`;
 
   return cmdSt
 }
 
-function ChownChangeOwnerAndGroupMultiple(paths, newOwner, newGroup, isRecursive) {
+function ChownChangeOwnerAndGroupMultiple(paths, newOwnerId, newGroupId, isRecursive) {
   let cmdStr = 'chown'
   if (isRecursive)
     cmdStr += ' -R';
-  cmdStr += ` ${newOwner}:${newGroup} ${paths.join(' ')}`;
+  cmdStr += ` ${newOwnerId}:${newGroupId} ${paths.join(' ')}`;
 
   return cmdSt
 }
