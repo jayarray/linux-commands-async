@@ -37,7 +37,7 @@ class Path {
 
   static ExistsDict(paths, executor) {
     return new Promise((resolve, reject) => {
-      let sourcesError = Error.SourcesValidator(paths);
+      let sourcesError = Error.PathsValidator(paths);
       if (sourcesError) {
         reject(`Failed to check if all paths exist: ${sourcesError}`);
         return;
@@ -76,7 +76,7 @@ class Path {
 
   static AllExist(paths, executor) {
     return new Promise((resolve, reject) => {
-      let sourcesError = Error.SourcesValidator(paths);
+      let sourcesError = Error.PathsValidator(paths);
       if (sourcesError) {
         reject(`Failed to check if all paths exist: ${sourcesError}`);
         return;
@@ -103,7 +103,7 @@ class Path {
 
   static DoNotExist(paths, executor) {
     return new Promise((resolve, reject) => {
-      let sourcesError = Error.SourcesValidator(paths);
+      let sourcesError = Error.PathsValidator(paths);
       if (sourcesError) {
         reject(`Failed to get non-existant paths: ${sourcesError}`);
         return;
@@ -164,7 +164,7 @@ class Path {
 
   static IsFileDict(paths, executor) {
     return new Promise((resolve, reject) => {
-      let sourcesError = Error.SourcesValidator(paths);
+      let sourcesError = Error.PathsValidator(paths);
       if (sourcesError) {
         reject(`Failed to check if all paths are files: ${sourcesError}`);
         return;
@@ -226,7 +226,7 @@ class Path {
 
   static AllAreFiles(paths, executor) {
     return new Promise((resolve, reject) => {
-      let sourcesError = Error.SourcesValidator(paths);
+      let sourcesError = Error.PathsValidator(paths);
       if (sourcesError) {
         reject(`Failed to check if all paths are files: ${sourcesError}`);
         return;
@@ -287,7 +287,7 @@ class Path {
 
   static IsDirDict(paths, executor) {
     return new Promise((resolve, reject) => {
-      let sourcesError = Error.SourcesValidator(paths);
+      let sourcesError = Error.PathsValidator(paths);
       if (sourcesError) {
         reject(`Failed to check if all paths are directories: ${sourcesError}`);
         return;
@@ -349,7 +349,7 @@ class Path {
 
   static AllAreDirs(paths, executor) {
     return new Promise((resolve, reject) => {
-      let sourcesError = Error.SourcesValidator(paths);
+      let sourcesError = Error.PathsValidator(paths);
       if (sourcesError) {
         reject(`Failed to check if all paths are directories: ${sourcesError}`);
         return;
@@ -428,16 +428,16 @@ class Error {
     return null;
   }
 
-  static SourcesValidator(sources) {
-    let error = ERROR.ArrayValidator(sources);
+  static PathsValidator(paths) {
+    let error = ERROR.ArrayValidator(paths);
     if (error)
-      return `sources are ${error}`;
+      return `paths are ${error}`;
 
     for (let i = 0; i < sources.length; ++i) {
       let currSrc = sources[i];
       let invalidType = ERROR.StringValidator(currSrc);
       if (invalidType)
-        return `sources contains a path that is ${invalidType}`;
+        return `paths contain a path that is ${invalidType}`;
     }
     return null;
   }
