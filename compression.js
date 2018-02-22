@@ -1,129 +1,33 @@
 let COMMAND = require('./command.js').Command;
-let PATH = require('./path.js');
+let PATH = require('./path.js').Path;
 let ERROR = require('./error.js');
 let LINUX_COMMANDS = require('./linuxcommands.js');
-
-//------------------------------------------
-// HELPERS
-
-function allSourcesExist(sources, executor) {
-  return new Promise((resolve, reject) => {
-    let sourcesError = Error.SourcesValidator(sources);
-    if (sourcesError) {
-      reject(`Failed to verify if all sources exist: ${sourcesError}`);
-      return;
-    }
-
-    let executorError = ERROR.ExecutorValidator(executor);
-    if (executorError) {
-      reject(`Failed to verify if all sources exist: Connection is ${executorError}`);
-      return;
-    }
-
-    let sourcesExistActions = sources.map(src => PATH.Path.Exists(src, executor));
-    Promise.all(sourcesExistActions).then(existsResults => {
-
-      let nonExistantPaths = [];
-      for (let i = 0; i < existsResults.length; ++i) {
-        if (!existsResults[i])
-          nonExistantPaths.push(sources[i]);
-      }
-
-      if (nonExistantPaths.length > 0) {
-        let errorStr = '';
-        if (nonExistantPaths.length == 1)
-          errorStr = `This path does not exist: ${nonExistantPaths[0]}`;
-        else
-          errorStr = `The following (${nonExistantPaths.length}) paths do not exist:\n${nonExistantPaths.join('\n')}`;
-
-        reject(errorStr);
-        return;
-      }
-      resolve(true);
-    }).catch(error => `Failed to verify if all sources exist: ${error}`);
-  });
-}
-
-function allSourcesAreFiles(sources, executor) {
-  return new Promise((resolve, reject) => {
-    allSourcesExist(sources, executor).then(success => {
-      let sourcesAreFilesActions = sources.map(src => PATH.Path.IsFile(src, executor));
-
-      Promise.all(sourcesAreFilesActions).then(isFileResults => {
-
-        let nonFilePaths = [];
-        for (let i = 0; i < isFileResults.length; ++i) {
-          if (!isFileResults[i])
-            nonFilePaths.push(sources[i]);
-        }
-
-        if (nonFilePaths.length > 0) {
-          let errorStr = '';
-          if (nonFilePaths.length == 1)
-            errorStr = `This path is not a file: ${nonFilePaths[0]}`;
-          else
-            errorStr = `The following (${nonFilePaths.length}) paths are not files:\n${nonFilePaths.join('\n')}`;
-
-          reject(errorStr);
-          return;
-        }
-
-        resolve(true);
-      }).catch(error => `Failed to verify if all sources are files: ${error}`);
-    }).catch(error => `Failed to verify if all sources are files: ${error}`);
-  });
-}
-
-function allSourcesAreDirs(sources, executor) {
-  return new Promise((resolve, reject) => {
-    allSourcesExist(sources, executor).then(success => {
-      let sourcesAreDirsActions = sources.map(src => PATH.Path.IsDir(src, executor));
-
-      Promise.all(sourcesAreDirsActions).then(isDirResults => {
-
-        let nonDirPaths = [];
-        for (let i = 0; i < isDirResults.length; ++i) {
-          if (!isDirResults[i])
-            nonDirPaths.push(sources[i]);
-        }
-
-        if (nonDirPaths.length > 0) {
-          let errorStr = '';
-          if (nonDirPaths.length == 1)
-            errorStr = `This path is not a directory: ${nonDirPaths[0]}`;
-          else
-            errorStr = `The following (${nonDirPaths.length}) paths are not directories:\n${nonDirPaths.join('\n')}`;
-
-          reject(errorStr);
-          return;
-        }
-        resolve(true);
-      }).catch(error => `Failed to verify if all sources are directories: ${error}`);
-    }).catch(error => `Failed to verify if all sources are directories: ${error}`);
-  });
-}
 
 //-------------------------------------------
 // ZIP
 class Zip {
   static CompressFiles(sources, dest, executor) {
     return new Promise((resolve, reject) => {
-      allSourcesExist(sources, executor).then(success => {
-        allSourcesAreFiles(sources, executor).then(success => {
-          let error = Error.DestValidator(dest);
-          if (error) {
-            reject(`Failed to zip files: ${error}`);
+      let error = Error.DestValidator(dest);
+      if (error) {
+        reject(`Failed to zip files: ${error}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to zip files: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.AllAreFiles(sources, executor).then(success => {
+        let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to zip files: ${output.stderr}`);
             return;
           }
-
-          let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
-          COMMAND.Execute(cmd, [], executor).then(output => {
-            if (output.stderr) {
-              reject(`Failed to zip files: ${output.stderr}`);
-              return;
-            }
-            resolve(true);
-          }).catch(error => `Failed to zip files: ${error}`);
+          resolve(true);
         }).catch(error => `Failed to zip files: ${error}`);
       }).catch(error => `Failed to zip files: ${error}`);
     });
@@ -131,22 +35,26 @@ class Zip {
 
   static CompressDirs(sources, dest, executor) {
     return new Promise((resolve, reject) => {
-      allSourcesExist(sources, executor).then(success => {
-        allSourcesAreDirs(sources, executor).then(success => {
-          let error = Error.DestValidator(dest);
-          if (`Failed to zip directories: ${error}`) {
-            reject(error);
+      let error = Error.DestValidator(dest);
+      if (error) {
+        reject(`Failed to zip directories: ${error}`);
+        return;
+      }
+
+      let executorError = ERROR.ExecutorValidator(executor);
+      if (executorError) {
+        reject(`Failed to zip directories: Connection is ${executorError}`);
+        return;
+      }
+
+      PATH.AllAreDirs(sources, executor).then(success => {
+        let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
+        COMMAND.Execute(cmd, [], executor).then(output => {
+          if (output.stderr) {
+            reject(`Failed to zip directories: ${output.stderr}`);
             return;
           }
-
-          let cmd = LINUX_COMMANDS.ZipDirs(sources, dest);
-          COMMAND.Execute(cmd, [], executor).then(output => {
-            if (output.stderr) {
-              reject(`Failed to zip directories: ${output.stderr}`);
-              return;
-            }
-            resolve(true);
-          }).catch(error => `Failed to zip directories: ${error}`);
+          resolve(true);
         }).catch(error => `Failed to zip directories: ${error}`);
       }).catch(error => `Failed to zip directories: ${error}`);
     });
@@ -234,7 +142,7 @@ class Tar {
         return;
       }
 
-      allSourcesExist(sources, executor).then(success => {
+      PATH.AllExist(sources, executor).then(success => {
         let cmd = LINUX_COMMANDS.TarCompressMultiple(sources, dest);
         COMMAND.Execute(cmd, [], executor).then(output => {
           if (output.stderr) {
@@ -311,7 +219,6 @@ class Tar {
   }
 }
 
-
 //---------------------------------------------
 // ERROR
 
@@ -378,5 +285,4 @@ class Error {
 // EXPORTS
 
 exports.Zip = Zip;
-exports.Gzip = Gzip;
 exports.Tar = Tar;
