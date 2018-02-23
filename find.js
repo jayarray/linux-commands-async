@@ -3,7 +3,6 @@ let _path = require('path');
 let PATH = require('./path.js');
 let COMMAND = require('./command.js').Command;
 let ERROR = require('./error.js');
-let BASHSCRIPT = require('./bashscript.js').BashScript;
 let LINUX_COMMANDS = require('./linuxcommands.js');
 
 //------------------------------------
