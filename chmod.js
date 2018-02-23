@@ -1,6 +1,5 @@
 let PERMISSIONS = require('./permissions.js');
 let ERROR = require('./error.js');
-let PATH = require('./path.js').Path;
 let COMMAND = require('./command.js').Command;
 let LINUX_COMMANDS = require('./linuxcommands.js');
 
