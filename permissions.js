@@ -155,7 +155,7 @@ class Permissions {
   }
 
   static CreatePermissionsObjectUsingOctalString(octalStr) {
-    let error = Error.OctalStringError(octalStr);
+    let error = Error.OctalStringValidator(octalStr);
     if (error)
       return { obj: null, error: error };
 
@@ -535,7 +535,7 @@ class Error {
     return null; // NO errors detected
   }
 
-  static OctalStringError(octalStr) {
+  static OctalStringValidator(octalStr) {
     let error = ERROR.NullOrUndefined(octalStr);
     if (error)
       return `Octal string is ${error} `;
