@@ -153,11 +153,11 @@ class Error {
     if (error)
       return `Paths are ${error}`;
 
-    for (let i = 0; i < args.length; ++i) {
-      let currArg = args[i];
-      let argIsValidString = ERROR.StringValidator(currArg) == null;
+    for (let i = 0; i < paths.length; ++i) {
+      let currPath = paths[i];
+      let pathIsValid = ERROR.StringValidator(currPath) == null;
 
-      if (!argIsValidString)
+      if (!pathIsValid)
         return `All paths must be string type`;
     }
 
