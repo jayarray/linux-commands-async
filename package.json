@@ -1,7 +1,7 @@
 {
   "name": "filesystem-async",
   "version": "1.0.5",
-  "description": "A collection of filesystem commands",
+  "description": "A collection of linux filesystem commands",
   "main": "filesystem-async.js",
   "dependencies": {
     "fs-extra": "^5.0.0",
