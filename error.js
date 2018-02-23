@@ -1,4 +1,3 @@
-
 function NullOrUndefined(o) {
   if (o === undefined)
     return 'undefined';
