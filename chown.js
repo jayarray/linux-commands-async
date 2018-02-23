@@ -1,7 +1,4 @@
-let PATH = require('./path.js').Path;
 let ERROR = require('./error.js');
-let ADMIN = require('./admin.js').Admin;
-let USERINFO = require('./userinfo.js').UserInfo;
 let LINUX_COMMANDS = require('./linuxcommands.js');
 let COMMAND = require('./command.js').Command;
 
