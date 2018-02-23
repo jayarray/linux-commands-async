@@ -63,7 +63,7 @@ class File {
           return;
         }
 
-        CHMOD.AddPermissions('ugo', 'x', path, false, executor).then(success => {
+        CHMOD.AddPermissions('ugo', 'x', [path], false, executor).then(success => {
           resolve(true);
         }).catch(error => `Failed to make file executable: ${error}`);
       }).catch(error => `Failed to make file executable: ${error}`);
