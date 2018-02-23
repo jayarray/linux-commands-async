@@ -258,7 +258,20 @@ function ChmodSetPermissions(paths, classesStr, typesStr, isRecursive) {
   let cmdStr = 'chmod';
   if (isRecursive)
     cmdStr += ' -R';
-  cmdStr += ` ${classesStr}=${typesStr} ${paths.join(' ')}`;
+
+  let classChars = ['u', 'g', 'o'];
+
+  let classCharsSet = new Set(classChars);
+  let classesStringSet = new Set(classesStr.split(''));
+
+  let missingClassChars = Array.from(new Set(classChars.filter(x => !classesStringSet.has(x))));
+  if (missingClassChars.length == 0)
+    cmdStr += ` a=${typesStr}`;
+  else {
+    let typeChars = ['r', 'w', 'x'];
+    cmdStr += ` ${classesStr}=${typesStr},${missingClassChars.join('')}-${typeChars.join('')}`;
+  }
+  cmdStr += ` ${paths.join(' ')}`;
 
   return cmdStr;
 }
