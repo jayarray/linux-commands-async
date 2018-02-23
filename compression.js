@@ -1,5 +1,4 @@
 let COMMAND = require('./command.js').Command;
-let PATH = require('./path.js').Path;
 let ERROR = require('./error.js');
 let LINUX_COMMANDS = require('./linuxcommands.js');
 
