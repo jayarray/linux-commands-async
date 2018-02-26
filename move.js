@@ -2,6 +2,7 @@ let VALIDATE = require('./validate.js');
 
 //------------------------------------------------------
 // MOVE 
+
 class Move {
   static Move(src, dest, executor) {
     let srcError = VALIDATE.IsStringInput(src);
@@ -17,9 +18,7 @@ class Move {
       return Promise.reject(`Failed to move: Connection is ${executorError}`);
 
     return new Promise((resolve, reject) => {
-      let cmd = `mv ${src} ${dest}`;
-
-      executor.Execute(cmd, []).then(output => {
+      executor.Execute('mv', [src, dest]).then(output => {
         if (output.stderr) {
           reject(`Failed to move: ${output.stderr}`);
           return;
