@@ -1,39 +1,29 @@
-let PATH = require('./path.js');
-let ERROR = require('./error.js');
+let VALIDATE = require('./validate.js');
 let REMOVE = require('./remove.js').Remove;
 let CHMOD = require('./chmod.js').Chmod;
-let COMMAND = require('./command.js').Command;
-let LINUX_COMMANDS = require('./linuxcommands.js');
+let PATH = require('./path.js').Path;
 
 //---------------------------------------------------
 // FILE
 class File {
   static Remove(path, executor) {
-    return REMOVE.File(path, executor);
+    return REMOVE.Files([path], executor);
   }
 
   static Create(path, text, executor) {
+    let pathError = VALIDATE.IsStringInput(path);
+    if (pathError)
+      return Promise.reject(`Failed to create file: path is ${pathError}`);
+
+    let textError = VALIDATE.IsStringInput(text);
+    if (textError)
+      return Promise.reject(`Failed to create file: text is ${textError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to create file: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathValidator(path);
-      if (error) {
-        reject(`Failed to create file: ${error}`);
-        return;
-      }
-
-      error = ERROR.StringValidator(text);
-      if (error) {
-        reject(`Failed to create file: text is ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to create file: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.EchoWriteToFile(path, text);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute(`echo "${text}" > ${path}`, []).then(output => {
         if (output.stderr) {
           reject(`Failed to create file: ${output.stderr}`);
           return;
@@ -44,22 +34,17 @@ class File {
   }
 
   static MakeExecutable(path, executor) {
+    let pathError = VALIDATE.IsStringInput(path);
+    if (pathError)
+      return Promise.reject(`Failed to make file executable: path is ${pathError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to make file executable: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathValidator(path);
-      if (error) {
-        reject(`Failed to make file executable: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to make file executable: Connection is ${executorError}`);
-        return;
-      }
-
-      PATH.Path.IsFile(path, executor).then(isFile => {
+      PATH.IsFile(path, executor).then(isFile => {
         if (!isFile) {
-          reject(`Failed to make file executable: Path is not a file: ${path}`);
+          reject(`Failed to make file executable: path is not a file: ${path}`);
           return;
         }
 
@@ -71,27 +56,21 @@ class File {
   }
 
   static Read(path, executor) {
+    let pathError = VALIDATE.IsStringInput(path);
+    if (pathError)
+      return Promise.reject(`Failed to read file: path is ${pathError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to read file: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = PATH.Error.PathValidator(path);
-      if (error) {
-        reject(`Failed to read file: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to read file: Connection is ${executorError}`);
-        return;
-      }
-
-      PATH.Path.IsFile(path, executor).then(isFile => {
+      PATH.IsFile(path, executor).then(isFile => {
         if (!isFile) {
-          reject(`Failed to read file: Path is not a file: ${path}`);
+          reject(`Failed to read file: path is not a file: ${path}`);
           return;
         }
 
-        let cmd = LINUX_COMMANDS.CatReadFileContent(path);
-        COMMAND.Execute(cmd, [], executor).then(output => {
+        executor.Execute('cat', [path]).then(output => {
           if (output.stderr) {
             reject(`Failed to read file: ${output.stderr}`);
             return;
