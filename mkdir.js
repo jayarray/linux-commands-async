@@ -1,3 +1,5 @@
+import { exec } from 'child_process';
+
 let VALIDATE = require('./validate.js');
 
 //------------------------------------------------------
@@ -9,9 +11,8 @@ class Mkdir {
     if (pathError)
       return Promise.reject(`Failed to make directory: ${pathError}`);
 
-    let executorError = VALIDATE.IsInstance(executor);
-    if (executorError)
-      return Promise.reject(`Failed to make directory: Connection is ${executorError}`);
+    if (!executor)
+      return Promise.reject(`Failed to make directory: Executor is required`);
 
     return new Promise((resolve, reject) => {
       executor.Execute('mkdir', [path]).then(output => {
@@ -29,9 +30,8 @@ class Mkdir {
     if (pathError)
       return Promise.reject(`Failed to make directory path: ${pathError}`);
 
-    let executorError = VALIDATE.IsInstance(executor);
-    if (executorError)
-      return Promise.reject(`Failed to make directory path: Connection is ${executorError}`);
+    if (!executor)
+      return Promise.reject(`Failed to make directory path:Executor is required`);
 
     return new Promise((resolve, reject) => {
       executor.Execute('mkdir', ['-p', path]).then(output => {
