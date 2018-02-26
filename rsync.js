@@ -29,7 +29,7 @@ class Rsync {
     if (userError)
       return Promise.reject(`Failed to execute rsync: user is ${userError}`);
 
-    let hostError = VALIDATE.IsStringInputr(host);
+    let hostError = VALIDATE.IsStringInput(host);
     if (hostError)
       return Promise.reject(`Failed to execute rsync: host is ${hostError}`);
 
@@ -60,7 +60,7 @@ class Rsync {
     if (userError)
       return Promise.reject(`Failed to execute rsync: user is ${userError}`);
 
-    let hostError = VALIDATE.IsStringInputr(host);
+    let hostError = VALIDATE.IsStringInput(host);
     if (hostError)
       return Promise.reject(`Failed to execute rsync: host is ${hostError}`);
 
@@ -91,7 +91,7 @@ class Rsync {
     if (userError)
       return Promise.reject(`Failed to execute rsync: user is ${userError}`);
 
-    let hostError = VALIDATE.IsStringInputr(host);
+    let hostError = VALIDATE.IsStringInput(host);
     if (hostError)
       return Promise.reject(`Failed to execute rsync: host is ${hostError}`);
 
