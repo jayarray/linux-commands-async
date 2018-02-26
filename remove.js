@@ -5,7 +5,7 @@ let VALIDATE = require('./validate.js');
 
 class Remove {
   static Files(paths, executor) {
-    let pathsError = VALIDATE.IsArray(path);
+    let pathsError = VALIDATE.IsArray(paths);
     if (pathsError)
       return Promise.reject(`Failed to remove files: paths are ${pathsError}`);
 
@@ -24,7 +24,7 @@ class Remove {
   }
 
   static Directories(paths, executor) {
-    let pathsError = VALIDATE.IsArray(path);
+    let pathsError = VALIDATE.IsArray(paths);
     if (pathsError)
       return Promise.reject(`Failed to remove directories: paths are ${pathsError}`);
 
