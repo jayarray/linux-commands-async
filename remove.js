@@ -1,60 +1,44 @@
-let PATH = require('./path.js');
-let ERROR = require('./error.js');
-let COMMAND = require('./command.js').Command;
-let LINUX_COMMANDS = require('./linuxcommands.js');
+let VALIDATE = require('./validate.js');
 
 //-------------------------------------------------
 // REMOVE (rm)
 
 class Remove {
-  static File(path, executor) {
+  static Files(paths, executor) {
+    let pathsError = VALIDATE.IsArray(path);
+    if (pathsError)
+      return Promise.reject(`Failed to remove files: paths are ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to remove files: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let pathError = PATH.Error.PathValidator(path);
-      if (pathError) {
-        reject(`Failed to remove file: ${pathError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to remove file: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.RemoveFile(path);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('rm', ['-f'].concat(paths)).then(output => {
         if (output.stderr) {
-          reject(`Failed to remove file: ${output.stderr}`);
+          reject(`Failed to remove files: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => reject(`Failed to remove file: ${error}`));
-
+      }).catch(error => reject(`Failed to remove files: ${error}`));
     });
   }
 
-  static Directory(path, executor) {
+  static Directories(paths, executor) {
+    let pathsError = VALIDATE.IsArray(path);
+    if (pathsError)
+      return Promise.reject(`Failed to remove directories: paths are ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to remove directories: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let pathError = PATH.Error.PathValidator(path);
-      if (pathError) {
-        reject(`Failed to remove directory: ${pathError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to remove directory: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.RemoveDir(path);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('rm', ['-fR'].concat(paths)).then(output => {
         if (output.stderr) {
           reject(`Failed to remove directory: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => reject(`Failed to remove directory: ${error}`));
+      }).catch(error => reject(`Failed to remove directories: ${error}`));
     });
   }
 }
