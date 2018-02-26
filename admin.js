@@ -207,7 +207,7 @@ function getLsofObject(line, headers) {
 // ADMIN
 class Admin {
   static Groups(executor) {
-    if (!executorError)
+    if (!executor)
       return Promise.reject(`Failed to get all groups: Executor is required`);
 
     return new Promise((resolve, reject) => {
@@ -331,7 +331,7 @@ class Admin {
         resolve(uptimeObj);
       }).catch(error => `Failed to get uptime: ${error}`);
     });
-  } i
+  }
 
   static Processes(executor) { // Gives status of running processes with a unique id called PID and other fields.
     if (!executor)
