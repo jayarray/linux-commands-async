@@ -13,9 +13,8 @@ class Move {
     if (destError)
       return Promise.reject(`Failed to move: Destination is ${destError}`);
 
-    let executorError = VALIDATE.IsInstance(executor);
-    if (executorError)
-      return Promise.reject(`Failed to move: Connection is ${executorError}`);
+    if (!executor)
+      return Promise.reject(`Failed to move: Executor is required`);
 
     return new Promise((resolve, reject) => {
       executor.Execute('mv', [src, dest]).then(output => {
