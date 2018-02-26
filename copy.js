@@ -1,4 +1,3 @@
-let PATH = require('./path.js');
 let VALIDATE = require('./validate.js');
 
 //-------------------------------------------------
@@ -6,11 +5,11 @@ let VALIDATE = require('./validate.js');
 
 class Copy {
   static File(src, dest, executor) {
-    let srcError = PATH.Error.PathValidator(src);
+    let srcError = VALIDATE.IsStringInput(src);
     if (srcError)
       return Promise.reject(`Failed to copy file: Source is ${srcError}`);
 
-    let destError = PATH.Error.PathValidator(dest);
+    let destError = VALIDATE.IsStringInput(dest);
     if (destError)
       return Promise.reject(`Failed to copy file: Destination is ${destError}`);
 
@@ -29,11 +28,11 @@ class Copy {
   }
 
   static Direcory(src, dest, executor) {
-    let srcError = PATH.Error.PathValidator(src);
+    let srcError = VALIDATE.IsStringInput(src);
     if (srcError)
       return Promise.reject(`Failed to copy directory: Source is ${srcError}`);
 
-    let destError = PATH.Error.PathValidator(dest);
+    let destError = VALIDATE.IsStringInput(dest);
     if (destError)
       return Promise.reject(`Failed to copy directory: Destination is ${destError}`);
 
