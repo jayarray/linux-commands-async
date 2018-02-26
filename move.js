@@ -1,33 +1,25 @@
-let PATH = require('./path.js');
-let ERROR = require('./error.js');
-let COMMAND = require('./command.js').Command;
-let LINUX_COMMANDS = require('./linuxcommands.js');
+let VALIDATE = require('./validate.js');
 
 //------------------------------------------------------
 // MOVE 
 class Move {
   static Move(src, dest, executor) {
+    let srcError = VALIDATE.IsStringInput(src);
+    if (srcError)
+      return Promise.reject(`Failed to move: Source is ${srcError}`);
+
+    let destError = VALIDATE.IsStringInput(dest);
+    if (destError)
+      return Promise.reject(`Failed to move: Destination is ${destError}`);
+
+    let executorError = VALIDATE.IsInstance(executor);
+    if (executorError)
+      return Promise.reject(`Failed to move: Connection is ${executorError}`);
+
     return new Promise((resolve, reject) => {
-      let srcError = PATH.Error.PathValidator(src);
-      if (srcError) {
-        reject(`Failed to move: Source is ${srcError}`);
-        return;
-      }
+      let cmd = `mv ${src} ${dest}`;
 
-      let destError = PATH.Error.PathValidator(dest);
-      if (destError) {
-        reject(`Failed to move: Destination is ${destError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to move: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.Move(src, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute(cmd, []).then(output => {
         if (output.stderr) {
           reject(`Failed to move: ${output.stderr}`);
           return;
