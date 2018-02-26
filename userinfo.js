@@ -1,21 +1,17 @@
-let ERROR = require('./error.js');
-let COMMAND = require('./command.js').Command;
-let LINUX_COMMANDS = require('./linuxcommands.js');
+import { exec } from 'child_process';
+
+let VALIDATE = require('./validate.js');
 
 //---------------------------------------
 // USERINFO
 
 class UserInfo {
   static WhoAmI(executor) {
-    return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to identify who you are: Connection is ${executorError}`);
-        return;
-      }
+    if (!executor)
+      return Promise.reject(`Failed to identify who you are: Executor is required`);
 
-      let cmd = LINUX_COMMANDS.WhoAmI();
-      COMMAND.Execute(cmd, [], executor).then(output => {
+    return new Promise((resolve, reject) => {
+      executor.Execute('whoami', []).then(output => {
         if (output.stderr) {
           reject(`Failed to identify who you are: ${output.stderr}`);
           return;
@@ -26,15 +22,11 @@ class UserInfo {
   }
 
   static CurrentUser(executor) {
-    return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to identify current user: Connection is ${executorError}`);
-        return;
-      }
+    if (!executor)
+      return Promise.reject(`Failed to identify current user: Executor is required`);
 
-      let cmd = LINUX_COMMANDS.CurrentUserInfo();
-      COMMAND.Execute(cmd, [], executor).then(output => {
+    return new Promise((resolve, reject) => {
+      executor.Execute('id', []).then(output => {
         if (output.stderr) {
           reject(`Failed to identify current user: ${output.stderr}`);
           return;
@@ -75,21 +67,15 @@ class UserInfo {
   }
 
   static OtherUser(username, executor) {
+    let usernameError = VALIDATE.IsStringInput(username);
+    if (usernameError)
+      return Promise.reject(`Failed to identify other user: username is ${usernameError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to identify other user: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let usernameError = ERROR.StringValidator(username);
-      if (usernameError) {
-        reject(`Failed to identify other user: Username is ${usernameError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to identify other user: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.OtherUserInfo(username);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('id', [username], executor).then(output => {
         if (output.stderr) {
           if (output.stderr.toLowerCase().includes('no such user'))
             reject(`Failed to identify other user: No such user: ${username}`);
