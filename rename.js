@@ -1,40 +1,31 @@
 let _path = require('path');
 
-let PATH = require('./path.js');
-let ERROR = require('./error.js');
+let PATH = require('./path.js').Path;
 let MOVE = require('./move.js').Move;
+let VALIDATE = require('./validate.js');
 
 //-----------------------------------------------
 // RENAME
+
 class Rename {
   static Rename(src, newName, executor) {
+    let srcError = VALIDATE.IsStringInput(src);
+    if (srcError)
+      return Promise.reject(`Failed to rename: Source is ${srcError}`);
+
+
+    let newNameIsValid = typeof newName == 'string' && newName != '';
+    if (!newNameIsValid)
+      return Promise.reject(`Failed to rename: New name must be a string type and cannot be empty`);
+
+    if (!executor)
+      return Promise.reject(`Failed to rename: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let srcError = PATH.Error.PathValidator(src);
-      if (srcError) {
-        reject(`Failed to rename: Source is ${srcError}`);
-        return;
-      }
+      let parentDir = PATH.ParentDir(src);
+      let dest = _path.join(parentDir, newName);
 
-      let newNameIsValid = typeof newName == 'string' && newName != '';
-      if (!newNameIsValid) {
-        reject(`Failed to rename: New name must be a string type and cannot be empty`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to rename: Connection is ${executorError}`);
-        return;
-      }
-
-      let parentDir = PATH.Path.ParentDir(src);
-      if (parentDir.error) {
-        reject(`Failed to rename: ${parentDir.error}`);
-        return;
-      }
-
-      let updatedPath = _path.join(parentDir.string, newName);
-      MOVE.Move(src, updatedPath, executor).then(success => {
+      MOVE.Move(src, dest, executor).then(success => {
         resolve(true);
       }).catch(error => reject(`Failed to rename: ${error}`));
     });
