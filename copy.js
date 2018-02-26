@@ -1,33 +1,24 @@
 let PATH = require('./path.js');
-let ERROR = require('./error.js');
-let COMMAND = require('./command.js').Command;
-let LINUX_COMMANDS = require('./linuxcommands.js');
+let VALIDATE = require('./validate.js');
 
 //-------------------------------------------------
 // COPY (cp)
+
 class Copy {
   static File(src, dest, executor) {
+    let srcError = PATH.Error.PathValidator(src);
+    if (srcError)
+      return Promise.reject(`Failed to copy file: Source is ${srcError}`);
+
+    let destError = PATH.Error.PathValidator(dest);
+    if (destError)
+      return Promise.reject(`Failed to copy file: Destination is ${destError}`);
+
+    if (!executor)
+      return Promise.reject(`Executor required.`);
+
     return new Promise((resolve, reject) => {
-      let srcError = PATH.Error.PathValidator(src);
-      if (srcError) {
-        reject(`Failed to copy file: Source is ${srcError}`);
-        return;
-      }
-
-      let destError = PATH.Error.PathValidator(dest);
-      if (destError) {
-        reject(`Failed to copy file: Destination is ${destError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to copy file: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.CopyFile(src, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('cp', [src, dest]).then(output => {
         if (output.stderr) {
           reject(`Failed to copy file: ${output.stderr}`);
           return;
@@ -38,27 +29,20 @@ class Copy {
   }
 
   static Direcory(src, dest, executor) {
+    let srcError = PATH.Error.PathValidator(src);
+    if (srcError)
+      return Promise.reject(`Failed to copy directory: Source is ${srcError}`);
+
+    let destError = PATH.Error.PathValidator(dest);
+    if (destError)
+      return Promise.reject(`Failed to copy directory: Destination is ${destError}`);
+
+    let executorError = VALIDATE.IsInstance(executor);
+    if (executorError)
+      return Promise.reject(`Failed to copy directory: Connection is ${executorError}`);
+
     return new Promise((resolve, reject) => {
-      let srcError = PATH.Error.PathValidator(src);
-      if (srcError) {
-        reject(`Failed to copy directory: Source is ${srcError}`);
-        return;
-      }
-
-      let destError = PATH.Error.PathValidator(dest);
-      if (destError) {
-        reject(`Failed to copy directory: Destination is ${destError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to copy directory: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.CopyDir(src, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('cp', ['-R', src, dest]).then(output => {
         if (output.stderr) {
           reject(`Failed to copy directory: ${output.stderr}`);
           return;
