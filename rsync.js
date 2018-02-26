@@ -1,46 +1,51 @@
-let PATH = require('./path.js');
-let COMMAND = require('./command.js').Command;
-let ERROR = require('./error.js');
-let LINUX_COMMANDS = require('./linuxcommands.js');
+let VALIDATE = require('./validate.js');
+
+//-----------------------------------
+// HELPERS
+
+function argsValidator(args) {
+  let error = VALIDATE.IsArray(args);
+  if (error)
+    return `arguments are ${error}`;
+
+  for (let i = 0; i < args.length; ++i) {
+    let currArg = args[i];
+    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
+    let argIsValidNumber = !isNaN(currArg);
+
+    if (!argIsValidString && !argIsValidNumber)
+      return `arg elements must be string or number type`;
+  }
+
+  return null;
+}
 
 //------------------------------------------------
 // RSYNC
 
 class Rsync {
   static Rsync(user, host, src, dest, executor) {
+    let userError = VALIDATE.IsStringInput(user);
+    if (userError)
+      return Promise.reject(`Failed to execute rsync: user is ${userError}`);
+
+    let hostError = VALIDATE.IsStringInputr(host);
+    if (hostError)
+      return Promise.reject(`Failed to execute rsync: host is ${hostError}`);
+
+    let srcError = VALIDATE.IsStringInput(src);
+    if (srcError)
+      return Promise.reject(`Failed to execute rsync: source is ${srcError}`);
+
+    let destError = VALIDATE.IsStringInput(dest);
+    if (destError)
+      return Promise.reject(`Failed to execute rsync: destination is ${destError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to execute rsync: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringValidator(user);
-      if (error) {
-        reject(`Failed to execute rsync: user is ${error}`);
-        return;
-      }
-
-      error = ERROR.StringValidator(host);
-      if (error) {
-        reject(`Failed to execute rsync: host is ${error}`);
-        return;
-      }
-
-      error = PATH.Error.PathValidator(src);
-      if (error) {
-        reject(`Failed to execute rsync: source is ${error}`);
-        return;
-      }
-
-      error = PATH.Error.PathValidator(dest);
-      if (error) {
-        reject(`Failed to execute rsync: destination is ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute rsync: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.RsyncStandard(user, host, src, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('rsync', ['-a', src, `${user}@${host}:${dest}`]).then(output => {
         if (output.stderr) {
           reject(`Failed to execute rsync: ${output.stderr}`);
           return;
@@ -51,39 +56,27 @@ class Rsync {
   }
 
   static Update(user, host, src, dest, executor) { // Update dest if src was updated
+    let userError = VALIDATE.IsStringInput(user);
+    if (userError)
+      return Promise.reject(`Failed to execute rsync: user is ${userError}`);
+
+    let hostError = VALIDATE.IsStringInputr(host);
+    if (hostError)
+      return Promise.reject(`Failed to execute rsync: host is ${hostError}`);
+
+    let srcError = VALIDATE.IsStringInput(src);
+    if (srcError)
+      return Promise.reject(`Failed to execute rsync: source is ${srcError}`);
+
+    let destError = VALIDATE.IsStringInput(dest);
+    if (destError)
+      return Promise.reject(`Failed to execute rsync: destination is ${destError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to execute rsync: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringValidator(user);
-      if (error) {
-        reject(`Failed to execute rsync: user is ${error}`);
-        return;
-      }
-
-      error = ERROR.StringValidator(host);
-      if (error) {
-        reject(`Failed to execute rsync: host is ${error}`);
-        return;
-      }
-
-      error = PATH.Error.PathValidator(src);
-      if (error) {
-        reject(`Failed to execute rsync: source is ${error}`);
-        return;
-      }
-
-      error = PATH.Error.PathValidator(dest);
-      if (error) {
-        reject(`Failed to execute rsync: destination is ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute rsync: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.RsyncUpdate(user, host, src, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('rsync', ['-a', '--update', src, `${user}@${host}:${dest}`]).then(output => {
         if (output.stderr) {
           reject(`Failed to execute rsync: ${output.stderr}`);
           return;
@@ -94,64 +87,27 @@ class Rsync {
   }
 
   static Match(user, host, src, dest, executor) { // Copy files and then delete those NOT in src (Match dest to src)
+    let userError = VALIDATE.IsStringInput(user);
+    if (userError)
+      return Promise.reject(`Failed to execute rsync: user is ${userError}`);
+
+    let hostError = VALIDATE.IsStringInputr(host);
+    if (hostError)
+      return Promise.reject(`Failed to execute rsync: host is ${hostError}`);
+
+    let srcError = VALIDATE.IsStringInput(src);
+    if (srcError)
+      return Promise.reject(`Failed to execute rsync: source is ${srcError}`);
+
+    let destError = VALIDATE.IsStringInput(dest);
+    if (destError)
+      return Promise.reject(`Failed to execute rsync: destination is ${destError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to execute rsync: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringValidator(user);
-      if (error) {
-        reject(`Failed to execute rsync: user is ${error}`);
-        return;
-      }
-
-      error = ERROR.StringValidator(host);
-      if (error) {
-        reject(`Failed to execute rsync: host is ${error}`);
-        return;
-      }
-
-      error = PATH.Error.PathValidator(src);
-      if (error) {
-        reject(`Failed to execute rsync: source is ${error}`);
-        return;
-      }
-
-      error = PATH.Error.PathValidator(dest);
-      if (error) {
-        reject(`Failed to execute rsync: destination is ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute rsync: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.RsyncMatch(user, host, src, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
-        if (output.stderr) {
-          reject(`Failed to execute rsync: ${output.stderr}`);
-          return;
-        }
-        resolve(output.stdout);
-      }).catch(error => `Failed to execute rsync: ${error}`);
-    });
-  }
-
-  static Manual(args, executor) {  // args = [string | number]
-    return new Promise((resolve, reject) => {
-      let error = Error.ArgsValidator(args);
-      if (error) {
-        reject(`Failed to execute rsync: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute rsync: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.RsyncManual(args);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('rsync', ['-a', '--delete-after', src, `${user}@${host}:${dest}`]).then(output => {
         if (output.stderr) {
           reject(`Failed to execute rsync: ${output.stderr}`);
           return;
@@ -162,21 +118,15 @@ class Rsync {
   }
 
   static DryRun(args, executor) { // Will execute without making changes (for testing command)
+    let argsError = argsValidator(args);
+    if (argsError)
+      return Promise.reject(`Failed to execute rsync: ${argsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to execute rsync: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.ArgsValidator(args);
-      if (error) {
-        reject(`Failed to execute rsync: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute rsync: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.RsyncDryRun(args);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('rsync', ['--dry-run'].concat(args)).then(output => {
         if (output.stderr) {
           reject(`Failed to execute rsync: ${output.stderr}`);
           return;
@@ -185,27 +135,24 @@ class Rsync {
       }).catch(error => `Failed to execute rsync: ${error}`);
     });
   }
-}
 
-//-----------------------------------
-// ERROR
+  static Manual(args, executor) {  // args = [string | number]
+    let argsError = argsValidator(args);
+    if (argsError)
+      return Promise.reject(`Failed to execute rsync: ${argsError}`);
 
-class Error {
-  static ArgsValidator(args) {
-    let error = ERROR.ArrayValidator(args);
-    if (error)
-      return `arguments are ${error}`;
+    if (!executor)
+      return Promise.reject(`Failed to execute rsync: Executor is required`);
 
-    for (let i = 0; i < args.length; ++i) {
-      let currArg = args[i];
-      let argIsValidString = ERROR.StringValidator(currArg) == null;
-      let argIsValidNumber = !isNaN(currArg);
-
-      if (!argIsValidString && !argIsValidNumber)
-        return `arg elements must be string or number type`;
-    }
-
-    return null;
+    return new Promise((resolve, reject) => {
+      executor.Execute('rsync', args).then(output => {
+        if (output.stderr) {
+          reject(`Failed to execute rsync: ${output.stderr}`);
+          return;
+        }
+        resolve(output.stdout);
+      }).catch(error => `Failed to execute rsync: ${error}`);
+    });
   }
 }
 
