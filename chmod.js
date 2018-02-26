@@ -1,82 +1,35 @@
 let PERMISSIONS = require('./permissions.js');
-let ERROR = require('./error.js');
-let COMMAND = require('./command.js').Command;
-let LINUX_COMMANDS = require('./linuxcommands.js');
-
-//-----------------------------------------
-// HELPERS
-
-function getNewPermStringBasedOnModifiedPermsObj(permsObj) {
-  // u
-  let ur = permsObj.u.r ? 'r' : '-';
-  let uw = permsObj.u.w ? 'w' : '-';
-  let ux = '';
-  if (permsObj.u.x == true && permsObj.u.xchar == '-')
-    ux = 'x';
-  else if (permsObj.u.x == true && permsObj.u.xchar != '-')
-    ux = permsObj.u.xchar;
-  else
-    ux = '-';
-
-  // g
-  let gr = permsObj.g.r ? 'r' : '-';
-  let gw = permsObj.g.w ? 'w' : '-';
-  let gx = '';
-  if (permsObj.g.x == true && permsObj.g.xchar == '-')
-    gx = 'x';
-  else if (permsObj.g.x == true && permsObj.g.xchar != '-')
-    gx = permsObj.g.xchar;
-  else
-    gx = '-';
-
-  // o
-  let or = permsObj.o.r ? 'r' : '-';
-  let ow = permsObj.o.w ? 'w' : '-';
-  let ox = '';
-  if (permsObj.o.x == true && permsObj.o.xchar == '-')
-    ox = 'x';
-  else if (permsObj.o.x == true && permsObj.o.xchar != '-')
-    ox = permsObj.o.xchar;
-  else
-    ox = '-';
-
-  return `${ur}${uw}${ux}${gr}${gw}${gx}${or}${ow}${ox}`;
-}
-
+let VALIDATE = require('./validate.js');
 
 //-----------------------------------------
 // CHMOD
 class Chmod {
   static UsingPermString(permStr, paths, isRecursive, executor) {
+    let permStrError = VALIDATE.argIsValidString(permStr);
+    if (permStrError)
+      return Promise.reject(`Failed to change permissions: Permissions string is ${permStrError}`);
+
+    let pathsError = Error.PathsValidator(paths);
+    if (pathsError)
+      return Promise.reject(`Failed to change permissions: ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to change permissions: Executor is required`);
+
+    let permsObj = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(permStr.trim());
+    if (permsObj.error)
+      return Promise.reject(`Failed to change permissions: ${permsObj.error}`);
+
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringValidator(permStr);
-      if (error) {
-        reject(`Failed to change permissions: Permissions string is ${error}`);
-        return;
-      }
-
-      let pathsError = Error.PathsValidator(paths);
-      if (pathsError) {
-        reject(`Failed to change permissions: ${pathsError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to change permissions: Connection is ${executorError}`);
-        return;
-      }
-
-      let permsObj = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(permStr.trim());
-      if (permsObj.error) {
-        reject(`Failed to change permissions: ${permsObj.error}`);
-        return;
-      }
-
       let octalStr = permsObj.obj.octal.string;
-      let cmd = LINUX_COMMANDS.ChmodUsingOctalString(paths, octalStr, isRecursive);
 
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      let args = [];
+      if (isRecursive)
+        args.push('-R');
+      args.push(octalStr);
+      args = args.concat(paths);
+
+      executor.Execute('chmod', args).then(output => {
         if (output.stderr) {
           reject(`Failed to change permissions: ${output.stderr}`);
           return;
@@ -87,33 +40,29 @@ class Chmod {
   }
 
   static UsingOctalString(octalStr, paths, isRecursive, executor) {
+    let octalStrError = VALIDATE.argIsValidString(octalStr);
+    if (octalStrError)
+      return Promise.reject(`Failed to change permissions: octal string is ${octalStrError}`);
+
+    let pathsError = Error.PathsValidator(paths);
+    if (pathsError)
+      return Promise.reject(`Failed to change permissions: ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to change permissions: Executor is required`);
+
+    let permsObj = PERMISSIONS.Permissions.CreatePermissionsObjectUsingOctalString(permStr.trim());
+    if (permsObj.error)
+      return Promise.reject(`Failed to change permissions: ${permsObj.error}`);
+
     return new Promise((resolve, reject) => {
-      let error = ERROR.StringValidator(octalStr);
-      if (error) {
-        reject(`Failed to change permissions: octal string is ${error}`);
-        return;
-      }
+      let args = [];
+      if (isRecursive)
+        args.push('-R');
+      args.push(octalStr);
+      args = args.concat(paths);
 
-      let pathsError = Error.PathsValidator(paths);
-      if (pathsError) {
-        reject(`Failed to change permissions: ${pathsError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to change permissions: Connection is ${executorError}`);
-        return;
-      }
-
-      let octalStrError = PERMISSIONS.Error.OctalStringValidator(octalStr);
-      if (octalStrError) {
-        reject(`Failed to change permissions: ${octalStrError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ChmodUsingOctalString(paths, octalStr, isRecursive);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chmod', args).then(output => {
         if (output.stderr) {
           reject(`Failed to change permissions: ${output.stderr}`);
           return;
@@ -124,33 +73,29 @@ class Chmod {
   }
 
   static RemovePermissions(classes, types, paths, isRecursive, executor) { // Example: classes = 'ugo',  types = 'rwx'
+    let classesError = Error.ClassesStringValidator(classes);
+    if (classesError)
+      return Promise.reject(`Failed to remove permissions: ${classesError}`);
+
+    let typesError = Error.TypesStringValidator(types);
+    if (typesError)
+      return Promise.reject(`Failed to remove permissions: ${typesError}`);
+
+    let pathsError = Error.PathsValidator(paths);
+    if (pathsError)
+      return Promise.reject(`Failed to remove permissions: ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to remove permissions: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.ClassesStringValidator(classes);
-      if (error) {
-        reject(`Failed to remove permissions: ${error}`);
-        return;
-      }
+      let args = [];
+      if (isRecursive)
+        args.push('-R');
+      args.push(`${classes}-${types}`);
+      args = args.concat(paths);
 
-      error = Error.TypesStringValidator(types);
-      if (error) {
-        reject(`Failed to remove permissions: ${error}`);
-        return;
-      }
-
-      let pathsError = Error.PathsValidator(paths);
-      if (pathsError) {
-        reject(`Failed to remove permissions: ${pathsError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to remove permissions: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ChmodRemovePermissions(paths, classes, types, isRecursive);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chmod', args).then(output => {
         if (output.stderr) {
           reject(`Failed to remove permissions: ${output.stderr}`);
           return;
@@ -161,33 +106,29 @@ class Chmod {
   }
 
   static AddPermissions(classes, types, paths, isRecursive, executor) {
+    let classesError = Error.ClassesStringValidator(classes);
+    if (classesError)
+      return Promise.reject(`Failed to add permissions: ${classesError}`);
+
+    let typesError = Error.TypesStringValidator(types);
+    if (typesError)
+      return Promise.reject(`Failed to add permissions: ${typesError}`);
+
+    let pathsError = Error.PathsValidator(paths);
+    if (pathsError)
+      return Promise.reject(`Failed to add permissions: ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to add permissions: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.ClassesStringValidator(classes);
-      if (error) {
-        reject(`Failed to add permissions: ${error}`);
-        return;
-      }
+      let args = [];
+      if (isRecursive)
+        args.push('-R');
+      args.push(`${classes}+${types}`);
+      args = args.concat(paths);
 
-      error = Error.TypesStringValidator(types);
-      if (error) {
-        reject(`Failed to add permissions: ${error}`);
-        return;
-      }
-
-      let pathsError = Error.PathsValidator(paths);
-      if (pathsError) {
-        reject(`Failed to add permissions: ${pathsError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to add permissions: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ChmodAddPermissions(paths, classes, types, isRecursive);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chmod', args).then(output => {
         if (output.stderr) {
           reject(`Failed to add permissions: ${output.stderr}`);
           return;
@@ -198,33 +139,40 @@ class Chmod {
   }
 
   static SetPermissions(classes, types, paths, isRecursive, executor) {
+    let classesError = Error.ClassesStringValidator(classes);
+    if (classesError)
+      return Promise.reject(`Failed to add permissions: ${classesError}`);
+
+    let typesError = Error.TypesStringValidator(types);
+    if (typesError)
+      return Promise.reject(`Failed to add permissions: ${typesError}`);
+
+    let pathsError = Error.PathsValidator(paths);
+    if (pathsError)
+      return Promise.reject(`Failed to add permissions: ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to add permissions: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.ClassesStringValidator(classes);
-      if (error) {
-        reject(`Failed to set permissions: ${error}`);
-        return;
-      }
+      let args = [];
+      if (isRecursive)
+        args.push('-R');
 
-      error = Error.TypesStringValidator(types);
-      if (error) {
-        reject(`Failed to set permissions: ${error}`);
-        return;
-      }
+      let classChars = ['u', 'g', 'o'];
+      let classCharsSet = new Set(classChars);
+      let classesStringSet = new Set(classes.split(''));
 
-      let pathsError = Error.PathsValidator(paths);
-      if (pathsError) {
-        reject(`Failed to set permissions: ${pathsError}`);
-        return;
+      let missingClassChars = Array.from(new Set(classChars.filter(x => !classesStringSet.has(x))));
+      if (missingClassChars.length == 0)
+        args.push(`a=${typesStr}`);
+      else {
+        let typeChars = ['r', 'w', 'x'];
+        args.push(`${classesStr}=${typesStr},${missingClassChars.join('')}-${typeChars.join('')}`);
       }
+      args = args.concat(paths);
 
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to set permissions: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ChmodSetPermissions(paths, classes, types, isRecursive);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chmod', args).then(output => {
         if (output.stderr) {
           reject(`Failed to set permissions: ${output.stderr}`);
           return;
@@ -236,26 +184,20 @@ class Chmod {
 
   static Manual(args, executor) {
     return new Promise((resolve, reject) => {
-      let error = Error.ArgsValidator(args);
-      if (error) {
-        reject(`Failed to execute chmod: ${error}`);
-        return;
-      }
+      let argsError = Error.ArgsValidator(args);
+      if (argsError)
+        return Promise.reject(`Failed to execute chmod: ${argsError}`);
 
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute chmod: Connection is ${executorError}`);
-        return;
-      }
+      if (!executor)
+        return Promise.reject(`Failed to execute chmod: Executor is required`);
 
-      let cmd = LINUX_COMMANDS.ChmodManual(args);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chmod', args).then(output => {
         if (output.stderr) {
-          reject(`Failed to execute chmod: ${output.stderr}`);
+          reject(`Failed to execute chmod: ${output.stderr} `);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to execute chmod: ${error}`);
+      }).catch(error => `Failed to execute chmod: ${error} `);
     });
   }
 
@@ -273,9 +215,9 @@ class Chmod {
 
 class Error {
   static ClassesStringValidator(string) {
-    let error = ERROR.StringValidator(string);
+    let error = VALIDATE.IsStringInput(string);
     if (error)
-      return `Classes string is ${error}`;
+      return `Classes string is ${error} `;
 
     let min = 1;
     let max = 3;
@@ -295,9 +237,9 @@ class Error {
   }
 
   static TypesStringValidator(string) {
-    let error = ERROR.StringValidator(string);
+    let error = VALIDATE.IsStringInput(string);
     if (error)
-      return `Types string is ${error}`;
+      return `Types string is ${error} `;
 
     let min = 1;
     let max = 3;
@@ -317,29 +259,29 @@ class Error {
   }
 
   static PathsValidator(paths) {
-    let error = ERROR.ArrayValidator(paths);
+    let error = VALIDATE.IsArray(paths);
     if (error)
-      return `Paths are ${error}`;
+      return `Paths are ${error} `;
 
     for (let i = 0; i < paths.length; ++i) {
       let currPath = paths[i];
-      let pathIsValid = ERROR.StringValidator(currPath) == null;
+      let pathIsValid = VALIDATE.IsStringInput(currPath) == null;
 
       if (!pathIsValid)
-        return `All paths must be valid (non-empty, non-whitespace) strings`;
+        return `All paths must be valid(non - empty, non - whitespace) strings`;
     }
 
     return null;
   }
 
   static ArgsValidator(args) {
-    let error = ERROR.ArrayValidator(args);
+    let error = VALIDATE.IsArray(args);
     if (error)
-      return `arguments are ${error}`;
+      return `arguments are ${error} `;
 
     for (let i = 0; i < args.length; ++i) {
       let currArg = args[i];
-      let argIsValidString = ERROR.StringValidator(currArg) == null;
+      let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
       let argIsValidNumber = !isNaN(currArg);
 
       if (!argIsValidString && !argIsValidNumber)
