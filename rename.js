@@ -13,7 +13,6 @@ class Rename {
     if (srcError)
       return Promise.reject(`Failed to rename: Source is ${srcError}`);
 
-
     let newNameIsValid = typeof newName == 'string' && newName != '';
     if (!newNameIsValid)
       return Promise.reject(`Failed to rename: New name must be a string type and cannot be empty`);
