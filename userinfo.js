@@ -1,5 +1,3 @@
-import { exec } from 'child_process';
-
 let VALIDATE = require('./validate.js');
 
 //---------------------------------------
