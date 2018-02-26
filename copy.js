@@ -14,7 +14,7 @@ class Copy {
       return Promise.reject(`Failed to copy file: Destination is ${destError}`);
 
     if (!executor)
-      return Promise.reject(`Executor required.`);
+      return Promise.reject(`Failed to copy file: Executor is required`);
 
     return new Promise((resolve, reject) => {
       executor.Execute('cp', [src, dest]).then(output => {
@@ -36,9 +36,8 @@ class Copy {
     if (destError)
       return Promise.reject(`Failed to copy directory: Destination is ${destError}`);
 
-    let executorError = VALIDATE.IsInstance(executor);
-    if (executorError)
-      return Promise.reject(`Failed to copy directory: Connection is ${executorError}`);
+    if (!executor)
+      return Promise.reject(`Failed to copy directory: Executor is required`);
 
     return new Promise((resolve, reject) => {
       executor.Execute('cp', ['-R', src, dest]).then(output => {
