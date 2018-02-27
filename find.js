@@ -320,7 +320,7 @@ class Error {
   static ArgsValidator(args) {
     let error = VALIDATE.IsArray(args);
     if (error)
-      return `args is ${error} `;
+      return `args is ${error}`;
 
     for (let i = 0; i < args.length; ++i) {
       let currArg = args[i];
