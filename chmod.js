@@ -5,7 +5,7 @@ let VALIDATE = require('./validate.js');
 // CHMOD
 class Chmod {
   static UsingPermString(permStr, paths, isRecursive, executor) {
-    let permStrError = VALIDATE.argIsValidString(permStr);
+    let permStrError = VALIDATE.IsStringInput(permStr);
     if (permStrError)
       return Promise.reject(`Failed to change permissions: Permissions string is ${permStrError}`);
 
@@ -40,7 +40,7 @@ class Chmod {
   }
 
   static UsingOctalString(octalStr, paths, isRecursive, executor) {
-    let octalStrError = VALIDATE.argIsValidString(octalStr);
+    let octalStrError = VALIDATE.IsStringInput(octalStr);
     if (octalStrError)
       return Promise.reject(`Failed to change permissions: octal string is ${octalStrError}`);
 
@@ -51,7 +51,7 @@ class Chmod {
     if (!executor)
       return Promise.reject(`Failed to change permissions: Executor is required`);
 
-    let permsObj = PERMISSIONS.Permissions.CreatePermissionsObjectUsingOctalString(permStr.trim());
+    let permsObj = PERMISSIONS.Permissions.CreatePermissionsObjectUsingOctalString(octalStr.trim());
     if (permsObj.error)
       return Promise.reject(`Failed to change permissions: ${permsObj.error}`);
 
@@ -165,10 +165,10 @@ class Chmod {
 
       let missingClassChars = Array.from(new Set(classChars.filter(x => !classesStringSet.has(x))));
       if (missingClassChars.length == 0)
-        args.push(`a=${typesStr}`);
+        args.push(`a=${types}`);
       else {
         let typeChars = ['r', 'w', 'x'];
-        args.push(`${classesStr}=${typesStr},${missingClassChars.join('')}-${typeChars.join('')}`);
+        args.push(`${classes}=${types},${missingClassChars.join('')}-${typeChars.join('')}`);
       }
       args = args.concat(paths);
 
