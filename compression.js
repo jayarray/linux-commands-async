@@ -1,132 +1,112 @@
-let COMMAND = require('./command.js').Command;
-let ERROR = require('./error.js');
-let LINUX_COMMANDS = require('./linuxcommands.js');
+let VALIDATE = require('./validate.js');
 
 //-------------------------------------------
 // ZIP
 class Zip {
   static CompressFiles(sources, dest, executor) {
+    let error = Error.SourcesValidator(sources);
+    if (error)
+      return Promise.reject(`Failed to zip files: ${error}`);
+
+    error = Error.DestValidator(dest);
+    if (error)
+      return Promise.reject(`Failed to zip files: ${error}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to zip files: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.DestValidator(dest);
-      if (error) {
-        reject(`Failed to zip files: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to zip files: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ZipFiles(sources, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('zip', [dest].concat(sources)).then(output => {
         if (output.stderr) {
           reject(`Failed to zip files: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to zip files: ${error}`);
+      }).catch(error => reject(`Failed to zip files: ${error}`));
     });
   }
 
   static CompressDirs(sources, dest, executor) {
+    let error = Error.SourcesValidator(sources);
+    if (error)
+      return Promise.reject(`Failed to zip files: ${error}`);
+
+    error = Error.DestValidator(dest);
+    if (error)
+      return Promise.reject(`Failed to zip files: ${error}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to zip files: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.DestValidator(dest);
-      if (error) {
-        reject(`Failed to zip directories: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to zip directories: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ZipDirs(sources, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('zip', ['-r', dest].concat(sources)).then(output => {
         if (output.stderr) {
           reject(`Failed to zip directories: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to zip directories: ${error}`);
+      }).catch(error => reject(`Failed to zip directories: ${error}`));
     });
   }
 
   static CompressManual(args, executor) {
+    let error = Error.ArgsValidator(args);
+    if (error)
+      return Promise.reject(`Failed to execute zip command: ${error}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to execute zip command: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      error = Error.ArgsValidator(args);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute zip command: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ZipManual(args);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('zip', args).then(output => {
         if (output.stderr) {
           reject(`Failed to execute zip command: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to execute zip command: ${error}`);
+      }).catch(error => reject(`Failed to execute zip command: ${error}`));
     });
   }
 
   static Decompress(src, dest, executor) {
+    let error = Error.SrcValidator(src);
+    if (error)
+      return Promise.reject(`Failed to unzip: ${error}`);
+
+    error = Error.DestValidator(dest);
+    if (error)
+      return Promise.reject(`Failed to unzip: ${error}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to unzip: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.SrcValidator(src);
-      if (error) {
-        reject(`Failed to unzip: ${error}`);
-        return;
-      }
-
-      error = Error.DestValidator(dest);
-      if (error) {
-        reject(`Failed to unzip: ${error}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ZipDecompress(src, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('unzip', [src, '-d', dest], executor).then(output => {
         if (output.stderr) {
           reject(`Failed to unzip: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to unzip: ${error}`);
+      }).catch(error => reject(`Failed to unzip: ${error}`));
     });
   }
 
   static DecompressManual(args, executor) {
+    let error = Error.ArgsValidator(args);
+    if (error)
+      return Promise.reject(`Failed to execute unzip command: args are ${error}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to execute unzip command: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      error = Error.ArgsValidator(args);
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute unzip command: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ZipDecompressManual(args);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('unzip', args).then(output => {
         if (output.stderr) {
           reject(`Failed to execute unzip command: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to execute unzip command: ${error}`);
+      }).catch(error => reject(`Failed to execute unzip command: ${error}`));
     });
   }
 }
@@ -136,89 +116,67 @@ class Zip {
 
 class Tar {
   static Compress(sources, dest, executor) {
+    let error = Error.SourcesValidator(sources);
+    if (error)
+      return Promise.reject(`Failed to tar: ${error}`);
+
+    error = Error.DestValidator(dest);
+    if (error)
+      return Promise.reject(`Failed to tar: ${error}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to tar: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.SourcesValidator(src);
-      if (error) {
-        reject(`Failed to tar: ${error}`);
-        return;
-      }
-
-      error = Error.DestValidator(dest);
-      if (error) {
-        reject(`Failed to tar: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to tar: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.TarCompress(sources, dest);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('tar', ['-czvf', dest].concat(sources)).then(output => {
         if (output.stderr) {
           reject(`Failed to tar: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to tar: ${error}`);
+      }).catch(error => reject(`Failed to tar: ${error}`));
     });
   }
 
   static Decompress(src, dest, executor) {
+    let error = Error.SrcValidator(src);
+    if (error)
+      return Promise.reject(`Failed to untar: ${error}`);
+
+    error = Error.DestValidator(dest);
+    if (error)
+      return Promise.reject(`Failed to untar: ${error}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to untar: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let error = Error.SrcValidator(src);
-      if (error) {
-        reject(`Failed to untar: source is ${error}`);
-        return;
-      }
-
-      error = Error.DestValidator(dest);
-      if (error) {
-        reject(`Failed to untar: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to untar: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.TarDecompress(src, dest);
-      EXECUTE.Local(cmd, [], executor).then(output => {
+      executor.Local('tar', ['-xzvf', src, '-C', dest], executor).then(output => {
         if (output.stderr) {
           reject(`Failed to untar: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to untar: ${error}`);
+      }).catch(error => reject(`Failed to untar: ${error}`));
     });
   }
 
   static Manual(args, executor) {
+    let error = Error.ArgsValidator(args);
+    if (error)
+      return Promise.reject(`Failed to execute tar command: ${error}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to execute tar command: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      error = Error.ArgsValidator(args);
-      if (error) {
-        reject(`Failed to execute tar command: ${error}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute tar command: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.TarManual(args);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('tar', args).then(output => {
         if (output.stderr) {
           reject(`Failed to execute tar command: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to execute tar command: ${error}`);
+      }).catch(error => reject(`Failed to execute tar command: ${error}`));
     });
   }
 }
@@ -228,27 +186,27 @@ class Tar {
 
 class Error {
   static SrcValidator(dest) {
-    let error = ERROR.StringValidator(dest);
+    let error = VALIDATE.IsStringInput(dest);
     if (error)
       return `source is ${error}`;
     return null;
   }
 
   static DestValidator(dest) {
-    let error = ERROR.StringValidator(dest);
+    let error = VALIDATE.IsStringInput(dest);
     if (error)
       return `destination is ${error}`;
     return null;
   }
 
   static SourcesValidator(sources) {
-    let error = ERROR.ArrayValidator(sources);
+    let error = VALIDATE.IsArray(sources);
     if (error)
       return `sources are ${error}`;
 
     for (let i = 0; i < sources.length; ++i) {
       let currSrc = sources[i];
-      let invalidType = ERROR.StringValidator(currSrc);
+      let invalidType = VALIDATE.IsStringInput(currSrc);
       if (invalidType)
         return `sources contains a path that is ${invalidType}`;
     }
@@ -256,25 +214,14 @@ class Error {
     return null;
   }
 
-  static KeepOriginalValidator(bool) {
-    let error = ERROR.NullOrUndefined(bool);
-    if (error)
-      return `keepOriginal is ${error}`;
-
-    if (!(bool === true) && !(bool === false))
-      return 'keepOriginal is not a boolean value';
-
-    return null;
-  }
-
   static ArgsValidator(args) {
-    let error = ERROR.ArrayValidator(args);
+    let error = VALIDATE.IsArray(args);
     if (error)
       return `arguments are ${error}`;
 
     for (let i = 0; i < args.length; ++i) {
       let currArg = args[i];
-      let argIsValidString = ERROR.StringValidator(currArg) == null;
+      let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
       let argIsValidNumber = !isNaN(currArg);
 
       if (!argIsValidString && !argIsValidNumber)
