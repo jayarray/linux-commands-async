@@ -363,9 +363,9 @@ class Error {
     if (error)
       return `paths are ${error}`;
 
-    for (let i = 0; i < sources.length; ++i) {
-      let currSrc = sources[i];
-      let invalidType = VALIDATE.IsStringInput(currSrc);
+    for (let i = 0; i < paths.length; ++i) {
+      let currPath = paths[i];
+      let invalidType = VALIDATE.IsStringInput(currPath);
       if (invalidType)
         return `paths contain a path that is ${invalidType}`;
     }
