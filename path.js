@@ -58,7 +58,7 @@ class Path {
           existsDict[currPath] = boolArray[i];
         }
         resolve(existsDict);
-      }).catch(error => `Failed to check if all paths exist: ${error}`);
+      }).catch(error => reject(`Failed to check if all paths exist: ${error}`));
     });
   }
 
@@ -80,7 +80,7 @@ class Path {
           }
         }
         resolve(true);
-      }).catch(error => `Failed to check if all paths exist: ${error}`);
+      }).catch(error => reject(`Failed to check if all paths exist: ${error}`));
     });
   }
 
@@ -102,7 +102,7 @@ class Path {
             nonExistantPaths.push(currPath);
         }
         resolve(nonExistantPaths);
-      }).catch(error => `Failed to check which paths do not exist: ${error}`);
+      }).catch(error => reject(`Failed to check which paths do not exist: ${error}`));
     });
   }
 
@@ -187,8 +187,8 @@ class Path {
           }
 
           resolve(isFileDict);
-        }).catch(error => `Failed to check if all paths are files: ${error}`);
-      }).catch(error => `Failed to check if all paths are files: ${error}`);
+        }).catch(error => reject(`Failed to check if all paths are files: ${error}`));
+      }).catch(error => reject(`Failed to check if all paths are files: ${error}`));
     });
   }
 
@@ -210,7 +210,7 @@ class Path {
           }
         }
         resolve(true);
-      }).catch(error => `Failed to check if all paths are files: ${error}`);
+      }).catch(error => reject(`Failed to check if all paths are files: ${error}`));
     });
   }
 
@@ -295,8 +295,8 @@ class Path {
           }
 
           resolve(isDirDict);
-        }).catch(error => `Failed to check if all paths are directories: ${error}`);
-      }).catch(error => `Failed to check if all paths are directories: ${error}`);
+        }).catch(error => reject(`Failed to check if all paths are directories: ${error}`));
+      }).catch(error => reject(`Failed to check if all paths are directories: ${error}`));
     });
   }
 
@@ -318,7 +318,7 @@ class Path {
           }
         }
         resolve(true);
-      }).catch(error => `Failed to check if all paths are directories: ${error}`);
+      }).catch(error => reject(`Failed to check if all paths are directories: ${error}`));
     });
   }
 
