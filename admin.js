@@ -236,7 +236,7 @@ class Admin {
           groups.push(group);
         });
         resolve(groups);
-      }).catch(error => `Failed to get all groups: ${error}`);
+      }).catch(error => reject(`Failed to get all groups: ${error}`));
     });
   }
 
@@ -258,7 +258,7 @@ class Admin {
           }
         }
         reject(`Failed to get group: group does not exist: ${gid}`);
-      }).catch(error => `Failed to get group: ${error}`);
+      }).catch(error => reject(`Failed to get group: ${error}`));
     });
   }
 
@@ -289,7 +289,7 @@ class Admin {
           users.push(user);
         });
         resolve(users);
-      }).catch(error => `Failed to get all users: ${error}`);
+      }).catch(error => reject(`Failed to get all users: ${error}`));
     });
   }
 
@@ -311,7 +311,7 @@ class Admin {
           }
         }
         reject(`Failed to get user: user does not exist: ${uid}`);
-      }).catch(error => `Failed to get user: ${error}`);
+      }).catch(error => reject(`Failed to get user: ${error}`));
     });
   }
 
@@ -329,7 +329,7 @@ class Admin {
         // System info
         let uptimeObj = parseUptimeString(output.stdout);
         resolve(uptimeObj);
-      }).catch(error => `Failed to get uptime: ${error}`);
+      }).catch(error => reject(`Failed to get uptime: ${error}`));
     });
   }
 
@@ -374,7 +374,7 @@ class Admin {
           processes.push(process);
         });
         resolve(processes);
-      }).catch(error => `Failed to get running processes: ${error}`);
+      }).catch(error => reject(`Failed to get running processes: ${error}`));
     });
   }
 
@@ -401,7 +401,7 @@ class Admin {
           }
         }
         reject(`Failed to get process: process does not exist: ${pid}`);
-      }).catch(error => `Failed to get process: ${error}`);
+      }).catch(error => reject(`Failed to get process: ${error}`));
     });
   }
 
@@ -417,8 +417,8 @@ class Admin {
             return;
           }
           resolve(true);
-        }).catch(error => `Failed to kill process: ${error}`);
-      }).catch(error => `Failed to kill process: ${error}`);
+        }).catch(error => reject(`Failed to kill process: ${error}`));
+      }).catch(error => reject(`Failed to kill process: ${error}`));
     });
   }
 
@@ -448,7 +448,7 @@ class Admin {
           objects.push(o);
         });
         resolve(objects);
-      }).catch(error => `Failed to get info regarding memory and resources: ${error}`);
+      }).catch(error => reject(`Failed to get info regarding memory and resources: ${error}`));
     });
   }
 
@@ -594,7 +594,7 @@ class Admin {
         };
 
         resolve(result);
-      }).catch(error => `Failed to get top processes: ${error}`);
+      }).catch(error => reject(`Failed to get top processes: ${error}`));
     });
   }
 
@@ -658,7 +658,7 @@ class Admin {
           users: users,
           uptimeObj: uptimeObj
         });
-      }).catch(error => `Failed to get logged in users: ${error}`);
+      }).catch(error => reject(`Failed to get logged in users: ${error}`));
     });
   }
 
@@ -698,7 +698,7 @@ class Admin {
         });
 
         resolve(files);
-      }).catch(error => `Failed to list open files: ${error}`);
+      }).catch(error => reject(`Failed to list open files: ${error}`));
     });
   }
 
@@ -719,8 +719,8 @@ class Admin {
 
         Admin.GetGroup('root', executor).then(group => {
           resolve(group.users.includes(user.name));
-        }).catch(error => `Failed to verify if user has root permissions: ${error}`);
-      }).catch(error => `Failed to verify if user has root permissions: ${error}`);
+        }).catch(error => reject(`Failed to verify if user has root permissions: ${error}`));
+      }).catch(error => reject(`Failed to verify if user has root permissions: ${error}`));
     });
   }
 
@@ -748,10 +748,10 @@ class Admin {
             USERINFO.OtherUser(user.name, executor).then(info => {
               let userGroupIds = info.groups.map(group => group.gid);
               resolve(group.users.includes(user.name) || userGroupIds.includes(group.id));
-            }).catch(error => `Failed to verify if user can change group ownership: ${error}`);
-          }).catch(error => `Failed to verify if user can change group ownership: ${error}`);
-        }).catch(error => `Failed to verify if user can change group ownership: ${error}`);
-      }).catch(error => `Failed to verify if user can change group ownership: ${error}`);
+            }).catch(error => reject(`Failed to verify if user can change group ownership: ${error}`));
+          }).catch(error => reject(`Failed to verify if user can change group ownership: ${error}`));
+        }).catch(error => error => reject(`Failed to verify if user can change group ownership: ${error}`));
+      }).catch(error => error => reject(`Failed to verify if user can change group ownership: ${error}`));
     });
   }
 
