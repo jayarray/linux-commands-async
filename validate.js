@@ -27,7 +27,7 @@ function IsNumber(n) {
   if (error)
     return error;
 
-  if (typeof n == 'number')
+  if (typeof n != 'number')
     return 'not a number';
   return null;
 }
