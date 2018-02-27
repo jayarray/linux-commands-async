@@ -21,8 +21,8 @@ class BashScript {
       FILE.Create(path, `#!/bin/bash\n${content}`, executor).then(success => {
         FILE.MakeExecutable(path, executor).then(success => {
           resolve(true);
-        }).catch(error => `Failed to create bashscript: ${error}`);
-      }).catch(error => `Failed to create bashscript: ${error}`);
+        }).catch(error => reject(`Failed to create bashscript: ${error}`));
+      }).catch(error => reject(`Failed to create bashscript: ${error}`));
     });
   }
 
@@ -43,9 +43,9 @@ class BashScript {
         executor.Execute(path, []).then(output => {
           resolve(output.stdout);
           FILE.Remove(path, executor).then(success => {
-          }).catch(error => `Failed to execute bash script: ${error}`);
-        }).catch(error => `Failed to execute bash script: ${error}`);
-      }).catch(error => `Failed to execute bash script: ${error}`);
+          }).catch(error => reject(`Failed to execute bash script: ${error}`));
+        }).catch(error => reject(`Failed to execute bash script: ${error}`));
+      }).catch(error => reject(`Failed to execute bash script: ${error}`));
     });
   }
 }
