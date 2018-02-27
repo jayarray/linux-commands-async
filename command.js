@@ -15,7 +15,7 @@ function argsValidator(args) {
     let stringError = VALIDATE.IsStringInput(currArg);
     let numberError = VALIDATE.IsNumber(currArg);
 
-    if (stringError || numberError)
+    if (stringError && numberError)
       return `arguments must be string or number type`;
   }
   return null;
