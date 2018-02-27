@@ -1,131 +1,115 @@
-let ERROR = require('./error.js');
-let LINUX_COMMANDS = require('./linuxcommands.js');
-let COMMAND = require('./command.js').Command;
+let VALIDATE = require('./validate.js');
 
 //-----------------------------------------------
 // CHOWN
 class Chown {
   static ChangeOwner(paths, newOwnerId, isRecursive, executor) { // newOwner can be string or integer
+    let pathsError = Error.PathsValidator(paths);
+    if (pathsError)
+      return Promise.reject(`Failed to change owner: ${pathsError}`);
+
+    let idError = Error.newIdValidator(newOwnerId);
+    if (idError)
+      return Promise.reject(`Failed to change owner: new owner id ${idError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to change owner: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let pathsError = Error.PathsValidator(paths);
-      if (pathsError) {
-        reject(`Failed to change owner: ${pathsError}`);
-        return;
-      }
+      let args = [];
+      if (isRecursive)
+        args.push('-R');
+      args.push(newOwnerId);
+      args = args.concat(paths);
 
-      let idError = Error.newIdValidator(newOwnerId);
-      if (idError) {
-        reject(`Failed to change owner: new owner id ${idError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to change owner: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ChownChangeOwner(paths, newOwnerId, isRecursive);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chown', args).then(output => {
         if (output.stderr) {
           reject(`Failed to change owner: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to change owner: ${error}`);
+      }).catch(error => reject(`Failed to change owner: ${error}`));
     });
   }
 
   static ChangeGroup(paths, newGroupId, isRecursive, executor) { // newOwner can be string or integer
+    let pathsError = Error.PathsValidator(paths);
+    if (pathsError)
+      return Promise.reject(`Failed to change group: ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to change group: Executor is required`);
+
+    let idError = Error.newIdValidator(newGroupId);
+    if (idError)
+      return Promise.reject(`Failed to change group: new group id ${idError}`);
+
     return new Promise((resolve, reject) => {
-      let pathsError = Error.PathsValidator(paths);
-      if (pathsError) {
-        reject(`Failed to change group: ${pathsError}`);
-        return;
-      }
+      let args = [];
+      if (isRecursive)
+        args.push('-R');
+      args.push(`:${newGroupId}`);
+      args = args.concat(paths);
 
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to change group: Connection is ${executorError}`);
-        return;
-      }
-
-      let idError = Error.newIdValidator(newGroupId);
-      if (idError) {
-        reject(`Failed to change group: new group id ${idError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ChownChangeGroup(paths, newGroupId, isRecursive);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chown', args).then(output => {
         if (output.stderr) {
           reject(`Failed to change group: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to change group: ${error}`);
+      }).catch(error => reject(`Failed to change group: ${error}`));
     });
   }
 
   static ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executor) { // newOwner can be string or integer
+    let pathsError = Error.PathsValidator(paths);
+    if (pathsError)
+      return Promise.reject(`Failed to change group: ${pathsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to change owner and group: Executor is required`);
+
+    let idError = Error.newIdValidator(newOwnerId);
+    if (idError)
+      return Promise.reject(`Failed to change owner and group: new owner id ${idError}`);
+
+    idError = Error.newIdValidator(newGroupId);
+    if (idError)
+      return Promise.reject(`Failed to change owner and group: new group id ${idError}`);
+
     return new Promise((resolve, reject) => {
-      let pathsError = Error.PathsValidator(paths);
-      if (pathsError) {
-        reject(`Failed to change group: ${pathsError}`);
-        return;
-      }
+      let args = [];
+      if (isRecursive)
+        args.push('-R');
+      args.push(`${newOwnerId}:${newGroupId}`);
+      args = args.concat(paths);
 
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to change owner and group: Connection is ${executorError}`);
-        return;
-      }
-
-      let idError = Error.newIdValidator(newOwnerId);
-      if (idError) {
-        reject(`Failed to change owner and group: new owner id ${idError}`);
-        return;
-      }
-
-      idError = Error.newIdValidator(newGroupId);
-      if (idError) {
-        reject(`Failed to change owner and group: new group id ${idError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ChownChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chown', args).then(output => {
         if (output.stderr) {
           reject(`Failed to change owner and group: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to change owner and group: ${error}`);
+      }).catch(error => reject(`Failed to change owner and group: ${error}`));
     });
   }
 
   static Manual(args, executor) { // newOwner can be string or integer
+    let argsError = Error.ArgsValidator(args);
+    if (argsError)
+      return Promise.reject(`Failed to execute chown: ${argsError}`);
+
+    if (!executor)
+      return Promise.reject(`Failed to execute chown: Executor is required`);
+
     return new Promise((resolve, reject) => {
-      let argsError = Error.ArgsValidator(args);
-      if (argsError) {
-        reject(`Failed to execute chown: ${argsError}`);
-        return;
-      }
-
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to execute chown: Connection is ${executorError}`);
-        return;
-      }
-
-      let cmd = LINUX_COMMANDS.ChownManual(args);
-      COMMAND.Execute(cmd, [], executor).then(output => {
+      executor.Execute('chown', args).then(output => {
         if (output.stderr) {
           reject(`Failed to execute chown: ${output.stderr}`);
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to execute chown: ${error}`);
+      }).catch(error => reject(`Failed to execute chown: ${error}`));
     });
   }
 }
