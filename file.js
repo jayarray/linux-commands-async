@@ -29,7 +29,7 @@ class File {
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to create file: ${error}`);
+      }).catch(error => reject(`Failed to create file: ${error}`));
     });
   }
 
@@ -50,8 +50,8 @@ class File {
 
         CHMOD.AddPermissions('ugo', 'x', [path], false, executor).then(success => {
           resolve(true);
-        }).catch(error => `Failed to make file executable: ${error}`);
-      }).catch(error => `Failed to make file executable: ${error}`);
+        }).catch(error => reject(`Failed to make file executable: ${error}`));
+      }).catch(error => reject(`Failed to make file executable: ${error}`));
     });
   }
 
@@ -76,8 +76,8 @@ class File {
             return;
           }
           resolve(output.stdout);
-        }).catch(error => `Failed to read file: ${error}`);
-      }).catch(error => `Failed to read file: ${error}`);
+        }).catch(error => reject(`Failed to read file: ${error}`));
+      }).catch(error => reject(`Failed to read file: ${error}`));
     });
   }
 
@@ -85,7 +85,7 @@ class File {
     return new Promise((resolve, reject) => {
       File.Read(path, executor).then(string => {
         resolve(string.split('\n'));
-      }).catch(error => `Failed to read lines: ${error}`);
+      }).catch(error => reject(`Failed to read lines: ${error}`));
     });
   }
 }
