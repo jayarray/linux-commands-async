@@ -51,7 +51,7 @@ class Rsync {
           return;
         }
         resolve(output.stdout);
-      }).catch(error => `Failed to execute rsync: ${error}`);
+      }).catch(error => reject(`Failed to execute rsync: ${error}`));
     });
   }
 
@@ -82,7 +82,7 @@ class Rsync {
           return;
         }
         resolve(output.stdout);
-      }).catch(error => `Failed to execute rsync: ${error}`);
+      }).catch(error => reject(`Failed to execute rsync: ${error}`));
     });
   }
 
@@ -113,7 +113,7 @@ class Rsync {
           return;
         }
         resolve(output.stdout);
-      }).catch(error => `Failed to execute rsync: ${error}`);
+      }).catch(error => reject(`Failed to execute rsync: ${error}`));
     });
   }
 
@@ -132,7 +132,7 @@ class Rsync {
           return;
         }
         resolve(output.stdout);
-      }).catch(error => `Failed to execute rsync: ${error}`);
+      }).catch(error => reject(`Failed to execute rsync: ${error}`));
     });
   }
 
@@ -151,7 +151,7 @@ class Rsync {
           return;
         }
         resolve(output.stdout);
-      }).catch(error => `Failed to execute rsync: ${error}`);
+      }).catch(error => reject(`Failed to execute rsync: ${error}`));
     });
   }
 }
