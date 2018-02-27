@@ -1,25 +1,19 @@
 let LIST = require('./list.js').List;
-let ERROR = require('./error.js');
-let COMMAND = require('./command.js').Command;
+let VALIDATE = require('./validate.js');
 
 //--------------------------------------------
 // PERMISSIONS
 
 class Permissions {
   static Permissions(path, executor) {
+    if (!executor)
+      return Promise.reject(`Failed to get permissions: Executor is required`);
+
+    let error = VALIDATE.IsStringInput(path);
+    if (error)
+      return Promise.reject(`Failed to get permissions: Path is ${error}`);
+
     return new Promise((resolve, reject) => {
-      let executorError = ERROR.ExecutorValidator(executor);
-      if (executorError) {
-        reject(`Failed to get permissions: Connection is ${executorError}`);
-        return;
-      }
-
-      let error = ERROR.StringValidator(path);
-      if (error) {
-        reject(`Failed to get permissions: Path is ${error}`);
-        return;
-      }
-
       LIST.Info(path, executor).then(info => {
         let permStr = info.permstr.trim();
 
@@ -35,7 +29,7 @@ class Permissions {
         permObj.filetype = info.filetype;
 
         resolve(permObj);
-      }).catch(reject);
+      }).catch(error => `Failed to get permissions: ${error}`);
     });
   }
 
@@ -382,7 +376,7 @@ class Permissions {
   }
 
   static FileTypeName(char) {
-    let error = ERROR.NullOrUndefined(char);
+    let error = VALIDATE.IsInstance(char);
     if (error)
       return { name: null, error: `Failed to get file type name. Char is ${error}` };
 
@@ -461,21 +455,21 @@ class Permissions {
 
 class Error {
   static IntegerError(i) {
-    let error = ERROR.IntegerValidator(i);
+    let error = VALIDATE.IsInteger(i);
     if (error)
       return `is ${error}`;
 
     let min = 0;
     let max = 7;
 
-    error = ERROR.BoundIntegerError(i, min, max);
+    error = VALIDATE.IsIntegerInRange(i, min, max);
     if (error)
       return error;
     return null;
   }
 
   static PermissionsStringError(string) {
-    let error = ERROR.NullOrUndefined(string);
+    let error = VALIDATE.IsInstance(string);
     if (error)
       return `Permissions string is ${error} `;
 
@@ -536,7 +530,7 @@ class Error {
   }
 
   static OctalStringValidator(octalStr) {
-    let error = ERROR.NullOrUndefined(octalStr);
+    let error = VALIDATE.IsInstance(octalStr);
     if (error)
       return `Octal string is ${error} `;
 
@@ -569,7 +563,7 @@ class Error {
   }
 
   static ObjectError(obj, isPseudo) {
-    let error = ERROR.NullOrUndefined(obj);
+    let error = VALIDATE.IsInstance(obj);
     if (error)
       return `Object is ${error} `;
 
