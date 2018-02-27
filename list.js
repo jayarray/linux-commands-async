@@ -25,8 +25,8 @@ class List {
             return;
           }
           resolve(output.stdout.split('\n'));
-        }).catch(error => `Failed to list all filenames: ${error}`);
-      }).catch(error => `Failed to list all filenames: ${error}`);
+        }).catch(error => reject(`Failed to list all filenames: ${error}`));
+      }).catch(error => reject(`Failed to list all filenames: ${error}`));
     });
   }
 
@@ -41,7 +41,7 @@ class List {
     return new Promise((resolve, reject) => {
       List.AllFilenames(dirPath, executor).then(filenames => {
         resolve(filenames.filter(x => !x.startsWith('.')));
-      }).catch(error => `Failed to list visible filenames: ${error}`);
+      }).catch(error => reject(`Failed to list visible filenames: ${error}`));
     });
   }
 
@@ -56,7 +56,7 @@ class List {
     return new Promise((resolve, reject) => {
       List.AllFilenames(dirPath, executor).then(filenames => {
         resolve(filenames.filter(x => x.startsWith('.')));
-      }).catch(error => `Failed to list hidden filenames: ${error}`);
+      }).catch(error => reject(`Failed to list hidden filenames: ${error}`));
     });
   }
 
@@ -87,8 +87,8 @@ class List {
             return;
           }
           resolve(results.info);
-        }).catch(error => `Failed to get file info: ${error}`);
-      }).catch(error => `Failed to get file info: ${error}`);
+        }).catch(error => reject(`Failed to get file info: ${error}`));
+      }).catch(error => reject(`Failed to get file info: ${error}`));
     });
   }
 
@@ -119,8 +119,8 @@ class List {
             return;
           }
           resolve(results.info);
-        }).catch(error => `Failed to get directory info: ${error}`);
-      }).catch(error => `Failed to get directory info: ${error}`);
+        }).catch(error => reject(`Failed to get directory info: ${error}`));
+      }).catch(error => reject(`Failed to get directory info: ${error}`));
     });
   }
 
@@ -179,8 +179,8 @@ class List {
             infos.push(results.info);
           });
           resolve(infos);
-        }).catch(error => `Failed to get all infos: ${error}`);
-      }).catch(error => `Failed to get all infos: ${error}`);
+        }).catch(error => reject(`Failed to get all infos: ${error}`));
+      }).catch(error => reject(`Failed to get all infos: ${error}`));
     });
   }
 
@@ -195,7 +195,7 @@ class List {
     return new Promise((resolve, reject) => {
       List.AllInfos(dirPath, executor).then(infos => {
         resolve(infos.filter(item => !item.name.startsWith('.')));
-      }).catch(error => `Failed to get visible infos: ${error}`);
+      }).catch(error => reject(`Failed to get visible infos: ${error}`));
     });
   }
 
@@ -210,7 +210,7 @@ class List {
     return new Promise((resolve, reject) => {
       List.AllInfos(dirPath, executor).then(infos => {
         resolve(infos.filter(item => item.name.startsWith('.')));
-      }).catch(error => `Failed to get all hidden infos: ${error}`);
+      }).catch(error => reject(`Failed to get all hidden infos: ${error}`));
     });
   }
 
