@@ -15,7 +15,7 @@ class UserInfo {
           return;
         }
         resolve(output.stdout.trim());
-      }).catch(error => `Failed to identify who you are: ${error}`);
+      }).catch(error => reject(`Failed to identify who you are: ${error}`));
     });
   }
 
@@ -60,7 +60,7 @@ class UserInfo {
         };
 
         resolve(info);
-      }).catch(error => `Failed to identify current user: ${error}`);
+      }).catch(error => reject(`Failed to identify current user: ${error}`));
     });
   }
 
@@ -110,7 +110,7 @@ class UserInfo {
           groups: groups
         };
         resolve(info);
-      }).catch(error => `Failed to identify other user: ${error}`);
+      }).catch(error => reject(`Failed to identify other user: ${error}`));
     });
   }
 }
