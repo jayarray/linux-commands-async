@@ -35,7 +35,7 @@ class Chmod {
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to change permissions: ${error}`);
+      }).catch(error => reject(`Failed to change permissions: ${error}`));
     });
   }
 
@@ -68,7 +68,7 @@ class Chmod {
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to change permissions: ${error}`);
+      }).catch(error => reject(`Failed to change permissions: ${error}`));
     });
   }
 
@@ -101,7 +101,7 @@ class Chmod {
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to remove permissions: ${error}`);
+      }).catch(error => reject(`Failed to remove permissions: ${error}`));
     });
   }
 
@@ -134,7 +134,7 @@ class Chmod {
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to add permissions: ${error}`);
+      }).catch(error => reject(`Failed to add permissions: ${error}`));
     });
   }
 
@@ -178,7 +178,7 @@ class Chmod {
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to set permissions: ${error}`);
+      }).catch(error => reject(`Failed to set permissions: ${error}`));
     });
   }
 
@@ -197,7 +197,7 @@ class Chmod {
           return;
         }
         resolve(true);
-      }).catch(error => `Failed to execute chmod: ${error} `);
+      }).catch(error => reject(`Failed to execute chmod: ${error} `));
     });
   }
 
