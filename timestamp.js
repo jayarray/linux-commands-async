@@ -1,4 +1,4 @@
-let ERROR = require('./error.js');
+let VALIDATE = require('./validate.js');
 
 //-------------------------------------
 
@@ -172,7 +172,7 @@ class Timestamp {
   }
 
   static MonthIndex(name) {
-    let error = ERROR.StringValidator(name);
+    let error = VALIDATE.IsStringInput(name);
     if (error)
       return { index: null, error: `MONTH_NAME_ERROR: Name is ${error}` };
 
@@ -186,7 +186,7 @@ class Timestamp {
   }
 
   static DayOfTheWeekIndex(name) {
-    let error = ERROR.StringValidator(name);
+    let error = VALIDATE.IsStringInput(name);
     if (error)
       return { index: null, error: `DAY_OF_WEEK_INDEX_ERROR: Name is ${error}` };
 
@@ -201,7 +201,7 @@ class Timestamp {
 
 class Error {
   static MeridiemTimeStringError(string) {
-    let error = ERROR.StringValidator(string);
+    let error = VALIDATE.IsStringInput(string);
     if (error)
       return `Time string is ${error}`;
 
@@ -273,7 +273,7 @@ class Error {
   }
 
   static MilitaryTimeStringError(string) {
-    let error = ERROR.StringValidator(string);
+    let error = VALIDATE.IsStringInput(string);
     if (error)
       return `Time string is ${error}`;
 
@@ -342,7 +342,7 @@ class Error {
   }
 
   static DateObjectError(dateObj) {
-    let error = ERROR.NullOrUndefined(dateObj);
+    let error = VALIDATE.IsInstance(dateObj);
     if (error)
       return `Date object is ${error}`;
 
