@@ -23,7 +23,7 @@ class Directory {
     return new Promise((resolve, reject) => {
       MKDIR.Mkdirp(path, executor).then(success => {
         resolve(true);
-      }).catch(error => `Failed tp create directory: ${error}`);
+      }).catch(error => reject(`Failed tp create directory: ${error}`));
     });
   }
 
