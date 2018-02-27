@@ -2,7 +2,7 @@
   "name": "filesystem-async",
   "version": "1.0.5",
   "description": "A collection of linux filesystem commands",
-  "main": "filesystem-async.js",
+  "main": "api.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec"
   },
