@@ -14,6 +14,7 @@ exports.Mkdir = require('./mkdir.js').Mkdir;
 exports.Move = require('./move.js').Move;
 exports.Path = require('./path.js').Path;
 exports.Permissions = require('./permissions.js').Permissions;
+exports.Ping = require('./ping.js').Ping;
 exports.Remove = require('./remove.js').Remove;
 exports.Rename = require('./rename.js').Rename;
 exports.Rsync = require('./rsync.js').Rsync;
