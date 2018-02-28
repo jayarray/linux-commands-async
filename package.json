@@ -1,10 +1,10 @@
 {
   "name": "filesystem-async",
   "version": "1.0.5",
-  "description": "A collection of linux filesystem commands",
+  "description": "An API for a collection of linux commands",
   "main": "api.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --reporter spec"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Jesus Arevalo <isa90201@gmail.com>",
   "license": "ISC"
