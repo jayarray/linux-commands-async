@@ -249,7 +249,7 @@ function GetGroup(id, executor) {
     return Promise.reject(`Failed to get group: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    Admin.Groups(executor).then(groups => {
+    Groups(executor).then(groups => {
       for (let i = 0; i < groups.length; ++i) {
         let currGroup = groups[i];
         if ((typeof gid == 'string' && currGroup.name == gid) || (Number.isInteger(gid) && currGroup.id == gid)) {
@@ -302,7 +302,7 @@ function GetUser(uid, executor) {
     return Promise.reject(`Failed to get user: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    Admin.Users(executor).then(users => {
+    Users(executor).then(users => {
       for (let i = 0; i < users.length; ++i) {
         let currUser = users[i];
         if ((typeof uid == 'string' && currUser.name == uid) || (Number.isInteger(uid) && currUser.id == uid)) {
@@ -392,7 +392,7 @@ function GetProcess(pid, executor) {
     return Promise.reject(`Failed to get process: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    Admin.Processes(executor).then(processes => {
+    Processes(executor).then(processes => {
       for (let i = 0; i < processes.length; ++i) {
         let currProcess = processes[i];
         if (currProcess.pid == pid) {
@@ -410,7 +410,7 @@ function Kill(pid, executor) { // Kills a process
     return Promise.reject(`Failed to kill process: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    Admin.GetProcess(pid, executor).then(process => {
+    GetProcess(pid, executor).then(process => {
       executor.Execute('kill', ['-9', pid]).then(output => {
         if (output.stderr) {
           reject(`Failed to kill process: ${output.stderr}`);
@@ -711,13 +711,13 @@ function UserHasRootPermissions(uid, executor) {
     return Promise.reject(`Failed to verify if user has root permissions: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    Admin.GetUser(uid, executor).then(user => {
+    GetUser(uid, executor).then(user => {
       if (user.name == 'root') {
         resolve(true);
         return;
       }
 
-      Admin.GetGroup('root', executor).then(group => {
+      GetGroup('root', executor).then(group => {
         resolve(group.users.includes(user.name));
       }).catch(error => reject(`Failed to verify if user has root permissions: ${error}`));
     }).catch(error => reject(`Failed to verify if user has root permissions: ${error}`));
@@ -737,14 +737,14 @@ function UserCanChangeGroupOwnership(uid, desiredGid, executor) { // Must be roo
     return Promise.reject(`Failed to verify if user can change group ownership: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    Admin.GetUser(uid, executor).then(user => {
-      Admin.UserHasRootPermissions(user.id, executor).then(hasRootAccess => {
+    GetUser(uid, executor).then(user => {
+      UserHasRootPermissions(user.id, executor).then(hasRootAccess => {
         if (hasRootAccess) {
           resolve(true);
           return;
         }
 
-        Admin.GetGroup(desiredGid, executor).then(group => {
+        GetGroup(desiredGid, executor).then(group => {
           USERINFO.OtherUser(user.name, executor).then(info => {
             let userGroupIds = info.groups.map(group => group.gid);
             resolve(group.users.includes(user.name) || userGroupIds.includes(group.id));
@@ -762,7 +762,7 @@ function UserCanChangeUserOwnership(uid, executor) { // Must have root permissio
 
   if (!executor)
     return Promise.reject(`Failed to verify if user can change group ownership: Executor is required`);
-  return Admin.UserHasRootPermissions(uid, executor);
+  return UserHasRootPermissions(uid, executor);
 }
 
 //-----------------------------------
