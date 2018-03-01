@@ -38,7 +38,7 @@ function Execute(path, content, executor) {
     return Promise.reject(`Failed to execute bashscript: Connection is ${executorError}`);
 
   return new Promise((resolve, reject) => {
-    BashScript.Create(path, content, executor).then(success => {
+    Create(path, content, executor).then(success => {
       executor.Execute(path, []).then(output => {
         resolve(output.stdout);
         FILE.Remove(path, executor).then(success => {
