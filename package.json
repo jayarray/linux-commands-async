@@ -1,6 +1,6 @@
 {
-  "name": "filesystem-async",
-  "version": "1.0.5",
+  "name": "linux-commands-async",
+  "version": "1.0.0",
   "description": "An API for a collection of linux commands",
   "main": "api.js",
   "scripts": {
