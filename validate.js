@@ -43,48 +43,22 @@ function IsInteger(i) {
 }
 
 function IsIntegerInRange(i, min, max) {
-  let minIsNull = min == null;
-  let maxIsNull = max == null;
+  let haveMin = IsInteger(min) == null;
+  let haveMax = IsInteger(max) == null;
 
-  let minIsInteger = IsInteger(min) == null;
-  let maxIsInteger = IsInteger(max) == null;
-
-  let minIsDefined = !minIsNull && minIsInteger;
-  let maxIsDefined = !maxIsNull && maxIsInteger;
-
-  let onlyMinIsDefined = minIsDefined && !maxIsDefined;
-  let onlyMaxIsDefined = maxIsDefined && !minIsDefined;
-  let bothAreDefined = minIsDefined && maxIsDefined;
-
-  // BOTH are defined
-  if (bothAreDefined) {
-    if (min > max + 1)
-      return `min (${min}) must be less than or equal to max (${max})`;
-
-    if (max < min - 1)
-      return `max (${max}) must be greater than or equal to min (${min})`;
-
-    if (min == max && i != min)
-      return `out of bounds; must follow rule: ${min} ≤ i ≤ ${max}`;
-    return null;
+  if (haveMin && haveMax && min > max) {
+    let temp = min;
+    min = max;
+    max = temp;
   }
 
-  // MIN only
-  if (onlyMinIsDefined) {
-    if (i < min)
-      return `out of bounds: must follow rule: i ≥ ${min}`;
-    return null;
-  }
+  if (haveMin && i < min)
+    return `out of bounds; ${i} is not between ${min} and ${max}`
 
-  // MAX only
-  if (onlyMaxIsDefined) {
-    if (i > max)
-      return `out of bounds: must follow rule: i ≤ ${max}`;
-    return null;
-  }
+  if (haveMax && i > max)
+    return `out of bounds; ${i} is not between ${min} and ${max}`
 
-  // None are defined
-  return 'min and max are not valid';
+  return null;
 }
 
 function IsArray(arr) {
