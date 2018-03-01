@@ -45,3 +45,8 @@ class Ping {
     });
   }
 }
+
+//--------------------------------
+// EXPORTS
+
+exports.Ping = Ping;
