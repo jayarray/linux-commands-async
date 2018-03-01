@@ -240,10 +240,10 @@ function Groups(executor) {
   });
 }
 
-function GetGroup(id, executor) {
+function GetGroup(gid, executor) {
   let gidError = IdError(gid);
   if (gidError)
-    return Promise.reject(`Failed to get group: gid ${error}`);
+    return Promise.reject(`Failed to get group: gid ${gidError}`);
 
   if (!executor)
     return Promise.reject(`Failed to get group: Executor is required`);
@@ -406,6 +406,10 @@ function GetProcess(pid, executor) {
 }
 
 function Kill(pid, executor) { // Kills a process
+  let pidError = VALIDATE.IsInteger(pid);
+  if (pidError)
+    return Promise.reject(`Failed to kill process: pid is ${pidError}`);
+
   if (!executor)
     return Promise.reject(`Failed to kill process: Executor is required`);
 
@@ -703,9 +707,9 @@ function ListOpenFilesByUser(user, executor) { // Displays all files opened by u
 }
 
 function UserHasRootPermissions(uid, executor) {
-  let pidError = VALIDATE.IsInteger(pid);
-  if (pidError)
-    return Promise.reject(`Failed to verify if user has root permissions: pid is ${pidError}`);
+  let uidError = VALIDATE.IsInteger(uid);
+  if (uidError)
+    return Promise.reject(`Failed to verify if user has root permissions: pid is ${uidError}`);
 
   if (!executor)
     return Promise.reject(`Failed to verify if user has root permissions: Executor is required`);
