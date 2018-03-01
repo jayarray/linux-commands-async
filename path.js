@@ -4,376 +4,387 @@ let VALIDATE = require('./validate.js');
 //-----------------------------------
 // PATH
 
-class Path {
-  static Exists(path, executor) {
-    let pathError = Error.PathValidator(path);
-    if (pathError)
-      return Promise.reject(`Failed to check if path exists: ${pathError}`);
+function Exists(path, executor) {
+  let pathError = PathValidator(path);
+  if (pathError)
+    return Promise.reject(`Failed to check if path exists: ${pathError}`);
 
-    if (!executor)
-      return Promise.reject(`Failed to check if path exists: Executor is required`);
+  if (!executor)
+    return Promise.reject(`Failed to check if path exists: Executor is required`);
 
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
+    let cmd = `if [ -e ${path} ]; then echo 1; else echo 0; fi`;
+
+    executor.Execute(cmd, []).then(output => {
+      if (output.stderr) {
+        reject(`Failed to check if path exists: ${output.stderr}`);
+        return;
+      }
+
+      let value = parseInt(output.stdout.trim());
+      resolve(value == 1);  // 1 is true, 0 is false
+    }).catch(error => reject(`Failed to check if path exists: ${error}`));
+  });
+}
+
+function ExistsDict(paths, executor) {
+  let pathsError = PathsValidator(paths);
+  if (pathsError)
+    return Promise.reject(`Failed to check if all paths exist: ${pathsError}`);
+
+  if (!executor)
+    return Promise.reject(`Failed to check if all paths exist: Executor is required`);
+
+  return new Promise((resolve, reject) => {
+    let cmdList = [];
+    paths.forEach(path => {
       let cmd = `if [ -e ${path} ]; then echo 1; else echo 0; fi`;
+      cmdList.push(cmd);
+    });
 
+    let cmdStr = cmdList.join('\n');
+    executor.Execute(cmdStr, []).then(output => {
+      if (output.stderr) {
+        reject(`Failed to check if all paths exist: ${output.stderr}`);
+        return;
+      }
+
+      let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
+
+      let existsDict = {};
+      for (let i = 0; i < paths.length; ++i) {
+        let currPath = paths[i];
+        existsDict[currPath] = boolArray[i];
+      }
+      resolve(existsDict);
+    }).catch(error => reject(`Failed to check if all paths exist: ${error}`));
+  });
+}
+
+function AllExist(paths, executor) {
+  let pathsError = PathsValidator(paths);
+  if (pathsError)
+    return Promise.reject(`Failed to check if all paths exist: ${pathsError}`);
+
+  if (!executor)
+    return Promise.reject(`Failed to check if all paths exist: Executor is required`);
+
+  return new Promise((resolve, reject) => {
+    ExistsDict(paths, executor).then(existsDict => {
+      for (let i = 0; i < paths.length; ++i) {
+        let currPath = paths[i];
+        if (!existsDict[currPath]) {
+          resolve(false);
+          return;
+        }
+      }
+      resolve(true);
+    }).catch(error => reject(`Failed to check if all paths exist: ${error}`));
+  });
+}
+
+function DoNotExist(paths, executor) {
+  let pathsError = PathsValidator(paths);
+  if (pathsError)
+    return Promise.reject(`Failed to check which paths do not exist: ${pathsError}`);
+
+  if (!executor)
+    return Promise.reject(`Failed to check which paths do not exist: Executor is required`);
+
+  return new Promise((resolve, reject) => {
+    ExistsDict(paths, executor).then(existsDict => {
+      let nonExistantPaths = [];
+
+      for (let i = 0; i < paths.length; ++i) {
+        let currPath = paths[i];
+        if (!existsDict[currPath])
+          nonExistantPaths.push(currPath);
+      }
+      resolve(nonExistantPaths);
+    }).catch(error => reject(`Failed to check which paths do not exist: ${error}`));
+  });
+}
+
+function IsFile(path, executor) {
+  let pathError = PathValidator(path);
+  if (pathError)
+    return Promise.reject(`Failed to check if path is a file: ${pathError}`);
+
+  if (!executor)
+    return Promise.reject(`Failed to check if path is a file: Executor is required`);
+
+  return new Promise((resolve, reject) => {
+    Exists(path, executor).then(exists => {
+      if (!exists) {
+        reject(`Failed to check if path is a file: Path does not exist: ${path}`);
+        return;
+      }
+
+      let cmd = `if [ -f ${path} ]; then echo 1; else echo 0; fi`;
       executor.Execute(cmd, []).then(output => {
         if (output.stderr) {
-          reject(`Failed to check if path exists: ${output.stderr}`);
+          reject(`Failed to check if remote path is a file: ${output.stderr}`);
           return;
         }
 
         let value = parseInt(output.stdout.trim());
-        resolve(value == 1);  // 1 is true, 0 is false
-      }).catch(error => reject(`Failed to check if path exists: ${error}`));
-    });
-  }
+        resolve(value == 1); // 1 is true, 0 is false
+      }).catch(error => reject(`Failed to check if path is a file: ${error}`));
+    }).catch(error => reject(`Failed to check if path is a file: ${error}`));
+  });
+}
 
-  static ExistsDict(paths, executor) {
-    let pathsError = Error.PathsValidator(paths);
-    if (pathsError)
-      return Promise.reject(`Failed to check if all paths exist: ${pathsError}`);
+function IsFileDict(paths, executor) {
+  let pathsError = PathsValidator(paths);
+  if (pathsError)
+    return Promise.reject(`Failed to check if all paths are files: ${pathsError}`);
 
-    if (!executor)
-      return Promise.reject(`Failed to check if all paths exist: Executor is required`);
+  if (!executor)
+    return Promise.reject(`Failed to check if all paths are files: Executor is required`);
 
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
+    ExistsDict(paths, executor).then(existsDict => {
+
+      // Check for any missing paths
+      let nonExistantPaths = [];
+      paths.forEach(path => {
+        if (!existsDict[path])
+          nonExistantPaths.push(path);
+      });
+
+      // Report any missing paths
+      if (nonExistantPaths.length > 0) {
+        let errorStr = '';
+        if (nonExistantPaths.length == 1)
+          errorStr = `Failed to check if all paths are files: This path does not exist: ${nonExistantPaths[0]}`;
+        else
+          errorStr = `Failed to check if all paths are files: The following (${nonExistantPaths.length}) paths do not exist:\n${nonExistantPaths.join('\n')}`;
+
+        reject(errorStr);
+        return;
+      }
+
       let cmdList = [];
       paths.forEach(path => {
-        let cmd = `if [ -e ${path} ]; then echo 1; else echo 0; fi`;
+        let cmd = `if [ -f ${path} ]; then echo 1; else echo 0; fi`;
         cmdList.push(cmd);
       });
 
       let cmdStr = cmdList.join('\n');
       executor.Execute(cmdStr, []).then(output => {
         if (output.stderr) {
-          reject(`Failed to check if all paths exist: ${output.stderr}`);
+          reject(`Failed to check if all paths are files: ${output.stderr}`);
           return;
         }
 
         let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
 
-        let existsDict = {};
+        let isFileDict = {};
         for (let i = 0; i < paths.length; ++i) {
           let currPath = paths[i];
-          existsDict[currPath] = boolArray[i];
-        }
-        resolve(existsDict);
-      }).catch(error => reject(`Failed to check if all paths exist: ${error}`));
-    });
-  }
-
-  static AllExist(paths, executor) {
-    let pathsError = Error.PathsValidator(paths);
-    if (pathsError)
-      return Promise.reject(`Failed to check if all paths exist: ${pathsError}`);
-
-    if (!executor)
-      return Promise.reject(`Failed to check if all paths exist: Executor is required`);
-
-    return new Promise((resolve, reject) => {
-      Path.ExistsDict(paths, executor).then(existsDict => {
-        for (let i = 0; i < paths.length; ++i) {
-          let currPath = paths[i];
-          if (!existsDict[currPath]) {
-            resolve(false);
-            return;
-          }
-        }
-        resolve(true);
-      }).catch(error => reject(`Failed to check if all paths exist: ${error}`));
-    });
-  }
-
-  static DoNotExist(paths, executor) {
-    let pathsError = Error.PathsValidator(paths);
-    if (pathsError)
-      return Promise.reject(`Failed to check which paths do not exist: ${pathsError}`);
-
-    if (!executor)
-      return Promise.reject(`Failed to check which paths do not exist: Executor is required`);
-
-    return new Promise((resolve, reject) => {
-      Path.ExistsDict(paths, executor).then(existsDict => {
-        let nonExistantPaths = [];
-
-        for (let i = 0; i < paths.length; ++i) {
-          let currPath = paths[i];
-          if (!existsDict[currPath])
-            nonExistantPaths.push(currPath);
-        }
-        resolve(nonExistantPaths);
-      }).catch(error => reject(`Failed to check which paths do not exist: ${error}`));
-    });
-  }
-
-  static IsFile(path, executor) {
-    let pathError = Error.PathValidator(path);
-    if (pathError)
-      return Promise.reject(`Failed to check if path is a file: ${pathError}`);
-
-    if (!executor)
-      return Promise.reject(`Failed to check if path is a file: Executor is required`);
-
-    return new Promise((resolve, reject) => {
-      Path.Exists(path, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to check if path is a file: Path does not exist: ${path}`);
-          return;
+          isFileDict[currPath] = boolArray[i];
         }
 
-        let cmd = `if [ -f ${path} ]; then echo 1; else echo 0; fi`;
-        executor.Execute(cmd, []).then(output => {
-          if (output.stderr) {
-            reject(`Failed to check if remote path is a file: ${output.stderr}`);
-            return;
-          }
-
-          let value = parseInt(output.stdout.trim());
-          resolve(value == 1); // 1 is true, 0 is false
-        }).catch(error => reject(`Failed to check if path is a file: ${error}`));
-      }).catch(error => reject(`Failed to check if path is a file: ${error}`));
-    });
-  }
-
-  static IsFileDict(paths, executor) {
-    let pathsError = Error.PathsValidator(paths);
-    if (pathsError)
-      return Promise.reject(`Failed to check if all paths are files: ${pathsError}`);
-
-    if (!executor)
-      return Promise.reject(`Failed to check if all paths are files: Executor is required`);
-
-    return new Promise((resolve, reject) => {
-      Path.ExistsDict(paths, executor).then(existsDict => {
-
-        // Check for any missing paths
-        let nonExistantPaths = [];
-        paths.forEach(path => {
-          if (!existsDict[path])
-            nonExistantPaths.push(path);
-        });
-
-        // Report any missing paths
-        if (nonExistantPaths.length > 0) {
-          let errorStr = '';
-          if (nonExistantPaths.length == 1)
-            errorStr = `Failed to check if all paths are files: This path does not exist: ${nonExistantPaths[0]}`;
-          else
-            errorStr = `Failed to check if all paths are files: The following (${nonExistantPaths.length}) paths do not exist:\n${nonExistantPaths.join('\n')}`;
-
-          reject(errorStr);
-          return;
-        }
-
-        let cmdList = [];
-        paths.forEach(path => {
-          let cmd = `if [ -f ${path} ]; then echo 1; else echo 0; fi`;
-          cmdList.push(cmd);
-        });
-
-        let cmdStr = cmdList.join('\n');
-        executor.Execute(cmdStr, []).then(output => {
-          if (output.stderr) {
-            reject(`Failed to check if all paths are files: ${output.stderr}`);
-            return;
-          }
-
-          let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
-
-          let isFileDict = {};
-          for (let i = 0; i < paths.length; ++i) {
-            let currPath = paths[i];
-            isFileDict[currPath] = boolArray[i];
-          }
-
-          resolve(isFileDict);
-        }).catch(error => reject(`Failed to check if all paths are files: ${error}`));
+        resolve(isFileDict);
       }).catch(error => reject(`Failed to check if all paths are files: ${error}`));
-    });
-  }
+    }).catch(error => reject(`Failed to check if all paths are files: ${error}`));
+  });
+}
 
-  static AllAreFiles(paths, executor) {
-    let pathsError = Error.PathsValidator(paths);
-    if (pathsError)
-      return Promise.reject(`Failed to check if all paths are files: ${pathsError}`);
+function AllAreFiles(paths, executor) {
+  let pathsError = PathsValidator(paths);
+  if (pathsError)
+    return Promise.reject(`Failed to check if all paths are files: ${pathsError}`);
 
-    if (!executor)
-      return Promise.reject(`Failed to check if all paths are files: Executor is required`);
+  if (!executor)
+    return Promise.reject(`Failed to check if all paths are files: Executor is required`);
 
-    return new Promise((resolve, reject) => {
-      Path.IsFileDict(paths, executor).then(isFileDict => {
-        for (let i = 0; i < paths.length; ++i) {
-          let currPath = paths[i];
-          if (!isFileDict[currPath]) {
-            resolve(false);
-            return;
-          }
+  return new Promise((resolve, reject) => {
+    IsFileDict(paths, executor).then(isFileDict => {
+      for (let i = 0; i < paths.length; ++i) {
+        let currPath = paths[i];
+        if (!isFileDict[currPath]) {
+          resolve(false);
+          return;
         }
-        resolve(true);
-      }).catch(error => reject(`Failed to check if all paths are files: ${error}`));
-    });
-  }
+      }
+      resolve(true);
+    }).catch(error => reject(`Failed to check if all paths are files: ${error}`));
+  });
+}
 
-  static IsDir(path, executor) {
-    let pathError = Error.PathValidator(path);
-    if (pathError)
-      return Promise.reject(`Failed to check if path is a directory: ${pathError}`);
+function IsDir(path, executor) {
+  let pathError = PathValidator(path);
+  if (pathError)
+    return Promise.reject(`Failed to check if path is a directory: ${pathError}`);
 
-    if (!executor)
-      return Promise.reject(`Failed to check if path is a directory: Executor is required`);
+  if (!executor)
+    return Promise.reject(`Failed to check if path is a directory: Executor is required`);
 
-    return new Promise((resolve, reject) => {
-      Path.Exists(path, executor).then(exists => {
-        if (!exists) {
-          reject(`Failed to check if path is a directory: Path does not exist: ${path}`);
+  return new Promise((resolve, reject) => {
+    Exists(path, executor).then(exists => {
+      if (!exists) {
+        reject(`Failed to check if path is a directory: Path does not exist: ${path}`);
+        return;
+      }
+
+      let cmd = `if [ -d ${path} ]; then echo 1; else echo 0; fi`;
+      executor.Execute(cmd, []).then(output => {
+        if (output.stderr) {
+          reject(`Failed to check if path is a directory: ${output.stderr}`);
           return;
         }
 
-        let cmd = `if [ -d ${path} ]; then echo 1; else echo 0; fi`;
-        executor.Execute(cmd, []).then(output => {
-          if (output.stderr) {
-            reject(`Failed to check if path is a directory: ${output.stderr}`);
-            return;
-          }
-
-          let value = parseInt(output.stdout.trim());
-          resolve(value == 1); // 1 is true, 0 is false
-        }).catch(error => reject(`Failed to check if path is a directory: ${error}`));
+        let value = parseInt(output.stdout.trim());
+        resolve(value == 1); // 1 is true, 0 is false
       }).catch(error => reject(`Failed to check if path is a directory: ${error}`));
-    });
-  }
+    }).catch(error => reject(`Failed to check if path is a directory: ${error}`));
+  });
+}
 
-  static IsDirDict(paths, executor) {
-    let pathsError = Error.PathsValidator(paths);
-    if (pathsError)
-      return Promise.reject(`Failed to check if all paths are directories: ${pathsError}`);
+function IsDirDict(paths, executor) {
+  let pathsError = PathsValidator(paths);
+  if (pathsError)
+    return Promise.reject(`Failed to check if all paths are directories: ${pathsError}`);
 
-    if (!executor)
-      return Promise.reject(`Failed to check if all paths are directories: Executor is required`);
+  if (!executor)
+    return Promise.reject(`Failed to check if all paths are directories: Executor is required`);
 
-    return new Promise((resolve, reject) => {
-      Path.ExistsDict(paths, executor).then(existsDict => {
+  return new Promise((resolve, reject) => {
+    ExistsDict(paths, executor).then(existsDict => {
 
-        // Check for any missing paths
-        let nonExistantPaths = [];
-        paths.forEach(path => {
-          if (!existsDict[path])
-            nonExistantPaths.push(path);
-        });
+      // Check for any missing paths
+      let nonExistantPaths = [];
+      paths.forEach(path => {
+        if (!existsDict[path])
+          nonExistantPaths.push(path);
+      });
 
-        // Report any missing paths
-        if (nonExistantPaths.length > 0) {
-          let errorStr = '';
-          if (nonExistantPaths.length == 1)
-            errorStr = `This path does not exist: ${nonExistantPaths[0]}`;
-          else
-            errorStr = `The following (${nonExistantPaths.length}) paths do not exist:\n${nonExistantPaths.join('\n')}`;
+      // Report any missing paths
+      if (nonExistantPaths.length > 0) {
+        let errorStr = '';
+        if (nonExistantPaths.length == 1)
+          errorStr = `This path does not exist: ${nonExistantPaths[0]}`;
+        else
+          errorStr = `The following (${nonExistantPaths.length}) paths do not exist:\n${nonExistantPaths.join('\n')}`;
 
-          reject(errorStr);
+        reject(errorStr);
+        return;
+      }
+
+      let cmdList = [];
+      paths.forEach(path => {
+        let cmd = `if [ -d ${path} ]; then echo 1; else echo 0; fi`;
+        cmdList.push(cmd);
+      });
+
+      let cmdStr = cmdList.join('\n');
+      executor.Execute(cmdStr, []).then(output => {
+        if (output.stderr) {
+          reject(`Failed to check if all paths are directories: ${output.stderr}`);
           return;
         }
 
-        let cmdList = [];
-        paths.forEach(path => {
-          let cmd = `if [ -d ${path} ]; then echo 1; else echo 0; fi`;
-          cmdList.push(cmd);
-        });
+        let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
 
-        let cmdStr = cmdList.join('\n');
-        executor.Execute(cmdStr, []).then(output => {
-          if (output.stderr) {
-            reject(`Failed to check if all paths are directories: ${output.stderr}`);
-            return;
-          }
-
-          let boolArray = output.stdout.trim().split('\n').map(line => parseInt(line.trim()) == 1);
-
-          let isDirDict = {};
-          for (let i = 0; i < paths.length; ++i) {
-            let currPath = paths[i];
-            isDirDict[currPath] = boolArray[i];
-          }
-
-          resolve(isDirDict);
-        }).catch(error => reject(`Failed to check if all paths are directories: ${error}`));
-      }).catch(error => reject(`Failed to check if all paths are directories: ${error}`));
-    });
-  }
-
-  static AllAreDirs(paths, executor) {
-    let pathsError = Error.PathsValidator(paths);
-    if (pathsError)
-      return Promise.reject(`Failed to check if all paths are directories: ${pathsError}`);
-
-    if (!executor)
-      return Promise.reject(`Failed to check if all paths are directories: Executor is required`);
-
-    return new Promise((resolve, reject) => {
-      Path.IsDirDict(paths, executor).then(isDirDict => {
+        let isDirDict = {};
         for (let i = 0; i < paths.length; ++i) {
           let currPath = paths[i];
-          if (!isDirDict[currPath]) {
-            resolve(false);
-            return;
-          }
+          isDirDict[currPath] = boolArray[i];
         }
-        resolve(true);
+
+        resolve(isDirDict);
       }).catch(error => reject(`Failed to check if all paths are directories: ${error}`));
-    });
-  }
+    }).catch(error => reject(`Failed to check if all paths are directories: ${error}`));
+  });
+}
 
-  static Filename(path) {
-    return PATH.basename(path);
-  }
+function AllAreDirs(paths, executor) {
+  let pathsError = PathsValidator(paths);
+  if (pathsError)
+    return Promise.reject(`Failed to check if all paths are directories: ${pathsError}`);
 
-  static Extension(path) {
-    return PATH.extname(path);
-  }
+  if (!executor)
+    return Promise.reject(`Failed to check if all paths are directories: Executor is required`);
 
-  static ParentDirName(path) {
-    return PATH.dirname(path).split(PATH.sep).pop();
-  }
+  return new Promise((resolve, reject) => {
+    IsDirDict(paths, executor).then(isDirDict => {
+      for (let i = 0; i < paths.length; ++i) {
+        let currPath = paths[i];
+        if (!isDirDict[currPath]) {
+          resolve(false);
+          return;
+        }
+      }
+      resolve(true);
+    }).catch(error => reject(`Failed to check if all paths are directories: ${error}`));
+  });
+}
 
-  static ParentDir(path) {
-    return PATH.dirname(path); // Full path to parent dir
-  }
+function Filename(path) {
+  return PATH.basename(path);
+}
 
-  static Escape(path) {
-    return escape(path);
-  }
+function Extension(path) {
+  return PATH.extname(path);
+}
 
-  static ContainsWhitespace(path) {
-    return path.includes(' ');
-  }
+function ParentDirName(path) {
+  return PATH.dirname(path).split(PATH.sep).pop();
+}
+
+function ParentDir(path) {
+  return PATH.dirname(path); // Full path to parent dir
+}
+
+function Escape(path) {
+  return escape(path);
+}
+
+function ContainsWhitespace(path) {
+  return path.includes(' ');
 }
 
 //---------------------------------
 // HELPERS
 
-class Error {
-  static PathValidator(p) {
-    let error = VALIDATE.IsStringInput(p);
-    if (error)
-      return `Path is ${error}`;
-    return null;
-  }
+function PathValidator(p) {
+  let error = VALIDATE.IsStringInput(p);
+  if (error)
+    return `Path is ${error}`;
+  return null;
+}
 
-  static PathsValidator(paths) {
-    let error = VALIDATE.IsArray(paths);
-    if (error)
-      return `paths are ${error}`;
+function PathsValidator(paths) {
+  let error = VALIDATE.IsArray(paths);
+  if (error)
+    return `paths are ${error}`;
 
-    for (let i = 0; i < paths.length; ++i) {
-      let currPath = paths[i];
-      let invalidType = VALIDATE.IsStringInput(currPath);
-      if (invalidType)
-        return `paths contain a path that is ${invalidType}`;
-    }
-    return null;
+  for (let i = 0; i < paths.length; ++i) {
+    let currPath = paths[i];
+    let invalidType = VALIDATE.IsStringInput(currPath);
+    if (invalidType)
+      return `paths contain a path that is ${invalidType}`;
   }
+  return null;
 }
 
 //------------------------------------
 // EXPORTS
 
-exports.Path = Path;
+exports.Exists = Exists;
+exports.ExistsDict = ExistsDict;
+exports.AllExist = AllExist;
+exports.DoNotExist = DoNotExist;
+exports.IsFile = IsFile;
+exports.IsFileDict = IsFileDict;
+exports.AllAreFiles = AllAreFiles;
+exports.IsDir = IsDir;
+exports.IsDirDict = IsDirDict;
+exports.AllAreDirs = AllAreDirs;
+exports.Filename = Filename;
+exports.Extension = Extension;
+exports.ParentDirName = ParentDirName;
+exports.ParentDir = ParentDir;
+exports.Escape = Escape;
+exports.ContainsWhitespace = ContainsWhitespace;
