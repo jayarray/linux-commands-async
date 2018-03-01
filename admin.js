@@ -1,5 +1,5 @@
 let VALIDATE = require('./validate.js');
-let USERINFO = require('./userinfo.js').UserInfo;
+let USERINFO = require('./userinfo.js');
 
 //-----------------------------------
 // HELPERS
