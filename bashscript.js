@@ -10,11 +10,11 @@ function Create(path, content, executor) {
     return Promise.reject(`Failed to create bash script: path is ${pathError}`);
 
   let contentError = VALIDATE.IsStringInput(content);
-  if (error == 'not a string')
-    return Promise.reject(`Failed to create bash script: content is ${error}`);
+  if (contentError == 'null' || contentError == 'undefined' || contentError == 'not a string')
+    return Promise.reject(`Failed to create bash script: content is ${contentError}`);
 
   if (!executor)
-    return Promise.reject(`Failed to create bashscript: Connection is ${executorError}`);
+    return Promise.reject(`Failed to create bashscript: Executor is required`);
 
   return new Promise((resolve, reject) => {
     FILE.Create(path, `#!/bin/bash\n${content}`, executor).then(success => {
@@ -31,11 +31,11 @@ function Execute(path, content, executor) {
     return Promise.reject(`Failed to execute bash script: path is ${pathError}`);
 
   let contentError = VALIDATE.IsStringInput(content);
-  if (error == 'not a string')
-    return Promise.reject(`Failed to execute bash script: content is ${error}`);
+  if (contentError == 'null' || contentError == 'undefined' || contentError == 'not a string')
+    return Promise.reject(`Failed to execute bash script: content is ${contentError}`);
 
   if (!executor)
-    return Promise.reject(`Failed to execute bashscript: Connection is ${executorError}`);
+    return Promise.reject(`Failed to execute bashscript: Executor is required`);
 
   return new Promise((resolve, reject) => {
     Create(path, content, executor).then(success => {
