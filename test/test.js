@@ -91,8 +91,13 @@ mocha.addFile(PATH.join(testBashScriptDir, 'test_bashscript.js')); */
 let testFindDir = PATH.join(testDir, 'find');
 mocha.addFile(PATH.join(testFindDir, 'test_find.js')); */
 
+/*
 let testCompressionDir = PATH.join(testDir, 'compression');
-mocha.addFile(PATH.join(testCompressionDir, 'test_compression.js'));
+mocha.addFile(PATH.join(testCompressionDir, 'test_compression.js'));*/
+
+
+let testValidateDir = PATH.join(testDir, 'validate');
+mocha.addFile(PATH.join(testValidateDir, 'test_validate.js'));
 
 let runner = mocha.run(() => { });
 
@@ -128,4 +133,5 @@ function importTest(name, path) {
 //importTest('directory.js', PATH.join(rootDir, 'directory.js'));
 //importTest('bashscript.js', PATH.join(rootDir, 'bashscript.js'));
 //importTest('find.js', PATH.join(rootDir, 'find.js'));
-importTest('compression.js', PATH.join(rootDir, 'compression.js'));
+//importTest('compression.js', PATH.join(rootDir, 'compression.js'));
+importTest('validate.js', PATH.join(rootDir, 'validate.js'));
