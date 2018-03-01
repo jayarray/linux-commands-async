@@ -16,7 +16,7 @@ function UsingPermString(permStr, paths, isRecursive, executor) {
   if (!executor)
     return Promise.reject(`Failed to change permissions: Executor is required`);
 
-  let permsObj = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(permStr.trim());
+  let permsObj = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(permStr.trim());
   if (permsObj.error)
     return Promise.reject(`Failed to change permissions: ${permsObj.error}`);
 
@@ -51,7 +51,7 @@ function UsingOctalString(octalStr, paths, isRecursive, executor) {
   if (!executor)
     return Promise.reject(`Failed to change permissions: Executor is required`);
 
-  let permsObj = PERMISSIONS.Permissions.CreatePermissionsObjectUsingOctalString(octalStr.trim());
+  let permsObj = PERMISSIONS.CreatePermissionsObjectUsingOctalString(octalStr.trim());
   if (permsObj.error)
     return Promise.reject(`Failed to change permissions: ${permsObj.error}`);
 
