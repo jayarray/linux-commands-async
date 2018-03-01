@@ -32,17 +32,17 @@ function IsNumber(n) {
   return null;
 }
 
-function IsInteger(i) {
-  let error = IsInstance(i);
+function IsInteger(n) {
+  let error = IsInstance(n);
   if (error)
     return error;
 
-  if (!Number.isInteger(i))
+  if (!Number.isInteger(n))
     return `not an integer`;
   return null;
 }
 
-function IsIntegerInRange(i, min, max) {
+function IsIntegerInRange(n, min, max) {
   let haveMin = IsInteger(min) == null;
   let haveMax = IsInteger(max) == null;
 
@@ -52,21 +52,21 @@ function IsIntegerInRange(i, min, max) {
     max = temp;
   }
 
-  if (haveMin && i < min)
-    return `out of bounds; ${i} is not between ${min} and ${max}`
+  if (haveMin && n < min)
+    return `out of bounds; ${n} is not between ${min} and ${max}`
 
-  if (haveMax && i > max)
-    return `out of bounds; ${i} is not between ${min} and ${max}`
+  if (haveMax && n > max)
+    return `out of bounds; ${n} is not between ${min} and ${max}`
 
   return null;
 }
 
-function IsArray(arr) {
-  let error = IsInstance(arr);
+function IsArray(o) {
+  let error = IsInstance(o);
   if (error)
     return error;
 
-  if (!Array.isArray(arr))
+  if (!Array.isArray(o))
     return 'not an array';
   return null;
 }
