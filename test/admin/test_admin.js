@@ -1,140 +1,271 @@
 let EXPECT = require('chai').expect;
 
-let _path = require('path');
-let rootDir = _path.join(__dirname, '..', '..');
+let PATH = require('path');
+let rootDir = PATH.join(__dirname, '..', '..');
 
-let adminJs = _path.join(rootDir, 'admin.js');
-let ADMIN = require(adminJs).Admin;
+let adminJs = PATH.join(rootDir, 'admin.js');
+let ADMIN = require(adminJs);
+
+let commandJs = PATH.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
 
 //------------------------------------------
 
 describe('*** admin.js ***', () => {
-  describe('Admin', () => {
-    describe('Groups()', () => {
-      it('Returns an array of objects.', () => {
-        ADMIN.Groups().then(groups => {
-          let isValid = Array.isArray(groups) && groups.length >= 1;
-          EXPECT(isValid).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+  let executor = COMMAND.LOCAL;
+
+  describe('Groups(executor)', () => {
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.Groups(null).then(groups => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('GroupExists(gid)', () => {
-      it('Returns error if gid is invalid.', () => {
-        ADMIN.GroupExists(null).then(exists => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns an array of objects if executor is valid.', () => {
+      ADMIN.Groups(executor).then(groups => {
+        let isValid = Array.isArray(groups) && groups.length >= 1;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns boolean if gid is valid.', () => {
-        ADMIN.GroupExists('root').then(exists => {
-          let isBoolean = exists === true || exists === false;
-          EXPECT(isBoolean).to.equal(true);
-        })
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+  describe('GetGroup(gid, executor)', () => {
+    let gid = 0;
+
+    it('Returns error if gid is invalid.', () => {
+      ADMIN.GetGroup(null, executor).then(group => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('GetGroup(id)', () => {
-      it('Returns error if id is invalid.', () => {
-        ADMIN.GetGroup(null).then(group => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns obj if id is valid.', () => {
-        ADMIN.GetGroup('root').then(group => EXPECT(group).to.not.equal(null))
-          .catch(error => EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.GetGroup(gid, null).then(group => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('Users()', () => {
-      it('Returns an array of objects.', () => {
-        ADMIN.Users().then(users => {
-          let isValid = Array.isArray(users) && users.length >= 1;
-          EXPECT(isValid).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns obj if gid and executor are valid.', () => {
+      ADMIN.GetGroup(gid, executor).then(group => EXPECT(group).to.not.equal(null))
+        .catch(error => EXPECT(false));
+    });
+  });
+
+  describe('Users(executor)', () => {
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.Users(null).then(users => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('UserExists(uid)', () => {
-      it('Returns error if uid is invalid.', () => {
-        ADMIN.UserExists(null).then(exists => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns an array of objects if executor is valid.', () => {
+      ADMIN.Users(executor).then(users => {
+        let isValid = Array.isArray(users) && users.length >= 1;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns boolean if gid is valid.', () => {
-        ADMIN.UserExists('root').then(exists => {
-          let isBoolean = exists === true || exists === false;
-          EXPECT(isBoolean).to.equal(true);
-        })
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+  describe('GetUser(uid, executor)', () => {
+    let uid = 0;
+
+    it('Returns error if uid is invalid.', () => {
+      ADMIN.GetUser(null, executor).then(user => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('GetUser(id)', () => {
-      it('Returns error if id is invalid.', () => {
-        ADMIN.GetUser(null).then(user => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns obj if id is valid.', () => {
-        ADMIN.GetUser('root').then(user => EXPECT(user).to.not.equal(null))
-          .catch(error => EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.GetUser(uid, null).then(user => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('Uptime()', () => {
-      it('Returns an object.', () => {
-        ADMIN.Uptime().then(obj => EXPECT(obj).to.not.equal(null))
-          .catch(error => EXPECT(false));
-      });
+    it('Returns obj if uid and executor are valid.', () => {
+      ADMIN.GetUser(uid, executor).then(user => EXPECT(group).to.not.equal(null))
+        .catch(error => EXPECT(false));
+    });
+  });
+
+  describe('Uptime(executor)', () => {
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.Uptime(null).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('Processes()', () => {
-      it('Returns an array of objects.', () => {
-        ADMIN.Processes().then(obj => {
-          let isValid = Array.isArray(obj.processes) && obj.processes.length >= 1;
-          EXPECT(isValid).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns an object if executor is valid.', () => {
+      ADMIN.Uptime(executor).then(o => EXPECT(o).to.not.equal(null))
+        .catch(error => EXPECT(false));
+    });
+  });
+
+  describe('Processes(executor)', () => {
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.Processes(null).then(arr => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('Kill(pid)', () => {
-      it('Returns an error if pid is not defined.', () => {
-        ADMIN.Kill(null).then(name => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns an array of objects if executor is valid.', () => {
+      ADMIN.Processes(executor).then(arr => EXPECT(o).to.not.equal(null))
+        .catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns an error if pid is not valid integer.', () => {
-        ADMIN.Kill(-100).then(name => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+  describe('GetProcess(pid, executor)', () => {
+    let pid = 0;
+
+    it('Returns error if pid is invalid.', () => {
+      ADMIN.GetProcess(null, executor).then(user => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('WhoAmI()', () => {
-      it('Returns username as a string.', () => {
-        ADMIN.WhoAmI().then(name => {
-          let isValid = name && typeof name == 'string';
-          EXPECT(isValid).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.GetProcess(pid, null).then(user => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('MemoryCheck()', () => {
-      it('Returns an array of objects.', () => {
-        ADMIN.MemoryCheck().then(objArray => {
-          let isValid = Array.isArray(objArray) && objArray.length >= 2;
-          EXPECT(isValid).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns obj if pid and executor are valid.', () => {
+      ADMIN.GetProcess(pid, executor).then(user => EXPECT(group).to.not.equal(null))
+        .catch(error => EXPECT(false));
+    });
+  });
+
+  describe('Kill(pid, executor)', () => {
+    let pid = 0;
+
+    it('Returns error if pid is invalid.', () => {
+      ADMIN.Kill(null, executor).then(user => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('LoggedIn()', () => {
-      it('Returns an array of objects.', () => {
-        ADMIN.LoggedIn().then(objArray => {
-          let isValid = Array.isArray(objArray) && objArray.length >= 0;
-          EXPECT(isValid).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.Kill(pid, null).then(user => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+  });
+
+  describe('MemoryCheck(executor)', () => {
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.MemoryCheck(null).then(arr => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an array of objects if executor is valid.', () => {
+      ADMIN.MemoryCheck(executor).then(arr => {
+        let isValid = Array.isArray(arr) && arr.length >= 1;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('TopProcesses(executor)', () => {
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.TopProcesses(null).then(arr => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an array of objects if executor is valid.', () => {
+      ADMIN.TopProcesses(executor).then(arr => {
+        let isValid = Array.isArray(arr) && arr.length >= 1;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('WhoIsLoggedIn(executor)', () => {
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.WhoIsLoggedIn(null).then(arr => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an array of objects if executor is valid.', () => {
+      ADMIN.WhoIsLoggedIn(executor).then(arr => {
+        let isValid = Array.isArray(arr) && arr.length >= 1;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('ListOpenFilesByUser(user, executor)', () => {
+    let user = 'root';
+
+    it('Returns error if user is invalid.', () => {
+      ADMIN.ListOpenFilesByUser(null, executor).then(arr => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.ListOpenFilesByUser(user, null).then(arr => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an array of objects if user and executor are valid.', () => {
+      ADMIN.ListOpenFilesByUser(user, executor).then(arr => {
+        let isValid = Array.isArray(arr) && arr.length >= 1;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('UserHasRootPermissions(uid, executor)', () => {
+    let uid = 0;
+
+    it('Returns error if uid is invalid.', () => {
+      ADMIN.UserHasRootPermissions(null, executor).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.UserHasRootPermissions(uid, null).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns boolean if uid and executor are valid.', () => {
+      ADMIN.UserHasRootPermissions(uid, executor).then(o => {
+        let isValid = o === true || o === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('UserCanChangeGroupOwnership(uid, desiredGid, executor)', () => {
+    let uid = 0;
+    let desiredGid = 1;
+
+    it('Returns error if uid is invalid.', () => {
+      ADMIN.UserCanChangeGroupOwnership(null, desiredGid, executor).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if desiredGid is invalid.', () => {
+      ADMIN.UserCanChangeGroupOwnership(uid, null, executor).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.UserCanChangeGroupOwnership(uid, desiredGid, null).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns boolean if uid, desiredGid, and executor are valid.', () => {
+      ADMIN.UserCanChangeGroupOwnership(uid, desiredGid, executor).then(o => {
+        let isValid = o === true || o === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('UserCanChangeUserOwnership(uid, executor)', () => {
+    let uid = 0;
+
+    it('Returns error if uid is invalid.', () => {
+      ADMIN.UserCanChangeUserOwnership(null, executor).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      ADMIN.UserCanChangeUserOwnership(uid, null).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns boolean if uid and executor are valid.', () => {
+      ADMIN.UserCanChangeUserOwnership(uid, executor).then(o => {
+        let isValid = o === true || o === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
     });
   });
 });
