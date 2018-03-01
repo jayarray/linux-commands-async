@@ -13,7 +13,6 @@ describe('*** command.js ***', () => {
   let args = [1];
   let cmdStr = 'echo 1';
 
-
   describe('LocalCommand', () => {
     describe('Execute(cmd, args)', () => {
       it(`Returns error if cmd is null.`, () => {
