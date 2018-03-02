@@ -202,7 +202,7 @@ function Manual(args, executor) {
 }
 
 function ValidClassChars() {
-  return PERMISSIONS.ValidClassChars();
+  return ['u', 'g', 'o'];
 }
 
 function ValidTypeChars() {
