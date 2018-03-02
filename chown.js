@@ -117,7 +117,7 @@ function Manual(args, executor) { // newOwner can be string or integer
 // ERROR
 
 function NewIdValidator(id) {
-  let error = ERROR.NullOrUndefined(id);
+  let error = VALIDATE.IsInstance(id);
   if (error)
     return `is ${error}`;
 
@@ -128,13 +128,13 @@ function NewIdValidator(id) {
 }
 
 function PathsValidator(paths) {
-  let error = ERROR.ArrayValidator(paths);
+  let error = VALIDATE.IsArray(paths);
   if (error)
     return `Paths are ${error}`;
 
   for (let i = 0; i < paths.length; ++i) {
     let currPath = paths[i];
-    let pathIsValid = ERROR.StringValidator(currPath) == null;
+    let pathIsValid = VALIDATE.IsStringInput(currPath) == null;
 
     if (!pathIsValid)
       return `All paths must be string type`;
@@ -144,13 +144,13 @@ function PathsValidator(paths) {
 }
 
 function ArgsValidator(args) {
-  let error = ERROR.ArrayValidator(args);
+  let error = VALIDATE.IsArray(args);
   if (error)
     return `arguments are ${error}`;
 
   for (let i = 0; i < args.length; ++i) {
     let currArg = args[i];
-    let argIsValidString = ERROR.StringValidator(currArg) == null;
+    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
     let argIsValidNumber = !isNaN(currArg);
 
     if (!argIsValidString && !argIsValidNumber)
