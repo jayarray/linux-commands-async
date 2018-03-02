@@ -183,14 +183,14 @@ function SetPermissions(classes, types, paths, isRecursive, executor) {
 }
 
 function Manual(args, executor) {
+  let argsError = ArgsValidator(args);
+  if (argsError)
+    return Promise.reject(`Failed to execute chmod: ${argsError}`);
+
+  if (!executor)
+    return Promise.reject(`Failed to execute chmod: Executor is required`);
+
   return new Promise((resolve, reject) => {
-    let argsError = ArgsValidator(args);
-    if (argsError)
-      return Promise.reject(`Failed to execute chmod: ${argsError}`);
-
-    if (!executor)
-      return Promise.reject(`Failed to execute chmod: Executor is required`);
-
     executor.Execute('chmod', args).then(output => {
       if (output.stderr) {
         reject(`Failed to execute chmod: ${output.stderr} `);
