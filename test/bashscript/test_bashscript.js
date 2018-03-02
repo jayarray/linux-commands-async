@@ -36,6 +36,14 @@ describe('*** bashscript.js ***', () => {
         BASHSCRIPT.Create(filepath, content, null).then(success => EXPECT(false))
           .catch(error => EXPECT(error).to.not.equal(null));
       });
+
+      it('Creates a file.', () => {
+        BASHSCRIPT.Create(filepath, content, executor).then(success => {
+          File.Remove(filepath, executor).then(success => {
+            EXPECT(true);
+          }).catch(error => EXPECT(false));
+        }).catch(error => EXPECT(false));
+      });
     });
 
 
@@ -53,6 +61,11 @@ describe('*** bashscript.js ***', () => {
       it('Returns error if executor is invalid.', () => {
         BASHSCRIPT.Execute(filepath, content, null).then(success => EXPECT(false))
           .catch(error => EXPECT(error).to.not.equal(null));
+      });
+
+      it('Creates, executes, and removes file.', () => {
+        BASHSCRIPT.Execute(filepath, content, executor).then(success => EXPECT(true))
+          .catch(error => EXPECT(false));
       });
     });
   });
