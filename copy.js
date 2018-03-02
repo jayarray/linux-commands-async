@@ -26,7 +26,7 @@ function File(src, dest, executor) {
   });
 }
 
-function Direcory(src, dest, executor) {
+function Directory(src, dest, executor) {
   let srcError = VALIDATE.IsStringInput(src);
   if (srcError)
     return Promise.reject(`Failed to copy directory: Source is ${srcError}`);
@@ -53,4 +53,4 @@ function Direcory(src, dest, executor) {
 // EXPORTS
 
 exports.File = File;
-exports.Direcory = Direcory;
+exports.Directory = Directory;
