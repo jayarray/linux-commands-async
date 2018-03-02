@@ -1,64 +1,165 @@
 let EXPECT = require('chai').expect;
 
-let _path = require('path');
-let rootDir = _path.join(__dirname, '..', '..');
+let PATH = require('path');
+let rootDir = PATH.join(__dirname, '..', '..');
 
-let chownJs = _path.join(rootDir, 'chown.js');
-let CHOWN = require(chownJs).Chown;
+let chownJs = PATH.join(rootDir, 'chown.js');
+let CHOWN = require(chownJs);
 
-let mkdirJs = _path.join(rootDir, 'mkdir.js');
-let MKDIR = require(mkdirJs).Mkdir;
+let mkdirJs = PATH.join(rootDir, 'mkdir.js');
+let MKDIR = require(mkdirJs);
 
-let userinfoJs = _path.join(rootDir, 'userinfo.js');
-let USERINFO = require(userinfoJs).UserInfo;
+let directoryJs = PATH.join(rootDir, 'directory.js');
+let DIRECTORY = require(directoryJs);
 
-let adminJs = _path.join(rootDir, 'admin.js');
-let ADMIN = require(adminJs).Admin;
+let adminJs = PATH.join(rootDir, 'admin.js');
+let ADMIN = require(adminJs);
 
-let removeJs = _path.join(rootDir, 'remove.js');
-let REMOVE = require(removeJs).Remove;
+let userinfoJs = PATH.join(rootDir, 'userinfo.js');
+let USERINFO = require(userinfoJs);
+
+let removeJs = PATH.join(rootDir, 'remove.js');
+let REMOVE = require(removeJs);
+
+let commandJs = PATH.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
+
+let permissionsJs = PATH.join(rootDir, 'permissions.js');
+let PERMISSIONS = require(permissionsJs);
 
 //------------------------------------------
 
 describe('*** chown.js ***', () => {
-  describe('Chown', () => {
-    describe('Chown(path, uid, gid)', () => {
-      let testDirPath = _path.join(rootDir, 'delete_this_test_dir');
+  let testDirPath = PATH.join(rootDir, 'delete_this_test_dir');
+  let paths = [testDirPath];
+  let newOwnerId = 1;
+  let newGroupId = 1;
+  let isRecursive = false;
+  let executor = COMMAND.LOCAL;
 
-      it('Returns error if path is invalid.', () => {
-        CHOWN.Chown(undefined, 1000, 1000).then(success => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+  describe('ChangeOwner(paths, newOwnerId, isRecursive, executor)', () => {
+    it('Returns error if paths is invalid.', () => {
+      CHOWN.ChangeOwner(null, newOwnerId, isRecursive, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it('Returns error if path does not exist.', () => {
-        CHOWN.Chown(testDirPath, 1000, 1000).then(success => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns error if newOwnerId is invalid.', () => {
+      CHOWN.ChangeOwner(paths, null, isRecursive, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it('Returns error if uid is invalid.', () => {
-        CHOWN.Chown(testDirPath, null, 1000).then(success => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns error if executor is invalid.', () => {
+      CHOWN.ChangeOwner(paths, newOwnerId, isRecursive, null).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it('Returns error if gid is invalid.', () => {
-        CHOWN.Chown(testDirPath, 1000, null).then(success => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Actually changes permissions.', () => {
-        MKDIR.Mkdirp(testDirPath).then(success => {
-          USERINFO.CurrentUser().then(info => {
-            let uid = info.uid;
-            let gid = info.gid;
-            let otherGid = info.groups.filter(group => group.gid != gid)[0].gid;
-
-            CHOWN.Chown(testDirPath, uid, otherGid).then(success => {
-              REMOVE.Directory(testDirPath).then(success => EXPECT(true))
-                .catch(error => EXPECT(false));
+    it('Actually changes owner.', () => {
+      USERINFO.CurrentUser(executor).then(info => {
+        let username = info.username;
+        CHOWN.ChangeOwner(paths, username, isRecursive, executor).then(success => {
+          PERMISSION.Permissions(testDirPath, executor).then(permsObj => {
+            let successful = username == permsObj.owner;
+            DIRECTORY.Remove(testDirPath, executor).then(success => {
+              EXPECT(successful).to.equal(true);
             }).catch(error => EXPECT(false));
           }).catch(error => EXPECT(false));
         }).catch(error => EXPECT(false));
-      });
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('ChangeGroup(paths, newGroupId, isRecursive, executor)', () => {
+    it('Returns error if paths is invalid.', () => {
+      CHOWN.ChangeOwner(null, newGroupId, isRecursive, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if newGroupId is invalid.', () => {
+      CHOWN.ChangeOwner(paths, null, isRecursive, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      CHOWN.ChangeOwner(paths, newGroupId, isRecursive, null).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Actually changes group.', () => {
+      USERINFO.CurrentUser(executor).then(info => {
+        let groupId = info.groups[0].groupName;
+        CHOWN.ChangeGroup(paths, groupId, isRecursive, executor).then(success => {
+          PERMISSION.Permissions(testDirPath, executor).then(permsObj => {
+            let successful = groupId == permsObj.group;
+            DIRECTORY.Remove(testDirPath, executor).then(success => {
+              EXPECT(successful).to.equal(true);
+            }).catch(error => EXPECT(false));
+          }).catch(error => EXPECT(false));
+        }).catch(error => EXPECT(false));
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executor)', () => {
+    it('Returns error if paths is invalid.', () => {
+      CHOWN.ChangeOwner(null, newOwnerId, newGroupId, isRecursive, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if newOwnerId is invalid.', () => {
+      CHOWN.ChangeOwner(paths, null, newGroupId, isRecursive, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if newGroupId is invalid.', () => {
+      CHOWN.ChangeOwner(paths, newOwnerId, null, isRecursive, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      CHOWN.ChangeOwner(paths, newOwnerId, newGroupId, isRecursive, null).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Actually changes owner and group.', () => {
+      USERINFO.CurrentUser(executor).then(info => {
+        let groupName = info.groups[0].groupName;
+        let username = info.username;
+        CHOWN.ChangeGroup(paths, username, groupId, isRecursive, executor).then(success => {
+          PERMISSION.Permissions(testDirPath, executor).then(permsObj => {
+            let successful = groupName == permsObj.group && username == permsObj.owner;
+            DIRECTORY.Remove(testDirPath, executor).then(success => {
+              EXPECT(successful).to.equal(true);
+            }).catch(error => EXPECT(false));
+          }).catch(error => EXPECT(false));
+        }).catch(error => EXPECT(false));
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('Manual(args, executor)', () => {
+    it('Returns error if args is invalid.', () => {
+      CHOWN.ChangeOwner(null, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      CHOWN.ChangeOwner(paths, newOwnerId, newGroupId, isRecursive, null).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Actually changes owner and group.', () => {
+      USERINFO.CurrentUser(executor).then(info => {
+        let username = info.username;
+        let args = [username, testDirPath];
+        CHOWN.Manual(args, executor).then(success => {
+          PERMISSION.Permissions(testDirPath, executor).then(permsObj => {
+            let successful = username == permsObj.owner;
+            DIRECTORY.Remove(testDirPath, executor).then(success => {
+              EXPECT(successful).to.equal(true);
+            }).catch(error => EXPECT(false));
+          }).catch(error => EXPECT(false));
+        }).catch(error => EXPECT(false));
+      }).catch(error => EXPECT(false));
     });
   });
 });
