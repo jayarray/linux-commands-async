@@ -20,7 +20,7 @@ function Create(path, executor) {
     return Promise.reject(`Failed to create directory: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    MKDIR.Mkdirp(path, executor).then(success => {
+    MKDIR.Makedirectory(path, executor).then(success => {
       resolve(true);
     }).catch(error => reject(`Failed tp create directory: ${error}`));
   });
