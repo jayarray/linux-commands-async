@@ -2,7 +2,7 @@ let VALIDATE = require('./validate.js');
 
 //---------------------------------------
 
-function CurrentHost(executor) {
+function Info(executor) {
   if (!executor) {
     return Promise.reject(`Failed to get host info: Executor is required`);
   }
@@ -27,3 +27,8 @@ function CurrentHost(executor) {
     }).catch(error => `Failed to get host info: ${error}`);
   });
 }
+
+//-------------------------------
+// EXPORTS
+
+exports.Info = Info;
