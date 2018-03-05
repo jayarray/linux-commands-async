@@ -6,175 +6,214 @@ let rootDir = _path.join(__dirname, '..', '..');
 let pathJs = _path.join(rootDir, 'path.js');
 let PATH = require(pathJs);
 
+let commandJs = _path.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
+
 //------------------------------------------
 
 describe('*** path.js ***', () => {
-  describe('Error', () => {
-    describe('PathError(p)', () => {
-      it(`Returns 'undefined' if p is undefined.`, () => {
-        EXPECT(PATH.Error.PathError(undefined)).to.equal('Path is undefined');
-      });
+  let executor = COMMAND.LOCAL;
+  let invalidPath = '';
+  let validPath = rootDir;
+  let validValues = ['f', 'd', 'dne', 'invalid'];
 
-      it(`Returns 'null' if p is null.`, () => {
-        EXPECT(PATH.Error.PathError(null)).to.equal('Path is null');
-      });
+  describe('IsFileOrDirectoryDict(paths, executor)', () => {
+    it('Returns error if paths is invalid.', () => {
+      PATH.IsFileOrDirectoryDict(null, executor).then(dict => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it(`Returns 'not a string' if p is not string type.`, () => {
-        EXPECT(PATH.Error.PathError(1)).to.equal('Path is not a string');
-        EXPECT(PATH.Error.PathError([])).to.equal('Path is not a string');
-        EXPECT(PATH.Error.PathError(true)).to.equal('Path is not a string');
-      });
+    it('Returns error if executor is invalid.', () => {
+      PATH.IsFileOrDirectoryDict([validPath], null).then(dict => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it(`Returns 'empty' if p is empty.`, () => {
-        EXPECT(PATH.Error.PathError('')).to.equal('Path is empty');
-      });
-
-      it(`Returns 'whitespace' if p is all whitespace.`, () => {
-        EXPECT(PATH.Error.PathError(' ')).to.equal('Path is whitespace');
-        EXPECT(PATH.Error.PathError('\t')).to.equal('Path is whitespace');
-        EXPECT(PATH.Error.PathError('\n  \t   ')).to.equal('Path is whitespace');
-      });
-
-      it(`Returns null if p is valid.`, () => {
-        EXPECT(PATH.Error.PathError('hai')).to.equal(null);
-        EXPECT(PATH.Error.PathError('   hai')).to.equal(null);
-        EXPECT(PATH.Error.PathError('hai \t\n\t')).to.equal(null);
-      });
+    it('Returns an object (dict).', () => {
+      PATH.IsFileOrDirectoryDict([validPath], executor).then(dict => {
+        let isValid = validValues.includes(dict[validPath]);
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
     });
   });
 
-  describe('Path', () => {
-    let invalidPath = '';
-    let validPath = '/path/to/file.txt';
-
-    describe('Exists(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        PATH.Path.Exists(invalidPath).then(o => EXPECT(false))
-          .catch(error => {
-            EXPECT(error).to.equal(`Path is empty`);
-          });
-      });
-
-      it('Returns boolean value if path is valid.', () => {
-        PATH.Path.Exists(validPath).then(o => EXPECT(true))
-          .catch(error => EXPECT(false));
-      });
+  describe('IsFileOrDir(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      PATH.IsFileOrDir(invalidPath, executor).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('IsFile(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        PATH.Path.IsFile(invalidPath).then(o => EXPECT(false))
-          .catch(error => {
-            EXPECT(error).to.equal(`Path is empty`);
-          });
-      });
+    it('Returns error if executor is invalid.', () => {
+      PATH.IsFileOrDir(validPath, null).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('IsDir(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        PATH.Path.IsDir(invalidPath).then(o => EXPECT(false))
-          .catch(error => {
-            EXPECT(error).to.equal(`Path is empty`);
-          });
-      });
+    it('Returns a string.', () => {
+      PATH.IsFileOrDir(validPath, executor).then(o => {
+        let isValid = validValues.includes(o);
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('Exists(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      PATH.Exists(invalidPath, executor).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('Filename(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        let o = PATH.Path.Filename(invalidPath);
-        if (o.error)
-          EXPECT(o.error).to.equal(`Path is empty`);
-        EXPECT(false);
-      });
-
-      it('Returns string if path is valid.', () => {
-        let o = PATH.Path.Filename(validPath);
-        if (o.error)
-          EXPECT(false);
-        EXPECT(o.name).to.equal('file.txt');
-      });
+    it('Returns error if executor is invalid.', () => {
+      PATH.Exists(validPath, null).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('Extension(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        let o = PATH.Path.Extension(invalidPath);
-        if (o.error)
-          EXPECT(o.error).to.equal(`Path is empty`);
-        EXPECT(false);
-      });
+    it('Returns boolean value if path is valid.', () => {
+      PATH.Exists(validPath, executor).then(o => {
+        let isValid = o === true || o === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns string if path is valid.', () => {
-        let o = PATH.Path.Extension(validPath);
-        if (o.error)
-          EXPECT(false);
-        EXPECT(o.extension).to.equal('.txt');
-      });
+  describe('ExistsDict(paths, executor)', () => {
+    it('Returns error if paths is invalid.', () => {
+      PATH.ExistsDict(null, executor).then(dict => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('ParentDirName(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        let invalidType = PATH.Error.PathError(invalidPath);
-        let o = PATH.Path.ParentDirName(invalidPath);
-        if (o.error)
-          EXPECT(o.error).to.equal(`Path is empty`);
-        EXPECT(false);
-      });
-
-      it('Returns string if path is valid.', () => {
-        let o = PATH.Path.ParentDirName(validPath);
-        if (o.error)
-          EXPECT(false);
-        EXPECT(o.name).to.equal('to');
-      });
+    it('Returns error if executor is invalid.', () => {
+      PATH.ExistsDict([validPath], null).then(dict => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('ParentDir(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        let invalidType = PATH.Error.PathError(invalidPath);
-        let o = PATH.Path.ParentDir(invalidPath);
-        if (o.error)
-          EXPECT(o.error).to.equal(`Path is empty`);
-        EXPECT(false);
-      });
+    it('Returns boolean value if path is valid.', () => {
+      PATH.ExistsDict([validPath], executor).then(dict => {
+        let isValid = dict[validPath] === true || dict[validPath] === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns string if path is valid.', () => {
-        let o = PATH.Path.ParentDir(validPath);
-        if (o.error)
-          EXPECT(false);
-        EXPECT(o.dir).to.equal('/path/to');
-      });
+  describe('IsFile(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      PATH.IsFile(invalidPath, executor).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('Escape(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        let o = PATH.Path.Escape(invalidPath);
-        if (o.error)
-          EXPECT(o.error).to.equal(`Path is empty`);
-        EXPECT(false);
-      });
-
-      it('Returns string if path is valid.', () => {
-        let o = PATH.Path.Escape(invalidPath);
-        if (o.error)
-          EXPECT(false);
-        EXPECT(true);
-      });
+    it('Returns error if executor is invalid.', () => {
+      PATH.IsFile(validPath, null).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('ContainsWhitespace(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        let o = PATH.Path.ContainsWhitespace(invalidPath);
-        if (o.error)
-          EXPECT(o.error).to.equal(`Path is empty`);
-        EXPECT(false);
-      });
+    it('Returns boolean value if path is valid.', () => {
+      PATH.IsFile(validPath, executor).then(o => {
+        let isValid = o === true || o === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns boolean if path is valid.', () => {
-        let o = PATH.Path.ContainsWhitespace(validPath);
-        if (o.error)
-          EXPECT(false);
-        EXPECT(true);
-      });
+  describe('IsFileDict(paths, executor)', () => {
+    it('Returns error if paths is invalid.', () => {
+      PATH.IsFileDict(null, executor).then(dict => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      PATH.IsFileDict([validPath], null).then(dict => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns boolean value if path is valid.', () => {
+      PATH.IsFileDict([validPath], executor).then(dict => {
+        let isValid = dict[validPath] === true || dict[validPath] === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('IsDir(path)', () => {
+    it('Returns error if path is invalid.', () => {
+      PATH.IsDir(invalidPath, executor).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      PATH.IsDir(validPath, null).then(o => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns boolean value if path is valid.', () => {
+      PATH.IsDir(validPath, executor).then(o => {
+        let isValid = o === true || o === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('IsDirDict(paths, executor)', () => {
+    it('Returns error if paths is invalid.', () => {
+      PATH.IsDirDict(null, executor).then(dict => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      PATH.IsDirDict([validPath], null).then(dict => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns boolean value if path is valid.', () => {
+      PATH.IsDirDict([validPath], executor).then(dict => {
+        let isValid = dict[validPath] === true || dict[validPath] === false;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('Filename(path)', () => {
+    it('Returns string if path is valid.', () => {
+      let s = PATH.Filename(validPath);
+      let isValid = s != null && s !== undefined;
+      EXPECT(isValid).to.equal(true);
+    });
+  });
+
+  describe('Extension(path)', () => {
+    it('Returns string if path is valid.', () => {
+      let s = PATH.Extension(validPath);
+      let isValid = s != null && s !== undefined;
+      EXPECT(isValid).to.equal(true);
+    });
+  });
+
+  describe('ParentDirName(path)', () => {
+    it('Returns string if path is valid.', () => {
+      let s = PATH.ParentDirName(validPath);
+      let isValid = s != null && s !== undefined;
+      EXPECT(isValid).to.equal(true);
+    });
+  });
+
+  describe('ParentDir(path)', () => {
+    it('Returns string if path is valid.', () => {
+      let s = PATH.ParentDir(validPath);
+      let isValid = s != null && s !== undefined;
+      EXPECT(isValid).to.equal(true);
+    });
+  });
+
+  describe('Escape(path)', () => {
+    it('Returns string if path is valid.', () => {
+      let s = PATH.Escape(invalidPath);
+      let isValid = s != null && s !== undefined;
+      EXPECT(isValid).to.equal(true);
+    });
+  });
+
+  describe('ContainsWhitespace(path)', () => {
+    it('Returns boolean if path is valid.', () => {
+      let s = PATH.ContainsWhitespace(validPath);
+      let isValid = s != null && s !== undefined;
+      EXPECT(isValid).to.equal(true);
     });
   });
 });
