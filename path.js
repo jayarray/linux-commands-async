@@ -321,6 +321,77 @@ function AllAreDirs(paths, executor) {
   });
 }
 
+function IsFileOrDir(path, executor) {
+  let pathError = PathValidator(path);
+  if (pathError)
+    return Promise.reject(`Failed to determine if path is file or directory: ${pathError}`);
+
+  if (!executor)
+    return Promise.reject(`Failed to determine if path is file or directory: Executor is required`);
+
+  return new Promise((resolve, reject) => {
+    let cmd = `if [ -e ${path} ]; then`;
+    cmd += ` if [ -d ${path} ]; then echo "d";`;
+    cmd += ` else`;
+    cmd += ` if [ -f ${path} ]; then  echo "f";`;
+    cmd += ` else echo "invalid";`;
+    cmd += ` fi fi`;
+    cmd += ` else echo "dne"; fi`;
+
+    executor.Execute(cmd, []).then(output => {
+      if (output.stderr) {
+        reject(`Failed to determine if path is file or directory: ${outptu.stderr}`);
+        return;
+      }
+      resolve(output.stdout.trim());
+    }).catch(error => `Failed to determine if path is file or directory: ${error}`);
+  });
+}
+
+function IsFileOrDirDict(paths, executor) {
+  let pathsError = PathsValidator(paths);
+  if (pathsError)
+    return Promise.reject(`Failed to determine if paths are files or directories: ${pathsError}`);
+
+  if (!executor)
+    return Promise.reject(`Failed to determine if paths are files or directories: Executor is required`);
+
+  return new Promise((resolve, reject) => {
+    let cmdList = [];
+    paths.forEach(path => {
+      let cmd = `if [ -e ${path} ]; then`;
+      cmd += ` if [ -d ${path} ]; then echo "d";`;
+      cmd += ` else`;
+      cmd += ` if [ -f ${path} ]; then  echo "f";`;
+      cmd += ` else echo "invalid";`;
+      cmd += ` fi fi`;
+      cmd += ` else echo "dne"; fi`;
+
+      cmdList.push(cmd);
+    });
+
+    executor.Execute(cmdList.join('\n'), []).then(output => {
+      if (output.stderr) {
+        reject(`Failed to determine if paths are files or directories: ${outptu.stderr}`);
+        return;
+      }
+
+      let lines = output.stdout.trim().split('\n')
+        .filter(line => line && line != '' && line.trim() != '')
+        .map(line => line.trim());
+
+      let dict = {};
+      for (let i = 0; i < lines.length; ++i) {
+        let currLine = lines[i];
+        let currPath = paths[i];
+        dict[currPath] = currLine;
+      }
+
+      resolve(dict);
+    }).catch(error => `Failed to determine if paths are files or directories: ${error}`);
+  });
+}
+
 function Filename(path) {
   return PATH.basename(path);
 }
@@ -369,6 +440,16 @@ function PathsValidator(paths) {
   return null;
 }
 
+//--------------------
+
+let C = require('./command.js');
+let L = C.LOCAL;
+let paths = ['/home/isa/test.txt', '/home/pi', '/home/isa/xxx', '/home/isa/yEd'];
+
+IsFileOrDirDict(paths, L).then(dict => {
+  console.log(`DICT: ${JSON.stringify(dict)}`);
+}).catch(error => console.log(`ERROR: ${error}`));
+
 //------------------------------------
 // EXPORTS
 
@@ -382,6 +463,8 @@ exports.AllAreFiles = AllAreFiles;
 exports.IsDir = IsDir;
 exports.IsDirDict = IsDirDict;
 exports.AllAreDirs = AllAreDirs;
+exports.IsFileOrDir = IsFileOrDir;
+exports.IsFileOrDirDict = IsFileOrDirDict;
 exports.Filename = Filename;
 exports.Extension = Extension;
 exports.ParentDirName = ParentDirName;
