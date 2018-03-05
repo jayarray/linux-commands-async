@@ -32,7 +32,8 @@ mocha.addFile(PATH.join(testListDir, 'test_list.js'));*/
 let testPermissionsDir = PATH.join(testDir, 'permissions');
 mocha.addFile(PATH.join(testPermissionsDir, 'test_permissions.js'));*/
 
-/*let testCopyDir = PATH.join(testDir, 'copy');
+/*
+let testCopyDir = PATH.join(testDir, 'copy');
 mocha.addFile(PATH.join(testCopyDir, 'test_copy.js'));*/
 
 /*
@@ -89,15 +90,19 @@ mocha.addFile(PATH.join(testBashScriptDir, 'test_bashscript.js'));*/
 
 /*
 let testFindDir = PATH.join(testDir, 'find');
-mocha.addFile(PATH.join(testFindDir, 'test_find.js')); */
+mocha.addFile(PATH.join(testFindDir, 'test_find.js'));*/
 
-
+/*
 let testZipDir = PATH.join(testDir, 'zip');
-mocha.addFile(PATH.join(testZipDir, 'test_zip.js'));
+mocha.addFile(PATH.join(testZipDir, 'test_zip.js'));*/
 
 /*
 let testValidateDir = PATH.join(testDir, 'validate');
 mocha.addFile(PATH.join(testValidateDir, 'test_validate.js'));*/
+
+
+let testPingDir = PATH.join(testDir, 'ping');
+mocha.addFile(PATH.join(testPingDir, 'test_ping.js'));
 
 let runner = mocha.run(() => { });
 
@@ -133,5 +138,6 @@ function importTest(name, path) {
 //importTest('directory.js', PATH.join(rootDir, 'directory.js'));
 //importTest('bashscript.js', PATH.join(rootDir, 'bashscript.js'));
 //importTest('find.js', PATH.join(rootDir, 'find.js'));
-importTest('zip.js', PATH.join(rootDir, 'zip.js'));
+//importTest('zip.js', PATH.join(rootDir, 'zip.js'));
 //importTest('validate.js', PATH.join(rootDir, 'validate.js'));
+importTest('ping.js', PATH.join(rootDir, 'ping.js'));
