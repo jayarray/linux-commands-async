@@ -10,7 +10,7 @@ function ListAllItems(dirPath, executor) {
     return Promise.reject(`Failed to list all disk usage items: Directory path is ${dirPathError}`);
 
   if (!executor)
-    return Promise.reject(`Failed to list all disk usage items: Connection is ${executorError}`);
+    return Promise.reject(`Failed to list all disk usage items: Executor is required`);
 
   return new Promise((resolve, reject) => {
     PATH.IsDir(dirPath, executor).then(isDir => {
@@ -47,18 +47,18 @@ function ListAllItems(dirPath, executor) {
   });
 }
 
-function ListVisibleItems(dirPath) {
+function ListVisibleItems(dirPath, executor) {
   return new Promise((resolve, reject) => {
-    DiskUsage.ListAllItems(dirPath).then(items => {
-      resolve(items.filter(item => !PATH.Path.Filename(item.path).name.startsWith('.')));
+    ListAllItems(dirPath, executor).then(items => {
+      resolve(items.filter(item => !PATH.Filename(item.path).startsWith('.')));
     }).catch(error => reject(`Failed to list visible disk usage items: ${error}`));
   });
 }
 
-function ListHiddenItems(dirPath) {
+function ListHiddenItems(dirPath, executor) {
   return new Promise((resolve, reject) => {
-    DiskUsage.ListAllItems(dirPath).then(items => {
-      resolve(items.filter(item => PATH.Path.Filename(item.path).name.startsWith('.')));
+    ListAllItems(dirPath, executor).then(items => {
+      resolve(items.filter(item => PATH.Filename(item.path).startsWith('.')));
     }).catch(error => reject(`Failed to list hidden disk usage items: ${error}`));
   });
 }
@@ -68,12 +68,11 @@ function DirSize(dirPath, executor) {
   if (dirPathError)
     return Promise.reject(`Failed to get directory size: Directory path is ${dirPathError}`);
 
-  let executorError = ERROR.ExecutorValidator(executor);
-  if (executorError)
-    return Promise.reject(`Failed to get directory size: Connection is ${executorError}`);
+  if (!executor)
+    return Promise.reject(`Failed to get directory size: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    PATH.Path.IsDir(dirPath, executor).then(isDir => {
+    PATH.IsDir(dirPath, executor).then(isDir => {
       if (!isDir) {
         reject(`Failed to get directory size: Path is not a directory: ${dirPath}`);
         return;
