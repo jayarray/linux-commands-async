@@ -100,9 +100,13 @@ mocha.addFile(PATH.join(testZipDir, 'test_zip.js'));*/
 let testValidateDir = PATH.join(testDir, 'validate');
 mocha.addFile(PATH.join(testValidateDir, 'test_validate.js'));*/
 
-
+/*
 let testPingDir = PATH.join(testDir, 'ping');
-mocha.addFile(PATH.join(testPingDir, 'test_ping.js'));
+mocha.addFile(PATH.join(testPingDir, 'test_ping.js'));*/
+
+
+let testHostDir = PATH.join(testDir, 'host');
+mocha.addFile(PATH.join(testHostDir, 'test_host.js'));
 
 let runner = mocha.run(() => { });
 
@@ -140,4 +144,5 @@ function importTest(name, path) {
 //importTest('find.js', PATH.join(rootDir, 'find.js'));
 //importTest('zip.js', PATH.join(rootDir, 'zip.js'));
 //importTest('validate.js', PATH.join(rootDir, 'validate.js'));
-importTest('ping.js', PATH.join(rootDir, 'ping.js'));
+//importTest('ping.js', PATH.join(rootDir, 'ping.js'));
+importTest('host.js', PATH.join(rootDir, 'host.js'));
