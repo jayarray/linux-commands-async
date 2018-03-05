@@ -1,154 +1,98 @@
 let EXPECT = require('chai').expect;
 
-let _path = require('path');
-let rootDir = _path.join(__dirname, '..', '..');
+let PATH = require('path');
+let rootDir = PATH.join(__dirname, '..', '..');
 
-let permissionsJs = _path.join(rootDir, 'permissions.js');
+let permissionsJs = PATH.join(rootDir, 'permissions.js');
 let PERMISSIONS = require(permissionsJs);
+
+let commandJs = PATH.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
 
 //------------------------------------------
 
 describe('*** permissions.js ***', () => {
   describe('Permissions', () => {
+    let executor = COMMAND.LOCAL;
     let invalidPermStr = 'r--r--r-- 12 root root 4096 Jan 1 14:30 file.txt';
     let validPermStr = 'r--r--r--';
     let validOctalStr = '1777';
     let invalidOctalStr = '77A';
     let expectedValidPermToOctalString = '444';
 
-    describe('Permissions(path)', () => {
+    describe('Permissions(path, executor)', () => {
       let invalidPath = '';
       let validPath = rootDir;
 
       it('Returns error if path is invalid.', () => {
-        PERMISSIONS.Permissions.Permissions(invalidPath).then(permObj => EXPECT(false))
+        PERMISSIONS.Permissions(null, executor).then(permObj => EXPECT(false))
+          .catch(error => EXPECT(true));
+      });
+
+      it('Returns error if executor is invalid.', () => {
+        PERMISSIONS.Permissions(rootDir, null).then(permObj => EXPECT(false))
           .catch(error => EXPECT(true));
       });
 
       it('Returns permissions object if path is valid.', () => {
-        PERMISSIONS.Permissions.Permissions(validPath).then(permObj => {
-          let results = PERMISSIONS.Error.ObjectError(permObj, false);
-          EXPECT(results.error).to.equal(null);
+        PERMISSIONS.Permissions(rootDir, executor).then(permObj => {
+          let isValid = permObj != null && permObj !== undefined;
+          EXPECT(isValid).to.not.equal(true);
         }).catch(error => EXPECT(true));
       });
     });
 
     describe('CreatePermissionsObjectUsingPermissionsString(permStr)', () => {
       it('Returns error if permStr is invalid.', () => {
-        let results = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(invalidPermStr);
+        let results = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(invalidPermStr);
         EXPECT(results.error).to.not.equal(null);
       });
 
       it('Returns an object if permStr is valid.', () => {
-        let results = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(validPermStr);
+        let results = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(validPermStr);
         EXPECT(results.error).to.equal(null);
       });
     });
 
-    describe('IntToRwxObject(int)', () => {
-      // TO DO
-    });
-
     describe('CreatePermissionsObjectUsingOctalString(octalStr) ', () => {
       it('Returns error if octalStr is invalid.', () => {
-        let results = PERMISSIONS.Permissions.CreatePermissionsObjectUsingOctalString(invalidOctalStr);
+        let results = PERMISSIONS.CreatePermissionsObjectUsingOctalString(invalidOctalStr);
         EXPECT(results.error).to.not.equal(null);
       });
 
       it('Returns an object if octalStr is valid.', () => {
-        let results = PERMISSIONS.Permissions.CreatePermissionsObjectUsingOctalString(validOctalStr);
+        let results = PERMISSIONS.CreatePermissionsObjectUsingOctalString(validOctalStr);
         EXPECT(results.error).to.equal(null);
       });
     });
 
     describe('Equal(p1, p2)', () => {
       it('Returns error if p1 or p2 is invalid.', () => {
-        let p1 = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(invalidPermStr);
-        let p2 = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(validPermStr);
-        let results = PERMISSIONS.Permissions.Equal(p1.obj, p2.obj);
+        let p1 = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(invalidPermStr);
+        let p2 = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(validPermStr);
+        let results = PERMISSIONS.Equal(p1.obj, p2.obj);
         EXPECT(results.error).to.not.equal(null);
       });
 
       it('Returns a boolean value if p1 and p2 are valid.', () => {
-        let p1 = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(invalidPermStr);
-        let p2 = PERMISSIONS.Permissions.CreatePermissionsObjectUsingPermissionsString(validPermStr);
-        let results = PERMISSIONS.Permissions.Equal(p1.obj, p2.obj);
+        let p1 = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(validPermStr);
+        let p2 = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(validPermStr);
+        let results = PERMISSIONS.Equal(p1.obj, p2.obj);
 
         let isBoolean = results.equal === true || results.equal === false;
         EXPECT(isBoolean).to.not.equal(true);
       });
     });
 
-    describe('ObjectToOctalString(obj)', () => {
-      // TO DO
-    });
-
     describe('PermissionsStringToOctalString(permStr)', () => {
       it('Returns error if permStr is invalid.', () => {
-        let results = PERMISSIONS.Permissions.PermissionsStringToOctalString(invalidPermStr);
+        let results = PERMISSIONS.PermissionsStringToOctalString(invalidPermStr);
         EXPECT(results.error).to.not.equal(null);
       });
 
       it('Returns a string if permStr is valid.', () => {
-        let results = PERMISSIONS.Permissions.PermissionsStringToOctalString(validPermStr);
+        let results = PERMISSIONS.PermissionsStringToOctalString(validPermStr);
         EXPECT(results.string).to.equal(expectedValidPermToOctalString);
-      });
-    });
-
-    describe('FileTypeName(char)', () => {
-      it('Returns error if char is invalid.', () => {
-        let results = PERMISSIONS.Permissions.FileTypeName(undefined);
-        EXPECT(results.error).to.not.equal(null);
-      });
-
-      it('Returns a string if char is valid.', () => {
-        let validChar = PERMISSIONS.Permissions.ValidFileTypeChars()[0];
-        let expectedName = PERMISSIONS.Permissions.FileTypeName(validChar).name;
-        let results = PERMISSIONS.Permissions.FileTypeName(validChar);
-        EXPECT(results.name).to.equal(expectedName);
-      });
-    });
-
-    describe('IsNonExecutableChar(c)', () => {
-      it('Returns a boolean value if c is valid.', () => {
-        let validChar = PERMISSIONS.Permissions.ValidExecuteChars()[0];
-        let isNonExecChar = PERMISSIONS.Permissions.IsNonExecutableChar(validChar);
-        let isBoolean = isNonExecChar === true || isNonExecChar === false;
-        EXPECT(isBoolean).to.equal(true);
-      });
-    });
-
-    describe('WillSetUidOrGuidOrStickybit(c)', () => {
-      it('Returns a boolean value if c is valid.', () => {
-        let validChar = PERMISSIONS.Permissions.ValidExecuteChars()[0];
-        let isSetChar = PERMISSIONS.Permissions.WillSetUidOrGuidOrStickybit(validChar);
-        let isBoolean = isSetChar === true || isSetChar === false;
-        EXPECT(isBoolean).to.equal(true);
-      });
-    });
-
-    describe('CharValue(c)', () => {
-      it('Returns null if c is not a valid char.', () => {
-        let charValue = PERMISSIONS.Permissions.CharValue('j');
-        EXPECT(charValue).to.equal(null);
-      });
-
-      it('Returns an integer value if c is a valid char.', () => {
-        let validChar = PERMISSIONS.Permissions.ValidExecuteChars()[0];
-        let charValue = PERMISSIONS.Permissions.CharValue(validChar);
-        let isNumber = Number.isInteger(charValue);
-        EXPECT(isNumber).to.equal(true);
-      });
-    });
-
-    describe('CharIsValid(c)', () => {
-      it('Returns a boolean value.', () => {
-        let validChar = PERMISSIONS.Permissions.ValidExecuteChars()[0];
-
-        let result1 = PERMISSIONS.Permissions.CharIsValid(validChar);
-        let result2 = PERMISSIONS.Permissions.CharIsValid(null);
-        let isBoolean = (result1 === true || result1 === false) && (result2 === true || result2 === false)
-        EXPECT(isBoolean).to.equal(true);
       });
     });
   });
