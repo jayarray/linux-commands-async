@@ -1,168 +1,93 @@
 let EXPECT = require('chai').expect;
 
-let _path = require('path');
-let rootDir = _path.join(__dirname, '..', '..');
+let PATH = require('path');
+let rootDir = PATH.join(__dirname, '..', '..');
 
-let listJs = _path.join(rootDir, 'list.js');
+let listJs = PATH.join(rootDir, 'list.js');
 let LIST = require(listJs);
+
+let commandJs = PATH.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
 
 //------------------------------------------
 
 describe('*** list.js ***', () => {
-  describe('Ls', () => {
-    let invalidPath = '';
-    let validPath = rootDir;
+  let executor = COMMAND.LOCAL;
+  let invalidPath = '';
+  let validPath = rootDir;
 
-    let validLsString = 'dr--r--r-- 1 root root 4096 Jan 1 14:30 file.txt';
-    let invalidLsString = 'dr--r--r-- 1 root 4096 Jan 1 14:30 file.txt'; // Missing group name
+  let validLsString = 'dr--r--r-- 1 root root 4096 Jan 1 14:30 file.txt';
+  let invalidLsString = 'dr--r--r-- 1 root 4096 Jan 1 14:30 file.txt'; // Missing group name
 
-    describe('AllFilenames(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.AllFilenames(invalidPath).then(filenames => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns array of filenames if path is valid.', () => {
-        LIST.List.AllFilenames(validPath).then(filenames => {
-          EXPECT(Array.isArray(filenames) && filenames.length >= 0).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+  describe('AllFilenames(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      LIST.AllFilenames(invalidPath, executor).then(filenames => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('VisibleFilenames(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.VisibleFilenames(invalidPath).then(filenames => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns array of filenames if path is valid.', () => {
-        LIST.List.VisibleFilenames(validPath).then(filenames => {
-          EXPECT(Array.isArray(filenames) && filenames.length >= 0).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      LIST.AllFilenames(validPath, null).then(filenames => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('HiddenFilenames(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.HiddenFilenames(invalidPath).then(filenames => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns array of filenames if path is valid.', () => {
+      LIST.AllFilenames(validPath, executor).then(filenames => {
+        EXPECT(Array.isArray(filenames) && filenames.length >= 0).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns array of filenames if path is valid.', () => {
-        LIST.List.HiddenFilenames(validPath).then(filenames => {
-          EXPECT(Array.isArray(filenames) && filenames.length >= 0).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+  describe('VisibleFilenames(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      LIST.VisibleFilenames(invalidPath, executor).then(filenames => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('FileInfo(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.FileInfo(invalidPath).then(info => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns an object if path is valid.', () => {
-        LIST.List.FileInfo(validPath).then(info => {
-          let ok = !(info.permstr === undefined) &&
-            !(info.hardlinks === undefined) &&
-            !(info.owner === undefined) &&
-            !(info.group === undefined) &&
-            !(info.size === undefined) &&
-            !(info.name === undefined) &&
-            !(info.filetype === undefined);
-          EXPECT(ok).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      LIST.VisibleFilenames(validPath, null).then(filenames => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('DirInfo(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.DirInfo(invalidPath).then(info => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns array of filenames if path is valid.', () => {
+      LIST.VisibleFilenames(validPath, executor).then(filenames => {
+        EXPECT(Array.isArray(filenames) && filenames.length >= 0).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns an object if path is valid.', () => {
-        LIST.List.DirInfo(validPath).then(info => {
-          let ok = !(info.permstr === undefined) &&
-            !(info.hardlinks === undefined) &&
-            !(info.owner === undefined) &&
-            !(info.group === undefined) &&
-            !(info.size === undefined) &&
-            !(info.name === undefined) &&
-            !(info.filetype === undefined);
-          EXPECT(ok).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+  describe('HiddenFilenames(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      LIST.HiddenFilenames(invalidPath, executor).then(filenames => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('Info(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.Info(invalidPath).then(info => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns an object if path is valid.', () => {
-        LIST.List.Info(validPath).then(info => {
-          let ok = !(info.permstr === undefined) &&
-            !(info.hardlinks === undefined) &&
-            !(info.owner === undefined) &&
-            !(info.group === undefined) &&
-            !(info.size === undefined) &&
-            !(info.name === undefined) &&
-            !(info.filetype === undefined);
-          EXPECT(ok).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      LIST.HiddenFilenames(validPath, null).then(filenames => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('AllInfos(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.AllInfos(invalidPath).then(infos => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns array of filenames if path is valid.', () => {
+      LIST.HiddenFilenames(validPath, executor).then(filenames => {
+        EXPECT(Array.isArray(filenames) && filenames.length >= 0).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-      it('Returns an array of objects if path is valid.', () => {
-        LIST.List.AllInfos(validPath).then(infos => {
-          EXPECT(Array.isArray(infos) && infos.length >= 0).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+  describe('FileInfo(path, executor)', () => {
+    let filepath = PATH.join(rootDir, 'api.js');
+
+    it('Returns error if path is invalid.', () => {
+      LIST.FileInfo(invalidPath, executor).then(info => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('VisibleInfos(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.VisibleInfos(invalidPath).then(infos => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns an array of objects if path is valid.', () => {
-        LIST.List.VisibleInfos(validPath).then(infos => {
-          EXPECT(Array.isArray(infos) && infos.length >= 0).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      LIST.FileInfo(filepath, null).then(info => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('HiddenInfos(path)', () => {
-      it('Returns error if path is invalid.', () => {
-        LIST.List.HiddenInfos(invalidPath).then(infos => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns an array of object if path is valid.', () => {
-        LIST.List.HiddenInfos(validPath).then(infos => {
-          EXPECT(Array.isArray(infos) && infos.length >= 0).to.equal(true);
-        }).catch(error => EXPECT(false));
-      });
-    });
-
-    describe('ParseLsString(string)', () => {
-      it('Returns error if string is invalid.', () => {
-        let results = LIST.List.ParseLsString(invalidLsString);
-        EXPECT(results.error).to.not.equal(null)
-      });
-
-      it('Returns an object if string is valid.', () => {
-        let results = LIST.List.ParseLsString(validLsString);
-        let info = results.info;
+    it('Returns an object if path is valid.', () => {
+      LIST.FileInfo(filepath, executor).then(info => {
         let ok = !(info.permstr === undefined) &&
           !(info.hardlinks === undefined) &&
           !(info.owner === undefined) &&
@@ -171,7 +96,111 @@ describe('*** list.js ***', () => {
           !(info.name === undefined) &&
           !(info.filetype === undefined);
         EXPECT(ok).to.equal(true);
-      });
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('DirInfo(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      LIST.DirInfo(invalidPath, executor).then(info => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      LIST.DirInfo(validPath, null).then(info => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an object if path is valid.', () => {
+      LIST.DirInfo(validPath, executor).then(info => {
+        let ok = !(info.permstr === undefined) &&
+          !(info.hardlinks === undefined) &&
+          !(info.owner === undefined) &&
+          !(info.group === undefined) &&
+          !(info.size === undefined) &&
+          !(info.name === undefined) &&
+          !(info.filetype === undefined);
+        EXPECT(ok).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('Info(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      LIST.Info(invalidPath, executor).then(info => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      LIST.Info(validPath, null).then(info => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an object if path is valid.', () => {
+      LIST.Info(validPath, executor).then(info => {
+        let ok = !(info.permstr === undefined) &&
+          !(info.hardlinks === undefined) &&
+          !(info.owner === undefined) &&
+          !(info.group === undefined) &&
+          !(info.size === undefined) &&
+          !(info.name === undefined) &&
+          !(info.filetype === undefined);
+        EXPECT(ok).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('AllInfos(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      LIST.AllInfos(invalidPath, executor).then(infos => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      LIST.AllInfos(validPath, null).then(infos => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an array of objects if path is valid.', () => {
+      LIST.AllInfos(validPath, executor).then(infos => {
+        EXPECT(Array.isArray(infos) && infos.length >= 0).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('VisibleInfos(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      LIST.VisibleInfos(invalidPath, executor).then(infos => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      LIST.VisibleInfos(validPath, null).then(infos => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an array of objects if path is a directory.', () => {
+      LIST.VisibleInfos(validPath, executor).then(infos => {
+        EXPECT(Array.isArray(infos) && infos.length >= 0).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('HiddenInfos(path, executor)', () => {
+    it('Returns error if path is invalid.', () => {
+      LIST.HiddenInfos(invalidPath, executor).then(infos => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if path is invalid.', () => {
+      LIST.HiddenInfos(validPath, null).then(infos => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an array of object if path is valid.', () => {
+      LIST.HiddenInfos(validPath, executor).then(infos => {
+        EXPECT(Array.isArray(infos) && infos.length >= 0).to.equal(true);
+      }).catch(error => EXPECT(false));
     });
   });
 });
