@@ -72,114 +72,71 @@ function UsingOctalString(octalStr, paths, isRecursive, executor) {
   });
 }
 
-function RemovePermissions(classes, types, paths, isRecursive, executor) { // Example: classes = 'ugo',  types = 'rwx'
+function ChangePermissions_(op, classes, types, paths, isRecursive, executor) { // op = (+ | - | =)
+  let ops = ['+', '-', '='];
+  if (!ops.includes(op)) {
+    return Promise.reject(`Failed to change permissions: Operation is invalid. Must be '+', '-', or '='`);
+  }
+
   let classesError = ClassesStringValidator(classes);
   if (classesError)
-    return Promise.reject(`Failed to remove permissions: ${classesError}`);
+    return Promise.reject(`Failed to change permissions: ${classesError}`);
 
   let typesError = TypesStringValidator(types);
   if (typesError)
-    return Promise.reject(`Failed to remove permissions: ${typesError}`);
+    return Promise.reject(`Failed to change permissions: ${typesError}`);
 
   let pathsError = PathsValidator(paths);
   if (pathsError)
-    return Promise.reject(`Failed to remove permissions: ${pathsError}`);
+    return Promise.reject(`Failed to change permissions: ${pathsError}`);
 
   if (!executor)
-    return Promise.reject(`Failed to remove permissions: Executor is required`);
+    return Promise.reject(`Failed to change permissions: Executor is required`);
 
   return new Promise((resolve, reject) => {
     let args = [];
     if (isRecursive)
       args.push('-R');
-    args.push(`${classes}-${types}`);
-    args = args.concat(paths);
 
-    executor.Execute('chmod', args).then(output => {
-      if (output.stderr) {
-        reject(`Failed to remove permissions: ${output.stderr}`);
-        return;
+    if (op == '-')
+      args.push(`${classes}-${types}`);
+    else if (op == '+')
+      args.push(`${classes}+${types}`);
+    else if (op == '=') {
+      let classChars = ['u', 'g', 'o'];
+      let classCharsSet = new Set(classChars);
+      let classesStringSet = new Set(classes.split(''));
+
+      let missingClassChars = Array.from(new Set(classChars.filter(x => !classesStringSet.has(x))));
+      if (missingClassChars.length == 0)
+        args.push(`a=${types}`);
+      else {
+        let typeChars = ['r', 'w', 'x'];
+        args.push(`${classes}=${types},${missingClassChars.join('')}-${typeChars.join('')}`);
       }
-      resolve(true);
-    }).catch(error => reject(`Failed to remove permissions: ${error}`));
-  });
-}
-
-function AddPermissions(classes, types, paths, isRecursive, executor) {
-  let classesError = ClassesStringValidator(classes);
-  if (classesError)
-    return Promise.reject(`Failed to add permissions: ${classesError}`);
-
-  let typesError = TypesStringValidator(types);
-  if (typesError)
-    return Promise.reject(`Failed to add permissions: ${typesError}`);
-
-  let pathsError = PathsValidator(paths);
-  if (pathsError)
-    return Promise.reject(`Failed to add permissions: ${pathsError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to add permissions: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    let args = [];
-    if (isRecursive)
-      args.push('-R');
-    args.push(`${classes}+${types}`);
-    args = args.concat(paths);
-
-    executor.Execute('chmod', args).then(output => {
-      if (output.stderr) {
-        reject(`Failed to add permissions: ${output.stderr}`);
-        return;
-      }
-      resolve(true);
-    }).catch(error => reject(`Failed to add permissions: ${error}`));
-  });
-}
-
-function SetPermissions(classes, types, paths, isRecursive, executor) {
-  let classesError = ClassesStringValidator(classes);
-  if (classesError)
-    return Promise.reject(`Failed to add permissions: ${classesError}`);
-
-  let typesError = TypesStringValidator(types);
-  if (typesError)
-    return Promise.reject(`Failed to add permissions: ${typesError}`);
-
-  let pathsError = PathsValidator(paths);
-  if (pathsError)
-    return Promise.reject(`Failed to add permissions: ${pathsError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to add permissions: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    let args = [];
-    if (isRecursive)
-      args.push('-R');
-
-    let classChars = ['u', 'g', 'o'];
-    let classCharsSet = new Set(classChars);
-    let classesStringSet = new Set(classes.split(''));
-
-    let missingClassChars = Array.from(new Set(classChars.filter(x => !classesStringSet.has(x))));
-    if (missingClassChars.length == 0)
-      args.push(`a=${types}`);
-    else {
-      let typeChars = ['r', 'w', 'x'];
-      args.push(`${classes}=${types},${missingClassChars.join('')}-${typeChars.join('')}`);
     }
     args = args.concat(paths);
 
     executor.Execute('chmod', args).then(output => {
       if (output.stderr) {
-        reject(`Failed to set permissions: ${output.stderr}`);
+        reject(`Failed to change permissions: ${output.stderr}`);
         return;
       }
       resolve(true);
-    }).catch(error => reject(`Failed to set permissions: ${error}`));
+    }).catch(error => reject(`Failed to change permissions: ${error}`));
   });
+}
+
+function RemovePermissions(classes, types, paths, isRecursive, executor) { // Example: classes = 'ugo',  types = 'rwx'
+  return ChangePermissions_('-', classes, types, paths, isRecursive, executor);
+}
+
+function AddPermissions(classes, types, paths, isRecursive, executor) {
+  return ChangePermissions_('+', classes, types, paths, isRecursive, executor);
+}
+
+function SetPermissions(classes, types, paths, isRecursive, executor) {
+  return ChangePermissions_('=', classes, types, paths, isRecursive, executor);
 }
 
 function Manual(args, executor) {
