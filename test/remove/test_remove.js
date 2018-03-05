@@ -1,60 +1,66 @@
 let EXPECT = require('chai').expect;
 
-let _path = require('path');
-let rootDir = _path.join(__dirname, '..', '..');
+let PATH = require('path');
+let rootDir = PATH.join(__dirname, '..', '..');
 
-let removeJs = _path.join(rootDir, 'remove.js');
-let REMOVE = require(removeJs).Remove;
+let removeJs = PATH.join(rootDir, 'remove.js');
+let REMOVE = require(removeJs);
 
-let FS = require('fs-extra');
+let fileJs = PATH.join(rootDir, 'file.js');
+let FILE = require(fileJs);
+
+let directoryJs = PATH.join(rootDir, 'directory.js');
+let DIRECTORY = require(directoryJs);
+
+let commandJs = PATH.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
 
 //------------------------------------------
 
 describe('*** remove.js ***', () => {
-  describe('Remove', () => {
-    describe('File(path)', () => {
-      it('Returns an error if src or dest are invalid.', () => {
-        REMOVE.File(undefined).then(bool => EXPECT(false))
-          .catch(error => EXPECT(true));
-      });
+  let executor = COMMAND.LOCAL;
 
-      it('Actually deletes file.', () => {
-        let dest = _path.join(rootDir, 'delete_me.txt');
+  describe('Files(paths, executor)', () => {
+    let filepath = 'delete_me.txt';
 
-        // Write a test file
-        let text = 'Delete me!';
-        FS.writeFile(dest, text, (err) => {
-          if (err)
-            EXPECT(false);
-
-          // Delete it
-          REMOVE.File(dest).then(bool => {
-            EXPECT(true);
-          }).catch(error => EXPECT(false));
-        });
-      });
+    it('Returns an error if paths is invalid.', () => {
+      REMOVE.Files(null, executor).then(bool => EXPECT(false))
+        .catch(error => EXPECT(true));
     });
 
-    describe('Directory(path)', () => {
-      it('Returns an error if src or dest are invalid.', () => {
-        REMOVE.Directory(undefined).then(bool => EXPECT(false))
-          .catch(error => EXPECT(true));
-      });
+    it('Returns an error if executor is invalid.', () => {
+      REMOVE.Files([filepath], null).then(bool => EXPECT(false))
+        .catch(error => EXPECT(true));
+    });
 
-      it('Actually deletes directory.', () => {
-        let dest = _path.join(rootDir, 'delete_me');
+    it('Actually deletes files.', () => {
+      FILE.Create(filepath, 'delete me!', executor).then(success => {
+        REMOVE.Files([filepath], executor).then(success => {
+          EXPECT(true);
+        }).catch(error => EXPECT(false));
+      }).catch(error => EXPECT(false));
+    });
+  });
 
-        // Write a test dir
-        FS.mkdir(dest, (err) => {
-          if (err)
-            EXPECT(false);
+  describe('Directories(paths, executor)', () => {
+    let dirpath = 'delete_this_dir';
 
-          // Delete it
-          REMOVE.Directory(dest).then(bool => {
-            EXPECT(true);
-          }).catch(error => EXPECT(false));
-        });
-      });
+    it('Returns an error if paths is invalid.', () => {
+      REMOVE.Directories(null, executor).then(bool => EXPECT(false))
+        .catch(error => EXPECT(true));
+    });
+
+    it('Returns an error if executor is invalid.', () => {
+      REMOVE.Directories([dirpath], null).then(bool => EXPECT(false))
+        .catch(error => EXPECT(true));
+    });
+
+    it('Actually deletes files.', () => {
+      DIRECTORY.Create(dirpath, executor).then(success => {
+        REMOVE.Directories([dirpath], executor).then(success => {
+          EXPECT(true);
+        }).catch(error => EXPECT(false));
+      }).catch(error => EXPECT(false));
     });
   });
 });
