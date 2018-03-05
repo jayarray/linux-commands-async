@@ -6,53 +6,54 @@ let rootDir = _path.join(__dirname, '..', '..');
 let renameJs = _path.join(rootDir, 'rename.js');
 let RENAME = require(renameJs).Rename;
 
-let mkdirJs = _path.join(rootDir, 'mkdir.js');
-let MKDIR = require(mkdirJs).Mkdir;
+let fileJs = _path.join(rootDir, 'file.js');
+let FILE = require(fileJs);
 
 let removeJs = _path.join(rootDir, 'remove.js');
-let REMOVE = require(removeJs).Remove;
+let REMOVE = require(removeJs);
 
 let pathJs = _path.join(rootDir, 'path.js');
-let PATH = require(pathJs).Path;
+let PATH = require(pathJs);
+
+let commandJs = _path.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
 
 //------------------------------------------
 
 describe('*** rename.js ***', () => {
-  describe('Rename', () => {
-    describe('Rename(currPath, newName)', () => {
-      let testDirPath = _path.join(rootDir, 'delete_this_test_dir');
-      let newName = 'new_test_dir';
+  let executor = COMMAND.LOCAL;
+  let filepath = _path.join(rootDir, 'delete_me.txt');
+  let newName = 'renamed_file.txt';
 
-      it('Returns error if currPath is undefined.', () => {
-        RENAME.Rename(null, newName).then(success => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+  describe('Rename(src, newName, executor)', () => {
+    it('Returns error if src is invalid.', () => {
+      RENAME(null, newName, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it('Returns error if currPath is invalid.', () => {
-        RENAME.Rename('', newName).then(success => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns error if newName is invalid.', () => {
+      RENAME(filepath, null, executor).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it('Returns error if newName is undefined.', () => {
-        RENAME.Rename(testDirPath, null).then(success => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns error if executor is invalid.', () => {
+      RENAME(filepath, newName, null).then(success => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it('Returns error if newName is invalid.', () => {
-        RENAME.Rename(testDirPath, '').then(success => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Actually renames stuff.', () => {
+      FILE.Create(filepath, 'delete me!', executor).then(success => {
+        RENAME(filepath, newName, executor).then(success => {
+          let parentDir = PATH.ParentDir(filepath);
+          let newPath = _path.join(parentDir, newName);
 
-      it('Actually renames stuff.', () => {
-        MKDIR.Mkdirp(testDirPath).then(success => {
-          RENAME.Rename(testDirPath, newName).then(success => {
-            let parentDir = PATH.Path.ParentDir(testDirPath);
-            let newPath = _path.join(parentDir.dir, newName);
-            REMOVE.Directory(renamedPath).then(success => EXPECT(true))
-              .catch(error => EXPECT(false));
+          PATH.Exists(newPath, executor).then(exists => {
+            FILE.Remove(newPath, executor).then(success => {
+              EXPECT(exists).to.equal(true);
+            }).catch(error => EXPECT(false));
           }).catch(error => EXPECT(false));
         }).catch(error => EXPECT(false));
-      });
+      }).catch(error => EXPECT(false));
     });
   });
 });
