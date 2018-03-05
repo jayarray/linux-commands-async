@@ -440,16 +440,6 @@ function PathsValidator(paths) {
   return null;
 }
 
-//--------------------
-
-let C = require('./command.js');
-let L = C.LOCAL;
-let paths = ['/home/isa/test.txt', '/home/pi', '/home/isa/xxx', '/home/isa/yEd'];
-
-IsFileOrDirDict(paths, L).then(dict => {
-  console.log(`DICT: ${JSON.stringify(dict)}`);
-}).catch(error => console.log(`ERROR: ${error}`));
-
 //------------------------------------
 // EXPORTS
 
