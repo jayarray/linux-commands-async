@@ -1,71 +1,93 @@
 let EXPECT = require('chai').expect;
 
-let _path = require('path');
-let rootDir = _path.join(__dirname, '..', '..');
+let PATH = require('path');
+let rootDir = PATH.join(__dirname, '..', '..');
 
-let diskusageJs = _path.join(rootDir, 'diskusage.js');
-let DISKUSAGE = require(diskusageJs).DiskUsage;
+let diskusageJs = PATH.join(rootDir, 'diskusage.js');
+let DISKUSAGE = require(diskusageJs);
+
+let commandJs = PATH.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
 
 //------------------------------------------
 
 describe('*** diskusage.js ***', () => {
-  describe('DiskUsage', () => {
-    let dirPath = rootDir;
+  let executor = COMMAND.LOCAL;
+  let dirPath = rootDir;
 
-    describe('ListAllItems(dirPath)', () => {
-      it('Returns error if dirpath is invalid.', () => {
-        DISKUSAGE.ListAllItems(null).then(items => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns an array if dirpath is valid.', () => {
-        DISKUSAGE.ListAllItems(dirPath).then(items => {
-          let isValid = Array.isArray(items);
-          EXPECT(isValid).to.equal(true);
-        }).catch(EXPECT(false));
-      });
+  describe('ListAllItems(dirPath, executor)', () => {
+    it('Returns error if dirpath is invalid.', () => {
+      DISKUSAGE.ListAllItems(null, executor).then(items => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('ListVisibleItems(dirPath)', () => {
-      it('Returns error if dirpath is invalid.', () => {
-        DISKUSAGE.ListAllItems(null).then(items => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns an array if dirpath is valid.', () => {
-        DISKUSAGE.ListVisibleItems(dirPath).then(items => {
-          let isValid = Array.isArray(items);
-          EXPECT(isValid).to.equal(true);
-        }).catch(EXPECT(false));
-      });
+    it('Returns error if executor is invalid.', () => {
+      DISKUSAGE.ListAllItems(dirPath, null).then(items => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('ListHiddenItems(dirPath)', () => {
-      it('Returns error if dirpath is invalid.', () => {
-        DISKUSAGE.ListHiddenItems(null).then(items => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns an array of objects.', () => {
+      DISKUSAGE.ListAllItems(dirPath, executor).then(items => {
+        let isValid = Array.isArray(items);
+        EXPECT(isValid).to.equal(true);
+      }).catch(EXPECT(false));
+    });
+  });
 
-      it('Returns an array if dirpath is valid.', () => {
-        DISKUSAGE.ListHiddenItems(dirPath).then(items => {
-          let isValid = Array.isArray(items);
-          EXPECT(isValid).to.equal(true);
-        }).catch(EXPECT(false));
-      });
+  describe('ListVisibleItems(dirPath, executor)', () => {
+    it('Returns error if dirpath is invalid.', () => {
+      DISKUSAGE.ListVisibleItems(null, executor).then(items => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('DirSize(dirPath)', () => {
-      it('Returns error if dirpath is invalid.', () => {
-        DISKUSAGE.ListHiddenItems(null).then(items => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
+    it('Returns error if executor is invalid.', () => {
+      DISKUSAGE.ListVisibleItems(dirPath, null).then(items => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
 
-      it('Returns an array if dirpath is valid.', () => {
-        DISKUSAGE.ListHiddenItems(dirPath).then(items => {
-          let isValid = Array.isArray(items);
-          EXPECT(isValid).to.equal(true);
-        }).catch(EXPECT(false));
-      });
+    it('Returns an array of objects.', () => {
+      DISKUSAGE.ListVisibleItems(dirPath, executor).then(items => {
+        let isValid = Array.isArray(items);
+        EXPECT(isValid).to.equal(true);
+      }).catch(EXPECT(false));
+    });
+  });
+
+  describe('ListHiddenItems(dirPath, executor)', () => {
+    it('Returns error if dirpath is invalid.', () => {
+      DISKUSAGE.ListHiddenItems(null, executor).then(items => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      DISKUSAGE.ListHiddenItems(dirPath, null).then(items => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns an array of objects.', () => {
+      DISKUSAGE.ListHiddenItems(dirPath, executor).then(items => {
+        let isValid = Array.isArray(items);
+        EXPECT(isValid).to.equal(true);
+      }).catch(EXPECT(false));
+    });
+  });
+
+  describe('DirSize(dirPath, executor)', () => {
+    it('Returns error if dirpath is invalid.', () => {
+      DISKUSAGE.DirSize(null, executor).then(items => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns error if executor is invalid.', () => {
+      DISKUSAGE.DirSize(dirPath, null).then(items => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
+    });
+
+    it('Returns size.', () => {
+      DISKUSAGE.DirSize(dirPath, executor).then(size => {
+        let isValid = Number.isInteger(size);
+        EXPECT(isValid).to.equal(true);
+      }).catch(EXPECT(false));
     });
   });
 });
