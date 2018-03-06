@@ -1,34 +1,48 @@
 let EXPECT = require('chai').expect;
 
-let _path = require('path');
-let rootDir = _path.join(__dirname, '..', '..');
+let PATH = require('path');
+let rootDir = PATH.join(__dirname, '..', '..');
 
-let userinfoJs = _path.join(rootDir, 'userinfo.js');
-let USERINFO = require(userinfoJs).UserInfo;
+let userinfoJs = PATH.join(rootDir, 'userinfo.js');
+let USERINFO = require(userinfoJs);
+
+let commandJs = PATH.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
 
 //------------------------------------------
 
 describe('*** userinfo.js ***', () => {
-  describe('UserInfo', () => {
-    describe('CurrentUser()', () => {
-      it('Returns an object.', () => {
-        USERINFO.CurrentUser().then(info => {
-          EXPECT(info).to.not.equal(null);
-        }).catch(error => EXPECT(false));
-      });
+  let executor = COMMAND.LOCAL;
+
+  describe('WhoAmI(executor)', () => {
+    it('Returns an object.', () => {
+      USERINFO.WhoAmI(executor).then(name => {
+        let isValid = name != null && name !== undefined && name != '';
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('CurrentUser(executor)', () => {
+    it('Returns an object.', () => {
+      USERINFO.CurrentUser(executor).then(info => {
+        let isValid = info !== undefined && info != null && info.username;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
+    });
+  });
+
+  describe('OtherUser(username, executor)', () => {
+    it('Returns an error if username is invalid.', () => {
+      USERINFO.OtherUser('idontexist', executor).then(info => EXPECT(false))
+        .catch(error => EXPECT(error).to.not.equal(null));
     });
 
-    describe('OtherUser(username)', () => {
-      it('Returns an error if username is invalid.', () => {
-        USERINFO.OtherUser('yourmom').then(info => EXPECT(false))
-          .catch(error => EXPECT(error).to.not.equal(null));
-      });
-
-      it('Returns an object if username is valid.', () => {
-        USERINFO.OtherUser('root').then(info => {
-          EXPECT(info).to.not.equal(null);
-        }).catch(error => EXPECT(false));
-      });
+    it('Returns an object if username is valid.', () => {
+      USERINFO.OtherUser('root', executor).then(info => {
+        let isValid = info !== undefined && info != null && info.username;
+        EXPECT(isValid).to.equal(true);
+      }).catch(error => EXPECT(false));
     });
   });
 });
