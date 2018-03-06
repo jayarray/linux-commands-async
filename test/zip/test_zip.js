@@ -172,7 +172,7 @@ describe('*** zip.js ***', () => {
     });
   });
 
-  
+
   describe('UnzipManual(args, executor)', () => {
     it('Returns error if args are invalid.', () => {
       ZIP.UnzipManual(null, executor).then(success => EXPECT(false))
