@@ -4,64 +4,45 @@ let PATH = require('path');
 let rootDir = PATH.join(__dirname, '..', '..');
 
 let timestampJs = PATH.join(rootDir, 'timestamp.js');
-let TIMESTAMP = require(timestampJs).Timestamp;
+let TIMESTAMP = require(timestampJs);
+
+let commandJs = PATH.join(rootDir, 'command.js');
+let COMMAND = require(commandJs);
 
 //------------------------------------------
 
 describe('*** timestamp.js ***', () => {
-  describe('Timestamp', () => {
-    let t = TIMESTAMP.Timestamp();
+  let executor = COMMAND.LOCAL;
 
-    describe('Timestamp()', () => {
-      it('Returns an object.', () => {
-        let success = t != null && !(t === undefined);
+  describe('Now(executor)', () => {
+    it('Returns an object.', () => {
+      TIMESTAMP.Now(executor).then(o => {
+        let success = o != null && o !== undefined && o.epoch;
         EXPECT(success).to.equal(true);
-      });
+      }).catch(error => EXPECT(false));
     });
+  });
 
-    describe('MilitaryStringToMeridiemString(militaryTime)', () => {
-      it('Returns an error if militaryTime is invalid.', () => {
-        let results = TIMESTAMP.MilitaryStringToMeridiemString('');
-        EXPECT(results.error).to.not.equal(null);
-      });
-
-      it('Returns a meridiem time string if militaryTime is valid.', () => {
-        let results = TIMESTAMP.MilitaryStringToMeridiemString(t.militaryTime.string);
-        EXPECT(results.string).to.equal(t.meridiemTime.string);
-      });
+  describe('Compare(t1, t2)', () => {
+    it('Returns an integer indicating whether t1 is less than, greater than, or equal to t2.', () => {
+      TIMESTAMP.Now(executor).then(t1 => {
+        TIMESTAMP.Now(executor).then(t2 => {
+          let compareValue = TIMESTAMP.Compare(t1, t2);
+          let success = compareValue == -1 || compareValue == 0 || compareValue == 1;
+          EXPECT(success).to.equal(true);
+        }).catch(error => EXPECT(false));
+      }).catch(error => EXPECT(false));
     });
+  });
 
-    describe('MeridiemToMilitaryTime(meridiemTime)', () => {
-      it('Returns an error if meridiemTime is invalid.', () => {
-        let results = TIMESTAMP.MeridiemToMilitaryTime('');
-        EXPECT(results.error).to.not.equal(null);
-      });
-
-      it('Returns a military time string if meridiemTime is valid.', () => {
-        let results = TIMESTAMP.MeridiemToMilitaryTime(t.meridiemTime.string);
-        EXPECT(results.string).to.equal(t.militaryTime.string);
-      });
-    });
-
-    describe('Difference(d1, d2)', () => {
-      let d1 = { year: 2018, month: 1, day: 1, hours: 0, minutes: 0, seconds: 0, milliseconds: 0 };
-      let d2 = { year: 2018, month: 1, day: 1, hours: 0, minutes: 0, seconds: 0, milliseconds: 100 };
-      let difference = 100;
-
-      it('Returns an error if d1 or d2 is invalid.', () => {
-        let results = TIMESTAMP.Difference(null, d2);
-        EXPECT(results.error).to.not.equal(null);
-      });
-
-      it('Returns an error if d1 or d2 is invalid.', () => {
-        let results = TIMESTAMP.Difference(d1, undefined);
-        EXPECT(results.error).to.not.equal(null);
-      });
-
-      it('Returns number of milliseconds if d1 and d2 are valid.', () => {
-        let results = TIMESTAMP.Difference(d1, d2);
-        EXPECT(results.milliseconds).to.equal(difference);
-      });
+  describe('EpochSecondsToTimestamp(seconds, executor)', () => {
+    it('Returns an object.', () => {
+      TIMESTAMP.Now(executor).then(t => {
+        TIMESTAMP.EpochSecondsToTimestamp(t.epoch, executor).then(o => {
+          let success = o != null && o !== undefined && o.epoch;
+          EXPECT(success).to.equal(true);
+        }).catch(error => EXPECT(false));
+      }).catch(error => EXPECT(false));
     });
   });
 });
