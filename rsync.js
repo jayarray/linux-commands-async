@@ -65,10 +65,6 @@ function Match(user, host, src, dest, executor) { // Copy files and then delete 
   return Rsync_(user, host, '--delete-after', src, dest, executor);
 }
 
-function DryRun(args, executor) { // Will execute without making changes (for testing command)
-  return Rsync_(user, host, '--dry-run', src, dest, executor);
-}
-
 function Manual(args, executor) {  // args = [string | number]
   let argsError = argsValidator(args);
   if (argsError)
@@ -86,6 +82,17 @@ function Manual(args, executor) {  // args = [string | number]
       resolve(output.stdout);
     }).catch(error => reject(`Failed to execute rsync: ${error}`));
   });
+}
+
+function DryRun(args, executor) { // Will execute without making changes (for testing command)
+  let argsError = argsValidator(args);
+  if (argsError)
+    return Promise.reject(`Failed to execute rsync: ${argsError}`);
+
+  if (!executor)
+    return Promise.reject(`Failed to execute rsync: Executor is required`);
+
+  return Manual(['--dry-run'].concat(args), executor);
 }
 
 //-----------------------------------
