@@ -69,6 +69,7 @@ describe('*** zip.js ***', () => {
     });
   });
 
+
   describe('Directories(sources, dest, executor)', () => {
     it('Returns error if sources are invalid.', () => {
       ZIP.Directories(null, zipDest, executor).then(success => EXPECT(false))
@@ -158,7 +159,9 @@ describe('*** zip.js ***', () => {
               else {
                 ZIP.Unzip(zipDest, unzipDest, executor).then(success => {
                   DIRECTORY.Remove(testDir, executor).then(success => {
-                    EXPECT(true);
+                    FILE.Remove(zipDest, executor).then(success => {
+                      EXPECT(true);
+                    }).catch(error => EXPECT(false));
                   }).catch(error => EXPECT(false));
                 }).catch(error => EXPECT(false));
               }
@@ -169,7 +172,7 @@ describe('*** zip.js ***', () => {
     });
   });
 
-
+  
   describe('UnzipManual(args, executor)', () => {
     it('Returns error if args are invalid.', () => {
       ZIP.UnzipManual(null, executor).then(success => EXPECT(false))
