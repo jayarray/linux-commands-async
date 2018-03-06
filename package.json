@@ -1,7 +1,7 @@
 {
   "name": "linux-commands-async",
   "version": "1.0.0",
-  "description": "An API for a collection of linux commands",
+  "description": "An API for executing (and creating) linux commands.",
   "main": "api.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec"
