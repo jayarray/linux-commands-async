@@ -48,7 +48,7 @@ function IsFileOrDirectoryDict(paths, executor) {
   });
 }
 
-function IsFileOrDir(path, executor) {
+function IsFileOrDirectory(path, executor) {
   let pathError = PathValidator(path);
   if (pathError)
     return Promise.reject(`Failed to determine if path is file or directory: ${pathError}`);
@@ -345,7 +345,7 @@ function PathsValidator(paths) {
 // EXPORTS
 
 exports.IsFileOrDirectoryDict = IsFileOrDirectoryDict;
-exports.IsFileOrDir = IsFileOrDir;
+exports.IsFileOrDirectory = IsFileOrDirectory;
 exports.Exists = Exists;
 exports.ExistsDict = ExistsDict;
 exports.IsFile = IsFile;
