@@ -4,7 +4,8 @@ let VALIDATE = require('./validate.js');
 //-----------------------------------
 // PATH
 
-function IsFileOrDirectoryDict(paths, executor) {
+// This seems like overkill
+function Query(paths, executor) {
   let pathsError = PathsValidator(paths);
   if (pathsError)
     return Promise.reject(`Failed to determine if paths are files or directories: ${pathsError}`);
@@ -15,7 +16,7 @@ function IsFileOrDirectoryDict(paths, executor) {
   return new Promise((resolve, reject) => {
     let cmdList = [];
     paths.forEach(path => {
-      let cmd = `if [ -e ${path} ]; then`;
+      let cmd = `if [ -e ${path} ]; then`; // can you do !exists and return dne to avoid nested ifs?
       cmd += ` if [ -d ${path} ]; then echo "d";`;
       cmd += ` else`;
       cmd += ` if [ -f ${path} ]; then  echo "f";`;
@@ -48,21 +49,6 @@ function IsFileOrDirectoryDict(paths, executor) {
   });
 }
 
-function IsFileOrDirectory(path, executor) {
-  let pathError = PathValidator(path);
-  if (pathError)
-    return Promise.reject(`Failed to determine if path is file or directory: ${pathError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to determine if path is file or directory: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    IsFileOrDirectoryDict([path], executor).then(dict => {
-      resolve(dict[path]);
-    }).catch(error => `Failed to determine if path is file or directory: ${error}`);
-  });
-}
-
 function Exists(path, executor) {
   let pathError = PathValidator(path);
   if (pathError)
@@ -72,46 +58,13 @@ function Exists(path, executor) {
     return Promise.reject(`Failed to check if path exists: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    IsFileOrDirectoryDict([path], executor).then(dict => {
-      let val = dict[path];
-
-      if (val == 'invalid') {
-        reject(`Failed to check if path exists: Path is invalid`);
-        return;
-      }
-
-      if (val == 'f' || val == 'd')
+    Query([path], executor).then(dict => {
+      let type = dict[path];
+      if (type == 'f' || type == 'd')
         resolve(true);
-      else if (val == 'dne')
+      else
         resolve(false);
-    }).catch(error => reject(`Failed to check if path exists: ${error}`));
-  });
-}
-
-function ExistsDict(paths, executor) {
-  let pathsError = PathsValidator(paths);
-  if (pathsError)
-    return Promise.reject(`Failed to check if all paths exist: ${pathsError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to check if all paths exist: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    IsFileOrDirectoryDict(paths, executor).then(dict => {
-      let existsDict = {};
-
-      for (let i = 0; i < paths.length; ++i) {
-        let currPath = paths[i];
-        let currDictResult = dict[currPath];
-
-        if (currDictResult == 'f' || currDictResult == 'd')
-          existsDict[currPath] = true;
-        else
-          existsDict[currPath] = false;
-      }
-
-      resolve(existsDict);
-    }).catch(error => reject(`Failed to check if path exists: ${error}`));
+    }).catch(error => reject(`Failed to check if path is a file: ${error}`));
   });
 }
 
@@ -124,83 +77,12 @@ function IsFile(path, executor) {
     return Promise.reject(`Failed to check if path is a file: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    IsFileOrDirectoryDict([path], executor).then(dict => {
-      let val = dict[path];
-
-      if (val == 'dne') {
-        reject(`Failed to check if path is a file: path does not exist: ${path}`);
-        return;
-      }
-
-      if (val == 'invalid') {
-        reject(`Failed to check if path is a file: path is invalid`);
-        return;
-      }
-
-      if (val == 'f')
+    Query([path], executor).then(dict => {
+      if (dict[path] == 'f')
         resolve(true);
       else
         resolve(false);
     }).catch(error => reject(`Failed to check if path is a file: ${error}`));
-  });
-}
-
-function IsFileDict(paths, executor) {
-  let pathsError = PathsValidator(paths);
-  if (pathsError)
-    return Promise.reject(`Failed to check if all paths are files: ${pathsError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to check if all paths are files: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    IsFileOrDirectoryDict(paths, executor).then(dict => {
-      // Check for any DNE paths
-      let dnePaths = [];
-      paths.forEach(path => {
-        if (dict[path] == 'dne')
-          dnePaths.push(path);
-      });
-
-      // Report any missing paths
-      if (dnePaths.length > 0) {
-        let errorStr = '';
-        if (dnePaths.length == 1)
-          errorStr = `Failed to check if all paths are files: This path does not exist: ${dnePaths[0]}`;
-        else
-          errorStr = `Failed to check if all paths are files: The following (${dnePaths.length}) paths do not exist:\n${dnePaths.join('\n')}`;
-
-        reject(errorStr);
-        return;
-      }
-
-      // Check for any INVALID paths
-      let invalidPaths = [];
-      paths.forEach(path => {
-        if (dict[path] == 'invalid')
-          invalidPaths.push(path);
-      });
-
-      // Report any INVALID paths
-      if (invalidPaths.length > 0) {
-        let errorStr = '';
-        if (invalidPaths.length == 1)
-          errorStr = `Failed to check if all paths are files: This path is invalid: ${invalidPaths[0]}`;
-        else
-          errorStr = `Failed to check if all paths are files: The following (${invalidPaths.length}) paths are invalid:\n${invalidPaths.join('\n')}`;
-
-        reject(errorStr);
-        return;
-      }
-
-      // Create dict
-      let isFileDict = {};
-      paths.forEach(path => {
-        isFileDict[path] = dict[path] == 'f';
-      });
-
-      resolve(isFileDict);
-    }).catch(error => `Failed to check if all paths are files: ${error}`);
   });
 }
 
@@ -213,83 +95,12 @@ function IsDir(path, executor) {
     return Promise.reject(`Failed to check if path is a directory: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    IsFileOrDirectoryDict([path], executor).then(dict => {
-      let val = dict[path];
-
-      if (val == 'dne') {
-        reject(`Failed to check if path is a directory: path does not exist: ${path}`);
-        return;
-      }
-
-      if (val == 'invalid') {
-        reject(`Failed to check if path is a directory: path is invalid`);
-        return;
-      }
-
-      if (val == 'd')
+    Query([path], executor).then(dict => {
+      if (dict[path] == 'd')
         resolve(true);
       else
         resolve(false);
     }).catch(error => reject(`Failed to check if path is a directory: ${error}`));
-  });
-}
-
-function IsDirDict(paths, executor) {
-  let pathsError = PathsValidator(paths);
-  if (pathsError)
-    return Promise.reject(`Failed to check if all paths are directories: ${pathsError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to check if all paths are directories: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    IsFileOrDirectoryDict(paths, executor).then(dict => {
-      // Check for any DNE paths
-      let dnePaths = [];
-      paths.forEach(path => {
-        if (dict[path] == 'dne')
-          dnePaths.push(path);
-      });
-
-      // Report any missing paths
-      if (dnePaths.length > 0) {
-        let errorStr = '';
-        if (dnePaths.length == 1)
-          errorStr = `Failed to check if all paths are directories: This path does not exist: ${dnePaths[0]}`;
-        else
-          errorStr = `Failed to check if all paths are directories: The following (${dnePaths.length}) paths do not exist:\n${dnePaths.join('\n')}`;
-
-        reject(errorStr);
-        return;
-      }
-
-      // Check for any INVALID paths
-      let invalidPaths = [];
-      paths.forEach(path => {
-        if (dict[path] == 'invalid')
-          invalidPaths.push(path);
-      });
-
-      // Report any INVALID paths
-      if (invalidPaths.length > 0) {
-        let errorStr = '';
-        if (invalidPaths.length == 1)
-          errorStr = `Failed to check if all paths are directories: This path is invalid: ${invalidPaths[0]}`;
-        else
-          errorStr = `Failed to check if all paths are directories: The following (${invalidPaths.length}) paths are invalid:\n${invalidPaths.join('\n')}`;
-
-        reject(errorStr);
-        return;
-      }
-
-      // Create dict
-      let isDirDict = {};
-      paths.forEach(path => {
-        isDirDict[path] = dict[path] == 'd';
-      });
-
-      resolve(isDirDict);
-    }).catch(error => `Failed to check if all paths are files: ${error}`);
   });
 }
 
@@ -309,14 +120,6 @@ function ParentDir(path) {
   return PATH.dirname(path); // Full path to parent dir
 }
 
-function Escape(path) {
-  return escape(path);
-}
-
-function ContainsWhitespace(path) {
-  return path.includes(' ');
-}
-
 //---------------------------------
 // HELPERS
 
@@ -333,8 +136,7 @@ function PathsValidator(paths) {
     return `paths are ${error}`;
 
   for (let i = 0; i < paths.length; ++i) {
-    let currPath = paths[i];
-    let invalidType = VALIDATE.IsStringInput(currPath);
+    let invalidType = VALIDATE.IsStringInput(paths[i]);
     if (invalidType)
       return `paths contain a path that is ${invalidType}`;
   }
@@ -344,14 +146,10 @@ function PathsValidator(paths) {
 //------------------------------------
 // EXPORTS
 
-exports.IsFileOrDirectoryDict = IsFileOrDirectoryDict;
-exports.IsFileOrDirectory = IsFileOrDirectory;
+exports.Query = Query;
 exports.Exists = Exists;
-exports.ExistsDict = ExistsDict;
 exports.IsFile = IsFile;
-exports.IsFileDict = IsFileDict;
 exports.IsDir = IsDir;
-exports.IsDirDict = IsDirDict;
 exports.Filename = Filename;
 exports.Extension = Extension;
 exports.ParentDirName = ParentDirName;
