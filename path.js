@@ -154,5 +154,3 @@ exports.Filename = Filename;
 exports.Extension = Extension;
 exports.ParentDirName = ParentDirName;
 exports.ParentDir = ParentDir;
-exports.Escape = Escape;
-exports.ContainsWhitespace = ContainsWhitespace;
