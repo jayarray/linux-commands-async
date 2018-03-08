@@ -3,6 +3,12 @@ let VALIDATE = require('./validate.js');
 //-------------------------------------------------
 // REMOVE (rm)
 
+/**
+ * Delete a file.
+ * @param {Array<string>} paths List of filepaths to delete.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise rejects and returns an error.
+ */
 function Files(paths, executor) {
   let pathsError = VALIDATE.IsArray(paths);
   if (pathsError)
@@ -22,6 +28,12 @@ function Files(paths, executor) {
   });
 }
 
+/**
+ * Delete a directory.
+ * @param {Array<string>} paths List of directory paths to delete.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise rejects and returns an error.
+ */
 function Directories(paths, executor) {
   let pathsError = VALIDATE.IsArray(paths);
   if (pathsError)
