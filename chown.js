@@ -3,6 +3,14 @@ let VALIDATE = require('./validate.js');
 //-----------------------------------------------
 // CHOWN
 
+/**
+ * Change user ownership.
+ * @param {Array<string>} paths A list of paths that will change user ownership.
+ * @param {string|Number} newOwnerId Username or user ID number.
+ * @param {boolean} isRecursive Assign as true if ownership is to be applied recursively, otherwise assign as false.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function ChangeOwner(paths, newOwnerId, isRecursive, executor) { // newOwner can be string or integer
   let pathsError = PathsValidator(paths);
   if (pathsError)
@@ -32,6 +40,14 @@ function ChangeOwner(paths, newOwnerId, isRecursive, executor) { // newOwner can
   });
 }
 
+/**
+ * Change group ownership.
+ * @param {Array<string>} paths A list of paths that will change group ownership.
+ * @param {string|Number} newGroupId Group name or group ID number.
+ * @param {boolean} isRecursive Assign as true if ownership is to be applied recursively, otherwise assign as false.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function ChangeGroup(paths, newGroupId, isRecursive, executor) { // newOwner can be string or integer
   let pathsError = PathsValidator(paths);
   if (pathsError)
@@ -61,6 +77,15 @@ function ChangeGroup(paths, newGroupId, isRecursive, executor) { // newOwner can
   });
 }
 
+/**
+ * Change user and group ownership simultaneously.
+ * @param {Array<string>} paths A list of paths that will change user and group ownership.
+ * @param {string|Number} newOwnerId Username or user ID number.
+ * @param {string|Number} newGroupId Group name or group ID number.
+ * @param {boolean} isRecursive Assign as true if ownership is to be applied recursively, otherwise assign as false.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executor) { // newOwner can be string or integer
   let pathsError = PathsValidator(paths);
   if (pathsError)
@@ -94,6 +119,12 @@ function ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executo
   });
 }
 
+/**
+ * Change user and group ownership simultaneously.
+ * @param {Array<string|Number>} args A list of args used in 'chown' command.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function Manual(args, executor) { // newOwner can be string or integer
   let argsError = ArgsValidator(args);
   if (argsError)
