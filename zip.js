@@ -28,7 +28,7 @@ function Files(sources, dest, executor) {
         reject(`Failed to zip files: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to zip files: ${error}`));
   });
 }
@@ -58,7 +58,7 @@ function Directories(sources, dest, executor) {
         reject(`Failed to zip directories: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to zip directories: ${error}`));
   });
 }
@@ -83,7 +83,7 @@ function Manual(args, executor) {
         reject(`Failed to execute zip command: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to execute zip command: ${error}`));
   });
 }
@@ -113,7 +113,7 @@ function Unzip(src, dest, executor) {
         reject(`Failed to unzip: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to unzip: ${error}`));
   });
 }
@@ -138,7 +138,7 @@ function UnzipManual(args, executor) {
         reject(`Failed to execute unzip command: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to execute unzip command: ${error}`));
   });
 }
