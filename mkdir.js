@@ -3,6 +3,12 @@ let VALIDATE = require('./validate.js');
 //------------------------------------------------------
 // MKDIR (mkdir)
 
+/**
+ * Create a directory.
+ * @param {string} path
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ */
 function MakeDirectory(path, executor) {
   let pathError = VALIDATE.IsStringInput(path);
   if (pathError)
