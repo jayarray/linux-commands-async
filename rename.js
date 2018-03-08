@@ -31,7 +31,7 @@ function Rename(src, newName, executor) {
     let dest = _path.join(parentDir, newName);
 
     MOVE.Move(src, dest, executor).then(success => {
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to rename: ${error}`));
   });
 }
