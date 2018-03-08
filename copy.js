@@ -3,6 +3,13 @@ let VALIDATE = require('./validate.js');
 //-------------------------------------------------
 // COPY (cp)
 
+/**
+ * Copy file.
+ * @param {string} src Source
+ * @param {string} dest Destination
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function File(src, dest, executor) {
   let srcError = VALIDATE.IsStringInput(src);
   if (srcError)
@@ -26,6 +33,13 @@ function File(src, dest, executor) {
   });
 }
 
+/**
+ * Copy directory.
+ * @param {string} src Source
+ * @param {string} dest Destination
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function Directory(src, dest, executor) {
   let srcError = VALIDATE.IsStringInput(src);
   if (srcError)
