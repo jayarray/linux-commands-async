@@ -7,10 +7,22 @@ let VALIDATE = require('./validate.js');
 //-----------------------------------------
 // DIRECTORY
 
+/**
+ * Delete a directory.
+ * @param {string} path
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function Remove(path, executor) {
   return REMOVE.Directories([path], executor);
 }
 
+/**
+ * Create a directory.
+ * @param {string} path
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function Create(path, executor) {
   let pathError = VALIDATE.IsStringInput(path);
   if (pathError)
@@ -26,6 +38,12 @@ function Create(path, executor) {
   });
 }
 
+/**
+ * Determine folder size.
+ * @param {string} path
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns the size in bytes. Else, it rejects and returns an error.
+ */
 function Size(path, executor) {
   let pathError = VALIDATE.IsStringInput(path);
   if (pathError)
