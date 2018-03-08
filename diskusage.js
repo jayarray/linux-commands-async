@@ -4,6 +4,12 @@ let VALIDATE = require('./validate.js');
 //------------------------------------
 // DISK USAGE
 
+/**
+ * List all files and directories (visible and hidden) with their respective sizes.
+ * @param {string} dirPath Directory location.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: size (int), path (string). Else, it rejects and returns an error.
+ */
 function ListAllItems(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
@@ -47,6 +53,12 @@ function ListAllItems(dirPath, executor) {
   });
 }
 
+/**
+ * List all visible files and directories with their respective sizes.
+ * @param {string} dirPath Directory location.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: size (int), path (string). Else, it rejects and returns an error.
+ */
 function ListVisibleItems(dirPath, executor) {
   return new Promise((resolve, reject) => {
     ListAllItems(dirPath, executor).then(items => {
@@ -55,6 +67,12 @@ function ListVisibleItems(dirPath, executor) {
   });
 }
 
+/**
+ * List all hidden files and directories with their respective sizes.
+ * @param {string} dirPath Directory location.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: size (int), path (string). Else, it rejects and returns an error.
+ */
 function ListHiddenItems(dirPath, executor) {
   return new Promise((resolve, reject) => {
     ListAllItems(dirPath, executor).then(items => {
@@ -63,6 +81,12 @@ function ListHiddenItems(dirPath, executor) {
   });
 }
 
+/**
+ * Determine folder size.
+ * @param {string} dirPath Directory location.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an integer representing the size in bytes. Else, it rejects and returns an error.
+ */
 function DirSize(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
