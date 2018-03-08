@@ -7,7 +7,7 @@ let VALIDATE = require('./validate.js');
 /**
  * Get permissions for specified path.
  * @param {string} path
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: u,g,o (each contains properties: r (bool), w (bool), x (bool), xchar (bool), string (string) ), octal (contains properties: special (int), user (int), group (int), string (string) ), owner (string), group (string), string (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {Promise<{u: {r: boolean, w: boolean, x: boolean, xchar: string, string: string}, g: {r: boolean, w: boolean, x: boolean, xchar: string, string: string}, o:{r: boolean, w: boolean, x: boolean, xchar: string, string: string}, octal: {special: number, user: number, group: number, others: number, string: string}, owner: string, group: string, string: string, filetype: string}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function Permissions(path, executor) {
   if (!executor)
@@ -40,7 +40,7 @@ function Permissions(path, executor) {
 /**
  * Get permissions for specified path.
  * @param {string} permStr Permissions string
- * @returns {Object} Returns an object with the following properties: u,g,o (each contains properties: r (bool), w (bool), x (bool), xchar (bool), string (string) ), octal (contains properties: special (int), user (int), group (int), string (string) ), owner (string), group (string), string (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {{u: {r: boolean, w: boolean, x: boolean, xchar: string, string: string}, g: {r: boolean, w: boolean, x: boolean, xchar: string, string: string}, o:{r: boolean, w: boolean, x: boolean, xchar: string, string: string}, octal: {special: number, user: number, group: number, others: number, string: string}, owner: string, group: string, string: string, filetype: string}} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function CreatePermissionsObjectUsingPermissionsString(permStr) {
   let error = PermissionsStringError(permStr);
@@ -160,7 +160,7 @@ function IntToRwxObject(int) {
 /**
  * Get permissions for specified path.
  * @param {string} octalStr Octal string
- * @returns {Object} Returns an object with the following properties: u,g,o (each contains properties: r (bool), w (bool), x (bool), xchar (bool), string (string) ), octal (contains properties: special (int), user (int), group (int), string (string) ), owner (string), group (string), string (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {{u: {r: boolean, w: boolean, x: boolean, xchar: string, string: string}, g: {r: boolean, w: boolean, x: boolean, xchar: string, string: string}, o:{r: boolean, w: boolean, x: boolean, xchar: string, string: string}, octal: {special: number, user: number, group: number, others: number, string: string}, owner: string, group: string, string: string, filetype: string}} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function CreatePermissionsObjectUsingOctalString(octalStr) {
   let error = OctalStringValidator(octalStr);
@@ -273,46 +273,32 @@ function CreatePermissionsObjectUsingOctalString(octalStr) {
  * Check if permissions objects are the same.
  * @param {Object} p1 Permissions object
  * @param {Object} p2 Permissions object
- * @returns {boolean} Returns true if both permissions objects are equal, false otherwise. Returns an error if permissions object are invalid.
+ * @returns {boolean} Returns true if both permissions objects are equal, false otherwise.
  */
 function Equal(p1, p2) {
-  let error = ObjectError(p1, false);
-  if (error)
-    return { equal: null, error: `Object 1: ${error}` };
-
-  error = ObjectError(p2, false);
-  if (error)
-    return { equal: null, error: `Object 2: ${error}` };
-
-  let equal = p1.u.r == p2.u.r &&
+  return equal = p1.u.r == p2.u.r &&
     p1.u.w == p2.u.w &&
     p1.u.x == p2.u.x &&
     p1.u.xchar == p2.u.xchar &&
     p1.u.string == p2.u.string &&
-
     p1.g.r == p2.g.r &&
     p1.g.w == p2.g.w &&
     p1.g.x == p2.g.x &&
     p1.g.xchar == p2.g.xchar &&
     p1.g.string == p2.g.string &&
-
     p1.o.r == p2.o.r &&
     p1.o.w == p2.o.w &&
     p1.o.x == p2.o.x &&
     p1.o.xchar == p2.o.xchar &&
     p1.o.string == p2.o.string &&
-
     p1.octal.string == p2.octal.string &&
     p1.octal.special == p2.octal.special &&
     p1.octal.user == p2.octal.user &&
     p1.octal.group == p2.octal.group &&
     p1.octal.others == p2.octal.others &&
-
     p1.owner == p2.owner &&
     p1.group == p2.group &&
     p1.string == p2.string;
-
-  return { equal: equal, error: null };
 }
 
 function ObjectToOctalString(obj) {  // Example:  obj = { u:{...}, g:{...}, o:{...} }
