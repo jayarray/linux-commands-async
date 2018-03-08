@@ -94,7 +94,7 @@ function Match(user, host, src, dest, executor) { // Copy files and then delete 
 
 /**
  * Execute rsync command using specified arguments.
- * @param {Array<string|Number>} args List of args used in 'rsync' command.
+ * @param {Array<string|number>} args List of args used in 'rsync' command.
  * @param {Command} executor Command object that will execute the command.
  * @returns {Promise<string>} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
  */
@@ -119,7 +119,7 @@ function Manual(args, executor) {
 
 /**
  * Run rsync command without affecting files. (For testing purposes).
- * @param {Array<string|Number>} args List of args used in 'rsync' command.
+ * @param {Array<string|number>} args List of args used in 'rsync' command.
  * @param {Command} executor Command object that will execute the command.
  * @returns {Promise<string>} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
  */
