@@ -3,6 +3,13 @@ let VALIDATE = require('./validate.js');
 //-------------------------------------------
 // ZIP
 
+/**
+ * Compress files using ZIP utility.
+ * @param {Array<string>} sources List of paths to zip.
+ * @param {string} dest Destination.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ */
 function Files(sources, dest, executor) {
   let error = SourcesValidator(sources);
   if (error)
@@ -26,6 +33,13 @@ function Files(sources, dest, executor) {
   });
 }
 
+/**
+ * Compress directories using ZIP utility.
+ * @param {Array<string>} sources List of paths to zip.
+ * @param {string} dest Destination.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ */
 function Directories(sources, dest, executor) {
   let error = SourcesValidator(sources);
   if (error)
@@ -49,6 +63,12 @@ function Directories(sources, dest, executor) {
   });
 }
 
+/**
+ * Compress with ZIP utility using specified arguments.
+ * @param {Array<string|Number>} args List of arguments used in 'zip' command.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ */
 function Manual(args, executor) {
   let error = ArgsValidator(args);
   if (error)
@@ -68,6 +88,13 @@ function Manual(args, executor) {
   });
 }
 
+/**
+ * Decompress zip file using UNZIP utility.
+ * @param {string} src Source for zip file.
+ * @param {string} dest Destination.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ */
 function Unzip(src, dest, executor) {
   let error = SrcValidator(src);
   if (error)
@@ -91,6 +118,12 @@ function Unzip(src, dest, executor) {
   });
 }
 
+/**
+ * Decompress zip file with UNZIP utility using specified arguments.
+ * @param {Array<string|Number>} args List of arguments used in 'zip' command.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ */
 function UnzipManual(args, executor) {
   let error = ArgsValidator(args);
   if (error)
