@@ -4,7 +4,12 @@ let VALIDATE = require('./validate.js');
 //-----------------------------------
 // PATH
 
-// This seems like overkill
+/**
+ * Check status of path.
+ * @param {string} path
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns one of the following strings: 'f' (file), 'd' (directory), 'dne' (does not exist), 'invalid'. Else, it rejects and returns an error.
+ */
 function Query(paths, executor) {
   let pathsError = PathsValidator(paths);
   if (pathsError)
@@ -49,6 +54,12 @@ function Query(paths, executor) {
   });
 }
 
+/**
+ * Check if path exists.
+ * @param {string} path
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns a boolean value. Else, it rejects and returns an error.
+ */
 function Exists(path, executor) {
   let pathError = PathValidator(path);
   if (pathError)
@@ -68,6 +79,12 @@ function Exists(path, executor) {
   });
 }
 
+/**
+ * Check if path is a file.
+ * @param {string} path
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns true if path is a file and false otherwise. Otherwise, it rejects and returns an error.
+ */
 function IsFile(path, executor) {
   let pathError = PathValidator(path);
   if (pathError)
@@ -86,6 +103,12 @@ function IsFile(path, executor) {
   });
 }
 
+/**
+ * Check if path is a directory.
+ * @param {string} path
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns true if path is a directory and false otherwise. Otherwise, it rejects and returns an error.
+ */
 function IsDir(path, executor) {
   let pathError = PathValidator(path);
   if (pathError)
@@ -104,20 +127,40 @@ function IsDir(path, executor) {
   });
 }
 
+/**
+ * Get filename from path.
+ * @param {string} path
+ * @returns {string} Returns a string containing the filename.
+ */
 function Filename(path) {
   return PATH.basename(path);
 }
 
+/**
+ * Get file extension from path.
+ * @param {string} path
+ * @returns {string} Returns a string containing the file extension.
+ */
 function Extension(path) {
   return PATH.extname(path);
 }
 
+/**
+ * Get parent name from path.
+ * @param {string} path
+ * @returns {string} Returns a string containing the parent directory name.
+ */
 function ParentDirName(path) {
   return PATH.dirname(path).split(PATH.sep).pop();
 }
 
+/**
+ * Get parent directory from path.
+ * @param {string} path
+ * @returns {string} Returns a string containing full path to parent directory.
+ */
 function ParentDir(path) {
-  return PATH.dirname(path); // Full path to parent dir
+  return PATH.dirname(path);
 }
 
 //---------------------------------
