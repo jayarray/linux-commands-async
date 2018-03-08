@@ -4,6 +4,13 @@ let VALIDATE = require('./validate.js');
 //----------------------------------------
 // BASH SCRIPT
 
+/**
+ * Create a basch script file.
+ * @param {string} path Location where file should be created.
+ * @param {string} content Text to be written in file. (Omit '#!/bin/bash' as it is first line in file).
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ */
 function Create(path, content, executor) {
   let pathError = VALIDATE.IsStringInput(path);
   if (pathError)
@@ -25,6 +32,13 @@ function Create(path, content, executor) {
   });
 }
 
+/**
+ * Creates bash script, executes it, and cleans it up.
+ * @param {string} path Location where file should be created.
+ * @param {string} content Text to be written in file. (Omit '#!/bin/bash' as it is first line in file).
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns a string with the output. Else, it rejects and returns an error.
+ */
 function Execute(path, content, executor) {
   let pathError = VALIDATE.IsStringInput(path);
   if (pathError)
