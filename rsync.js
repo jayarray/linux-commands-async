@@ -53,19 +53,52 @@ function Rsync_(user, host, flag, src, dest, executor) { // PRIVATE
   });
 }
 
+/**
+ * Sync files to host.
+ * @param {string} user Username
+ * @param {string} host Host name
+ * @param {string} src Source
+ * @param {string} dest Destination
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
+ */
 function Rsync(user, host, src, dest, executor) {
   return Rsync_(user, host, [], src, dest, executor);
 }
 
+/**
+ * Update files on host that were updated at the source. (Skips new files)
+ * @param {string} user Username
+ * @param {string} host Host name
+ * @param {string} src Source
+ * @param {string} dest Destination
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
+ */
 function Update(user, host, src, dest, executor) { // Update dest if src was updated
   return Rsync_(user, host, '--update', src, dest, executor);
 }
 
+/**
+ * Match files on host to those in the source. (Will delete files in host that do not exist in source).
+ * @param {string} user Username
+ * @param {string} host Host name
+ * @param {string} src Source
+ * @param {string} dest Destination
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
+ */
 function Match(user, host, src, dest, executor) { // Copy files and then delete those NOT in src (Match dest to src)
   return Rsync_(user, host, '--delete-after', src, dest, executor);
 }
 
-function Manual(args, executor) {  // args = [string | number]
+/**
+ * Execute rsync command using specified arguments.
+ * @param {Array<string|Number>} args List of args used in 'rsync' command.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
+ */
+function Manual(args, executor) {
   let argsError = argsValidator(args);
   if (argsError)
     return Promise.reject(`Failed to execute rsync: ${argsError}`);
@@ -84,6 +117,12 @@ function Manual(args, executor) {  // args = [string | number]
   });
 }
 
+/**
+ * Run rsync command without affecting files. (For testing purposes).
+ * @param {Array<string|Number>} args List of args used in 'rsync' command.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
+ */
 function DryRun(args, executor) { // Will execute without making changes (for testing command)
   let argsError = argsValidator(args);
   if (argsError)
