@@ -4,6 +4,11 @@ let VALIDATE = require('./validate.js');
 //--------------------------------------------
 // PERMISSIONS
 
+/**
+ * Get permissions for specified path.
+ * @param {string} path
+ * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: u,g,o (each contains properties: r (bool), w (bool), x (bool), xchar (bool), string (string) ), octal (contains properties: special (int), user (int), group (int), string (string) ), owner (string), group (string), string (string), filetype (string). Else, it rejects and returns an error.
+ */
 function Permissions(path, executor) {
   if (!executor)
     return Promise.reject(`Failed to get permissions: Executor is required`);
@@ -32,6 +37,11 @@ function Permissions(path, executor) {
   });
 }
 
+/**
+ * Get permissions for specified path.
+ * @param {string} permStr Permissions string
+ * @returns {Object} Returns an object with the following properties: u,g,o (each contains properties: r (bool), w (bool), x (bool), xchar (bool), string (string) ), octal (contains properties: special (int), user (int), group (int), string (string) ), owner (string), group (string), string (string), filetype (string). Else, it rejects and returns an error.
+ */
 function CreatePermissionsObjectUsingPermissionsString(permStr) {
   let error = PermissionsStringError(permStr);
   if (error)
@@ -147,6 +157,11 @@ function IntToRwxObject(int) {
   return { obj: obj, error: null };
 }
 
+/**
+ * Get permissions for specified path.
+ * @param {string} octalStr Octal string
+ * @returns {Object} Returns an object with the following properties: u,g,o (each contains properties: r (bool), w (bool), x (bool), xchar (bool), string (string) ), octal (contains properties: special (int), user (int), group (int), string (string) ), owner (string), group (string), string (string), filetype (string). Else, it rejects and returns an error.
+ */
 function CreatePermissionsObjectUsingOctalString(octalStr) {
   let error = OctalStringValidator(octalStr);
   if (error)
@@ -254,6 +269,12 @@ function CreatePermissionsObjectUsingOctalString(octalStr) {
   return { obj: obj, error: null };
 }
 
+/**
+ * Check if permissions objects are the same.
+ * @param {Object} p1 Permissions object
+ * @param {Object} p2 Permissions object
+ * @returns {boolean} Returns true if both permissions objects are equal, false otherwise. Returns an error if permissions object are invalid.
+ */
 function Equal(p1, p2) {
   let error = ObjectError(p1, false);
   if (error)
