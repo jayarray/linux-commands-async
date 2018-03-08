@@ -3,6 +3,13 @@ let VALIDATE = require('./validate.js');
 //------------------------------------------------------
 // MOVE 
 
+/**
+ * Move a file or directory to another location.
+ * @param {string} src Source
+ * @param {string} dest Destination
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ */
 function Move(src, dest, executor) {
   let srcError = VALIDATE.IsStringInput(src);
   if (srcError)
