@@ -7,6 +7,13 @@ let VALIDATE = require('./validate.js');
 //-----------------------------------------------
 // RENAME
 
+/**
+ * Change name of file or directory.
+ * @param {string} src Source
+ * @param {string} newName New desired name file or directory.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise rejects and returns an error.
+ */
 function Rename(src, newName, executor) {
   let srcError = VALIDATE.IsStringInput(src);
   if (srcError)
