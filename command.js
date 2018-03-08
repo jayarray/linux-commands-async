@@ -24,7 +24,7 @@ function argsValidator(args) {
 //---------------------------------------------
 // SAVING DATA (to string)
 
-class SavedData { // Nits: make |value| private and add a get() method for encapsulation
+class SavedData {
   constructor(stream) {
     this.value_ = '';
     stream.on('data', this.Callback_.bind(this));
@@ -42,13 +42,15 @@ class SavedData { // Nits: make |value| private and add a get() method for encap
 //-----------------------------------------
 // LOCAL
 
-class LocalCommand {
+class Command {
   constructor() {
   }
 
   /**
-   * @param {string} cmd 
-   * @param {Array<string|number>} args 
+   * Executes a system command locally.
+   * @param {string} cmd Command name or command string.
+   * @param {Array<string|number>} args List of args associated with command name. (Assign as empty array if no args are needed).
+   * @returns {Promise} Returns a promise. If it resolves, it returns an object with properties: stderr, stdout, exitCode. Else, it rejects and returns an error.
    */
   Execute(cmd, args) {
     let cmdError = VALIDATE.IsStringInput(cmd);
@@ -81,12 +83,12 @@ class LocalCommand {
   }
 }
 
-const LOCAL = new LocalCommand();
+const LOCAL = new Command();
 
 //-----------------------------------------
 // REMOTE
 
-class RemoteCommand extends LocalCommand {
+class RemoteCommand extends Command {
   /**
   * @param {string} user 
   * @param {string} host 
@@ -97,7 +99,13 @@ class RemoteCommand extends LocalCommand {
     this.host_ = host;
   }
 
-  /** @override */
+  /**
+   * @override
+   * Executes a system command remotely.
+   * @param {string} cmd Command name or command string.
+   * @param {Array<string|number>} args List of args associated with command name. (Assign as empty array if no args are needed).
+   * @returns {Promise} Returns a promise. If it resolves, it returns an object with properties: stderr, stdout, exitCode. Else, it rejects and returns an error.
+   */
   Execute(cmd, args) {
     let cmdError = VALIDATE.IsStringInput(cmd);
     if (cmdError)
@@ -117,6 +125,12 @@ class RemoteCommand extends LocalCommand {
     return LOCAL.Execute('ssh', sshArgs);
   }
 
+  /**
+   * Creates a Command object that executes commands remotely.
+   * @param {string} user Username
+   * @param {string} host Remote host name
+   * @returns {Promise} Returns a promise. If it resolves, it returns a Command object. Else, it rejects and returns an error.
+   */
   static Create(user, host) {
     let userError = VALIDATE.IsStringInput(user);
     if (userError)
