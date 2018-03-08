@@ -23,7 +23,7 @@ function Files(paths, executor) {
         reject(`Failed to remove files: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to remove files: ${error}`));
   });
 }
@@ -48,7 +48,7 @@ function Directories(paths, executor) {
         reject(`Failed to remove directory: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to remove directories: ${error}`));
   });
 }
