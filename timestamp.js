@@ -126,7 +126,7 @@ function Compare(t1, t2) {
 
 /**
  * Convert number of seconds in an epoch timestamp to a timestamp object.
- * @param {Number} seconds
+ * @param {number} seconds
  * @param {Command} executor Command object that will execute the command.
 * @returns {Promise<{day: {abbr: string, name: string, weekNumber: number, monthNumber: number}, week: {number: number}, month: {abbr: string, name: string, number: number}, year: {abbr: string, full: string}, militarytime: {}, meridiemTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, suffix: string, string: string}, militaryTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, string: string}, epoch: {seconds: number}}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
