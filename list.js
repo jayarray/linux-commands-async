@@ -4,6 +4,12 @@ let VALIDATE = require('./validate.js');
 //---------------------------------------------
 // List (ls)
 
+/**
+ * List all file and directory names (visible and hidden).
+ * @param {string} dirPath Directory location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filenames. Else, it rejects and returns an error.
+ */
 function AllFilenames(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
@@ -30,6 +36,12 @@ function AllFilenames(dirPath, executor) {
   });
 }
 
+/**
+ * List all visible file and directory names.
+ * @param {string} dirPath Directory location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filenames. Else, it rejects and returns an error.
+ */
 function VisibleFilenames(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
@@ -45,6 +57,12 @@ function VisibleFilenames(dirPath, executor) {
   });
 }
 
+/**
+ * List all hidden file and directory names.
+ * @param {string} dirPath Directory location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filenames. Else, it rejects and returns an error.
+ */
 function HiddenFilenames(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
@@ -60,6 +78,12 @@ function HiddenFilenames(dirPath, executor) {
   });
 }
 
+/**
+ * Retrive file permissions info.
+ * @param {string} filepath File location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ */
 function FileInfo(filepath, executor) {
   let filepathError = VALIDATE.IsStringInput(filepath);
   if (filepathError)
@@ -92,6 +116,12 @@ function FileInfo(filepath, executor) {
   });
 }
 
+/**
+ * Retrive directory permissions info.
+ * @param {string} dirPath Directory location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ */
 function DirInfo(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
@@ -124,6 +154,12 @@ function DirInfo(dirPath, executor) {
   });
 }
 
+/**
+ * Retrive permissions info.
+ * @param {string} dirPath Directory location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ */
 function Info(path, executor) {
   return new Promise((resolve, reject) => {
     FileInfo(path, executor).then(fileInfo => {
@@ -146,6 +182,12 @@ function Info(path, executor) {
   });
 }
 
+/**
+ * Retrive all permissions info for all files in a directory.
+ * @param {string} dirPath Directory location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ */
 function AllInfos(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
@@ -184,6 +226,12 @@ function AllInfos(dirPath, executor) {
   });
 }
 
+/**
+ * Retrive permissions info for all visible files in a directory.
+ * @param {string} dirPath Directory location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ */
 function VisibleInfos(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
@@ -199,6 +247,12 @@ function VisibleInfos(dirPath, executor) {
   });
 }
 
+/**
+ * Retrive permissions info for all hidden files in a directory.
+ * @param {string} dirPath Directory location
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ */
 function HiddenInfos(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
   if (dirPathError)
