@@ -4,6 +4,14 @@ let VALIDATE = require('./validate.js');
 //------------------------------------
 // FIND
 
+/**
+ * List all files matching the given name pattern.
+ * @param {string} path Directory location
+ * @param {string} pattern
+ * @param {Number} maxDepth Maximum number of levels to recurse
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ */
 function FilesByName(path, pattern, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
   if (error)
@@ -51,6 +59,14 @@ function FilesByName(path, pattern, maxDepth, executor) {
   });
 }
 
+/**
+ * List all files containing the specified text in their content.
+ * @param {string} path Directory location
+ * @param {string} text
+ * @param {Number} maxDepth Maximum number of levels to recurse
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ */
 function FilesByContent(path, text, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
   if (error)
@@ -98,6 +114,14 @@ function FilesByContent(path, text, maxDepth, executor) {
   });
 }
 
+/**
+ * List all files containing the specified text in their content.
+ * @param {string} path Directory location
+ * @param {string} user
+ * @param {Number} maxDepth Maximum number of levels to recurse
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ */
 function FilesByUser(path, user, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
   if (error)
@@ -145,6 +169,14 @@ function FilesByUser(path, user, maxDepth, executor) {
   });
 }
 
+/**
+ * List all directories matching the given name pattern.
+ * @param {string} path Directory location
+ * @param {string} pattern
+ * @param {Number} maxDepth Maximum number of levels to recurse
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ */
 function DirsByName(path, pattern, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
   if (error)
@@ -192,6 +224,13 @@ function DirsByName(path, pattern, maxDepth, executor) {
   });
 }
 
+/**
+ * List all empty files.
+ * @param {string} path Directory location
+ * @param {Number} maxDepth Maximum number of levels to recurse.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ */
 function EmptyFiles(path, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
   if (error)
@@ -235,6 +274,13 @@ function EmptyFiles(path, maxDepth, executor) {
   });
 }
 
+/**
+ * List all empty directories.
+ * @param {string} path Directory location
+ * @param {Number} maxDepth Maximum number of levels to recurse.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ */
 function EmptyDirs(path, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
   if (error)
@@ -278,6 +324,12 @@ function EmptyDirs(path, maxDepth, executor) {
   });
 }
 
+/**
+ * List all empty directories.
+ * @param {Array<string|Number>} args List of args used in 'find' command.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ */
 function Manual(args, executor) {
   let error = ArgsValidator(args);
   if (error)
