@@ -1,3 +1,8 @@
+/**
+ * Get current timestamp.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: day (contains properties: abbr (string), name (string), weekNumber (int), monthNumber (int) ), week (contains properties: number (int) ), month, year, militaryTime, meridiemtime, epoch. Else, it rejects and returns an error.
+ */
 function Now(executor) {
   return new Promise((resolve, reject) => {
     // BUILD COMMANDS
@@ -103,6 +108,13 @@ function Now(executor) {
   });
 }
 
+/**
+ * Compare two timestamps and determine whether t1 is equal to, less, than, or greater than t2.
+ * @param {Object} t1 Timestamp.
+ * @param {Object} t2 Timestamp.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns an integer: -1 (if t1 happened before t2), 0 (if t1 happened at the same time as t2), 1 (if t1 happened after t2).
+ */
 function Compare(t1, t2) {
   if (t1.epoch.seconds < t2.epoch.seconds)
     return -1;
@@ -112,6 +124,12 @@ function Compare(t1, t2) {
     return 0;
 }
 
+/**
+ * Convert number of seconds in an epoch timestamp to a timestamp object.
+ * @param {Number} seconds
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves returns an object. Else, it rejects and returns an error.
+ */
 function EpochSecondsToTimestamp(seconds, executor) {
   return new Promise((resolve, reject) => {
     // BUILD COMMANDS
