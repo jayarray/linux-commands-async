@@ -1,7 +1,7 @@
 /**
  * Get current timestamp.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: day (contains properties: abbr (string), name (string), weekNumber (int), monthNumber (int) ), week (contains properties: number (int) ), month, year, militaryTime, meridiemtime, epoch. Else, it rejects and returns an error.
+ * @returns {Promise<{day: {abbr: string, name: string, weekNumber: number, monthNumber: number}, week: {number: number}, month: {abbr: string, name: string, number: number}, year: {abbr: string, full: string}, militarytime: {}, meridiemTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, suffix: string, string: string}, militaryTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, string: string}, epoch: {seconds: number}}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function Now(executor) {
   return new Promise((resolve, reject) => {
@@ -110,10 +110,10 @@ function Now(executor) {
 
 /**
  * Compare two timestamps and determine whether t1 is equal to, less, than, or greater than t2.
- * @param {Object} t1 Timestamp.
- * @param {Object} t2 Timestamp.
+ * @param {Object} t1 Timestamp object
+ * @param {Object} t2 Timestamp object
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns an integer: -1 (if t1 happened before t2), 0 (if t1 happened at the same time as t2), 1 (if t1 happened after t2).
+ * @returns {Promise<number>} Returns a promise. If it resolves, it returns an integer: -1, 0, 1. Value indicates whether t1 is less than, equal, greater than t2 (respectively).
  */
 function Compare(t1, t2) {
   if (t1.epoch.seconds < t2.epoch.seconds)
@@ -128,7 +128,7 @@ function Compare(t1, t2) {
  * Convert number of seconds in an epoch timestamp to a timestamp object.
  * @param {Number} seconds
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves returns an object. Else, it rejects and returns an error.
+* @returns {Promise<{day: {abbr: string, name: string, weekNumber: number, monthNumber: number}, week: {number: number}, month: {abbr: string, name: string, number: number}, year: {abbr: string, full: string}, militarytime: {}, meridiemTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, suffix: string, string: string}, militaryTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, string: string}, epoch: {seconds: number}}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function EpochSecondsToTimestamp(seconds, executor) {
   return new Promise((resolve, reject) => {
