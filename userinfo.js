@@ -6,7 +6,7 @@ let VALIDATE = require('./validate.js');
 /**
  * Get current user name.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that returns current username if successful, otherwise it rejects and returns an error.
+ * @returns {Promise<string>} Returns a promise. If it resolves, it returns a string. Else, it returns an error.
  */
 function WhoAmI(executor) {
   if (!executor)
@@ -26,7 +26,7 @@ function WhoAmI(executor) {
 /**
  * Get current user info.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that returns an object, otherwise it rejects and returns an error.
+ * @returns {Promise<{username: string, uid: number, gid: number, groups: Array<{gid: number, name: string}> >}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function CurrentUser(executor) {
   if (!executor)
@@ -77,7 +77,7 @@ function CurrentUser(executor) {
  * Get current user info.
  * @param {string} username
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that returns an object, otherwise it rejects and returns an error.
+ * @returns {Promise<{username: string, uid: number, gid: number, groups: Array<{gid: number, name: string}> >}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function OtherUser(username, executor) {
   let usernameError = VALIDATE.IsStringInput(username);
