@@ -3,6 +3,12 @@ const VALIDATE = require('./validate.js');
 //----------------------------------------
 // PING
 
+/**
+ * Check if host is reachable.
+ * @param {string} host Host name
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise. If it resolves, it returns a boolean value. Else, it rejects and returns an error.
+ */
 function IsReachable(host, executor) {
   let hostError = VALIDATE.IsStringInput(host);
   if (hostError)
