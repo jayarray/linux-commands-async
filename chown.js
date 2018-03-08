@@ -120,7 +120,7 @@ function ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executo
 }
 
 /**
- * Change user and group ownership simultaneously.
+ * Change ownership.
  * @param {Array<string|Number>} args A list of args used in 'chown' command.
  * @param {Command} executor Command object that will execute the command.
  * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
