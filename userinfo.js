@@ -3,6 +3,11 @@ let VALIDATE = require('./validate.js');
 //---------------------------------------
 // USERINFO
 
+/**
+ * Get current user name.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that returns current username if successful, otherwise it rejects and returns an error.
+ */
 function WhoAmI(executor) {
   if (!executor)
     return Promise.reject(`Failed to identify who you are: Executor is required`);
@@ -18,6 +23,11 @@ function WhoAmI(executor) {
   });
 }
 
+/**
+ * Get current user info.
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that returns an object, otherwise it rejects and returns an error.
+ */
 function CurrentUser(executor) {
   if (!executor)
     return Promise.reject(`Failed to identify current user: Executor is required`);
@@ -63,6 +73,12 @@ function CurrentUser(executor) {
   });
 }
 
+/**
+ * Get current user info.
+ * @param {string} username
+ * @param {Command} executor Command object that will execute the command.
+ * @returns {Promise} Returns a promise that returns an object, otherwise it rejects and returns an error.
+ */
 function OtherUser(username, executor) {
   let usernameError = VALIDATE.IsStringInput(username);
   if (usernameError)
