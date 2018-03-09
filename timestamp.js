@@ -1,7 +1,7 @@
 /**
  * Get current timestamp.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise<{day: {abbr: string, name: string, weekNumber: number, monthNumber: number}, week: {number: number}, month: {abbr: string, name: string, number: number}, year: {abbr: string, full: string}, meridiemTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, suffix: string, string: string}, militaryTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, string: string}, epoch: {seconds: number}}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
+ * @returns {Promise<{day: {abbr: string, name: string, weekNumber: number, monthNumber: number}, week: number, month: {abbr: string, name: string, number: number}, year: {abbr: string, full: string}, meridiemTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, suffix: string, string: string}, militaryTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, string: string}, epoch: {seconds: number}}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function Now(executor) {
   return new Promise((resolve, reject) => {
@@ -45,8 +45,7 @@ function Now(executor) {
 
       // Week
       let weekInfoParts = lines[1].split(' ').map(part => part.trim());
-      let week = {};
-      week[weekInfoHeaders[0]] = parseInt(weekInfoParts[0]);
+      let week = parseInt(weekInfoParts[0]);
 
       // Month
       let monthInfoParts = lines[2].split(' ').map(part => part.trim());
@@ -128,7 +127,7 @@ function Compare(t1, t2) {
  * Convert number of seconds in an epoch timestamp to a timestamp object.
  * @param {number} seconds
  * @param {Command} executor Command object that will execute the command.
-* @returns {Promise<{day: {abbr: string, name: string, weekNumber: number, monthNumber: number}, week: {number: number}, month: {abbr: string, name: string, number: number}, year: {abbr: string, full: string}, militarytime: {}, meridiemTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, suffix: string, string: string}, militaryTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, string: string}, epoch: {seconds: number}}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
+* @returns {Promise<{day: {abbr: string, name: string, weekNumber: number, monthNumber: number}, week: number, month: {abbr: string, name: string, number: number}, year: {abbr: string, full: string}, militarytime: {}, meridiemTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, suffix: string, string: string}, militaryTime: {hours: number, minutes: number, seconds: number, nanoseconds: number, string: string}, epoch: {seconds: number}}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function EpochSecondsToTimestamp(seconds, executor) {
   return new Promise((resolve, reject) => {
@@ -169,8 +168,7 @@ function EpochSecondsToTimestamp(seconds, executor) {
 
       // Week
       let weekInfoParts = lines[1].split(' ').map(part => part.trim());
-      let week = {};
-      week[weekInfoHeaders[0]] = parseInt(weekInfoParts[0]);
+      let week = parseInt(weekInfoParts[0]);
 
       // Month
       let monthInfoParts = lines[2].split(' ').map(part => part.trim());
