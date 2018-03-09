@@ -5,10 +5,10 @@ let VALIDATE = require('./validate.js');
 // PATH
 
 /**
- * Check status of path.
- * @param {string} path
+ * Check the status of multiple paths.
+ * @param {Array<string>} paths List of paths to query.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns one of the following strings: 'f' (file), 'd' (directory), 'dne' (does not exist), 'invalid'. Else, it rejects and returns an error.
+ * @returns {Promise<{path: string}>} Returns a promise. If it resolves, it returns an dictionary of all queried paths, each of which is assigned one of the following strings: 'f' (file), 'd' (directory), 'dne' (does not exist), 'invalid'. Else, it rejects and returns an error.
  */
 function Query(paths, executor) {
   let pathsError = PathsValidator(paths);
@@ -58,7 +58,7 @@ function Query(paths, executor) {
  * Check if path exists.
  * @param {string} path
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns a boolean value. Else, it rejects and returns an error.
+ * @returns {Promise<boolean>} Returns a promise. If it resolves, it returns a boolean value. Else, it returns an error.
  */
 function Exists(path, executor) {
   let pathError = PathValidator(path);
@@ -83,7 +83,7 @@ function Exists(path, executor) {
  * Check if path is a file.
  * @param {string} path
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns true if path is a file and false otherwise. Otherwise, it rejects and returns an error.
+ * @returns {Promise<boolean>} Returns a promise. If it resolves, it returns a boolean value. Else it returns an error.
  */
 function IsFile(path, executor) {
   let pathError = PathValidator(path);
@@ -107,7 +107,7 @@ function IsFile(path, executor) {
  * Check if path is a directory.
  * @param {string} path
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns true if path is a directory and false otherwise. Otherwise, it rejects and returns an error.
+ * @returns {Promise<boolean>} Returns a promise. If it resolves, it returns a boolean value. Else, it returns an error.
  */
 function IsDir(path, executor) {
   let pathError = PathValidator(path);
