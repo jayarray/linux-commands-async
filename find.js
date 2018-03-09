@@ -10,7 +10,7 @@ let VALIDATE = require('./validate.js');
  * @param {string} pattern
  * @param {Number} maxDepth Maximum number of levels to recurse
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
  */
 function FilesByName(path, pattern, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
@@ -65,7 +65,7 @@ function FilesByName(path, pattern, maxDepth, executor) {
  * @param {string} text
  * @param {Number} maxDepth Maximum number of levels to recurse
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
  */
 function FilesByContent(path, text, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
@@ -120,7 +120,7 @@ function FilesByContent(path, text, maxDepth, executor) {
  * @param {string} user
  * @param {Number} maxDepth Maximum number of levels to recurse
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
  */
 function FilesByUser(path, user, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
@@ -175,7 +175,7 @@ function FilesByUser(path, user, maxDepth, executor) {
  * @param {string} pattern
  * @param {Number} maxDepth Maximum number of levels to recurse
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
  */
 function DirsByName(path, pattern, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
@@ -229,7 +229,7 @@ function DirsByName(path, pattern, maxDepth, executor) {
  * @param {string} path Directory location
  * @param {Number} maxDepth Maximum number of levels to recurse.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
  */
 function EmptyFiles(path, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
@@ -279,7 +279,7 @@ function EmptyFiles(path, maxDepth, executor) {
  * @param {string} path Directory location
  * @param {Number} maxDepth Maximum number of levels to recurse.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
  */
 function EmptyDirs(path, maxDepth, executor) {
   let error = VALIDATE.IsStringInput(path);
@@ -328,7 +328,7 @@ function EmptyDirs(path, maxDepth, executor) {
  * List all empty directories.
  * @param {Array<string|Number>} args List of args used in 'find' command.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filepaths. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
  */
 function Manual(args, executor) {
   let error = ArgsValidator(args);
