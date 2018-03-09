@@ -774,6 +774,7 @@ function WhoIsLoggedIn(executor) { // displays users currently logged in and the
 
 /**
  * List all open files for a specified user.
+ * @param {string} user Username
  * @param {Command} executor Command object that will execute the command.
  * @returns {Promise<Array<{command: string, pid: number, user: string, fd: string, type: string, device: string, sizeoff: number}>>} Returns a promise. If it resolves, it returns an array objects with the following properties: COMMAND (string), PID (int), USER (string), FD (string), TYPE (string), DEVICE (string), SIZEOFF (int), NODE (int), S (string), NAME (string). Else, it rejects and returns an error.
  */
