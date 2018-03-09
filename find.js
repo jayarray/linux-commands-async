@@ -390,7 +390,7 @@ function EmptyDirs(path, maxDepth, executor) {
 }
 
 /**
- * List all empty directories.
+ * List files given the specified arguments.
  * @param {Array<string|Number>} args List of args used in 'find' command.
  * @param {Command} executor Command object that will execute the command.
  * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
