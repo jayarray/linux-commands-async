@@ -8,7 +8,7 @@ let VALIDATE = require('./validate.js');
  * @param {string} src Source
  * @param {string} dest Destination
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise returns an error.
  */
 function File(src, dest, executor) {
   let srcError = VALIDATE.IsStringInput(src);
@@ -28,7 +28,7 @@ function File(src, dest, executor) {
         reject(`Failed to copy file: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to copy file: ${error}`));
   });
 }
@@ -38,7 +38,7 @@ function File(src, dest, executor) {
  * @param {string} src Source
  * @param {string} dest Destination
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function Directory(src, dest, executor) {
   let srcError = VALIDATE.IsStringInput(src);
@@ -58,7 +58,7 @@ function Directory(src, dest, executor) {
         reject(`Failed to copy directory: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to copy directory: ${error}`));
   });
 }
