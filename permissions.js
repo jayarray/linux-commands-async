@@ -276,7 +276,7 @@ function CreatePermissionsObjectUsingOctalString(octalStr) {
  * @returns {boolean} Returns true if both permissions objects are equal, false otherwise.
  */
 function Equal(p1, p2) {
-  return equal = p1.u.r == p2.u.r &&
+  return p1.u.r == p2.u.r &&
     p1.u.w == p2.u.w &&
     p1.u.x == p2.u.x &&
     p1.u.xchar == p2.u.xchar &&
