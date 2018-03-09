@@ -67,20 +67,13 @@ describe('*** permissions.js ***', () => {
     });
 
     describe('Equal(p1, p2)', () => {
-      it('Returns error if p1 or p2 is invalid.', () => {
-        let p1 = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(invalidPermStr);
-        let p2 = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(validPermStr);
-        let results = PERMISSIONS.Equal(p1.obj, p2.obj);
-        EXPECT(results.error).to.not.equal(null);
-      });
-
       it('Returns a boolean value if p1 and p2 are valid.', () => {
         let p1 = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(validPermStr);
         let p2 = PERMISSIONS.CreatePermissionsObjectUsingPermissionsString(validPermStr);
-        let results = PERMISSIONS.Equal(p1.obj, p2.obj);
+        let areEqual = PERMISSIONS.Equal(p1.obj, p2.obj);
 
-        let isBoolean = results.equal === true || results.equal === false;
-        EXPECT(isBoolean).to.not.equal(true);
+        let isBoolean = areEqual === true || areEqual === false;
+        EXPECT(isBoolean).to.equal(true);
       });
     });
 
