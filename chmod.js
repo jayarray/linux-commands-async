@@ -10,7 +10,7 @@ let VALIDATE = require('./validate.js');
  * @param {Array<string>} paths A list of paths that will have their permissions changed.
  * @param {boolean} isRecursive Assign as true if changes are to be applied recursively, otherwise assign as false.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function UsingPermString(permStr, paths, isRecursive, executor) {
   let permStrError = VALIDATE.IsStringInput(permStr);
@@ -42,7 +42,7 @@ function UsingPermString(permStr, paths, isRecursive, executor) {
         reject(`Failed to change permissions: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to change permissions: ${error}`));
   });
 }
@@ -53,7 +53,7 @@ function UsingPermString(permStr, paths, isRecursive, executor) {
  * @param {Array<string>} paths A list of paths that will have their permissions changed.
  * @param {boolean} isRecursive Assign as true if changes are to be applied recursively, otherwise assign as false.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function UsingOctalString(octalStr, paths, isRecursive, executor) {
   let octalStrError = VALIDATE.IsStringInput(octalStr);
@@ -83,7 +83,7 @@ function UsingOctalString(octalStr, paths, isRecursive, executor) {
         reject(`Failed to change permissions: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to change permissions: ${error}`));
   });
 }
@@ -138,7 +138,7 @@ function ChangePermissions_(op, classes, types, paths, isRecursive, executor) { 
         reject(`Failed to change permissions: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to change permissions: ${error}`));
   });
 }
@@ -150,7 +150,7 @@ function ChangePermissions_(op, classes, types, paths, isRecursive, executor) { 
  * @param {Array<string>} paths A list of paths that will have their permissions changed.
  * @param {boolean} isRecursive Assign as true if changes are to be applied recursively, otherwise assign as false.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function RemovePermissions(classes, types, paths, isRecursive, executor) { // Example: classes = 'ugo',  types = 'rwx'
   return ChangePermissions_('-', classes, types, paths, isRecursive, executor);
@@ -163,7 +163,7 @@ function RemovePermissions(classes, types, paths, isRecursive, executor) { // Ex
  * @param {Array<string>} paths A list of paths that will have their permissions changed.
  * @param {boolean} isRecursive Assign as true if changes are to be applied recursively, otherwise assign as false.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function AddPermissions(classes, types, paths, isRecursive, executor) {
   return ChangePermissions_('+', classes, types, paths, isRecursive, executor);
@@ -176,7 +176,7 @@ function AddPermissions(classes, types, paths, isRecursive, executor) {
  * @param {Array<string>} paths A list of paths that will have their permissions changed.
  * @param {boolean} isRecursive Assign as true if changes are to be applied recursively, otherwise assign as false.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function SetPermissions(classes, types, paths, isRecursive, executor) {
   return ChangePermissions_('=', classes, types, paths, isRecursive, executor);
@@ -186,7 +186,7 @@ function SetPermissions(classes, types, paths, isRecursive, executor) {
  * Change ownership.
  * @param {Array<string|Number>} args A list of args used in 'chmod' command.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function Manual(args, executor) {
   let argsError = ArgsValidator(args);
@@ -202,7 +202,7 @@ function Manual(args, executor) {
         reject(`Failed to execute chmod: ${output.stderr} `);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to execute chmod: ${error} `));
   });
 }
