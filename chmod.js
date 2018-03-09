@@ -264,7 +264,7 @@ function SetPermissions(classes, types, paths, isRecursive, executor) {
 
 /**
  * Change ownership.
- * @param {Array<string|Number>} args A list of args used in 'chmod' command.
+ * @param {Array<string|number>} args A list of args used in 'chmod' command.
  * @param {Command} executor Command object that will execute the command.
  * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
