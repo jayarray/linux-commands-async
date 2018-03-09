@@ -1,6 +1,29 @@
 let PATH = require('path');
 let VALIDATE = require('./validate.js');
 
+//---------------------------------
+// HELPERS
+
+function PathValidator(p) {
+  let error = VALIDATE.IsStringInput(p);
+  if (error)
+    return `Path is ${error}`;
+  return null;
+}
+
+function PathsValidator(paths) {
+  let error = VALIDATE.IsArray(paths);
+  if (error)
+    return `paths are ${error}`;
+
+  for (let i = 0; i < paths.length; ++i) {
+    let invalidType = VALIDATE.IsStringInput(paths[i]);
+    if (invalidType)
+      return `paths contain a path that is ${invalidType}`;
+  }
+  return null;
+}
+
 //-----------------------------------
 // PATH
 
@@ -161,29 +184,6 @@ function ParentDirName(path) {
  */
 function ParentDir(path) {
   return PATH.dirname(path);
-}
-
-//---------------------------------
-// HELPERS
-
-function PathValidator(p) {
-  let error = VALIDATE.IsStringInput(p);
-  if (error)
-    return `Path is ${error}`;
-  return null;
-}
-
-function PathsValidator(paths) {
-  let error = VALIDATE.IsArray(paths);
-  if (error)
-    return `paths are ${error}`;
-
-  for (let i = 0; i < paths.length; ++i) {
-    let invalidType = VALIDATE.IsStringInput(paths[i]);
-    if (invalidType)
-      return `paths contain a path that is ${invalidType}`;
-  }
-  return null;
 }
 
 //------------------------------------
