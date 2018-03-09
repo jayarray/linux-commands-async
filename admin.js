@@ -129,6 +129,7 @@ function getFreeObject(line, headers) {
     let name = field;
     if (field.includes('/'))
       name = field.replace('/', '');
+    name = name.toLocaleLowerCase();
 
     if (hasValues[field])
       freeObj[name] = parseInt(parts[partIndex]);
@@ -209,7 +210,7 @@ function getLsofObject(line, headers) {
 /**
  * List all system groups.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects representing all the system groups with the following properties: name (string), id (int), users (array of strings). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{name: string, id: number, users: Array<string>}>>} Returns a promise. If it resolves, it returns an array of objects representing all the system groups with the following properties: name (string), id (int), users (array of strings). Else, it rejects and returns an error.
  */
 function Groups(executor) {
   if (!executor)
@@ -247,9 +248,9 @@ function Groups(executor) {
 
 /**
  * Retrieve the system group that matches the specified group id.
- * @param {string|Number} gid Group name or group ID number.
+ * @param {string|number} gid Group name or group ID number.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object representing the system group and contains the following properties: name (string), id (int), users (array of strings). Else, it rejects and returns an error.
+ * @returns {Promise<{name: string, id: number, users: Array<string>}>} Returns a promise. If it resolves, it returns an object representing the system group and contains the following properties: name (string), id (int), users (array of strings). Else, it rejects and returns an error.
  */
 function GetGroup(gid, executor) {
   let gidError = IdError(gid);
@@ -276,7 +277,7 @@ function GetGroup(gid, executor) {
 /**
  * List all system users.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects representing all the system users with the following properties: name (string), id (int), info (string). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{name: string, id: number, info: string}>>} Returns a promise. If it resolves, it returns an array of objects representing all the system users with the following properties: name (string), id (int), info (string). Else, it rejects and returns an error.
  */
 function Users(executor) {
   if (!executor)
@@ -311,9 +312,9 @@ function Users(executor) {
 
 /**
  * Retrieve the system user that matches the specified user id.
- * @param {string|Number} uid Username or user ID number.
+ * @param {string|number} uid Username or user ID number.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object representing the system user and contains the following properties: name (string), id (int), info (info). Else, it rejects and returns an error.
+ * @returns {Promise<{name: string, id: number, info: string}>} Returns a promise. If it resolves, it returns an object representing the system user and contains the following properties: name (string), id (int), info (info). Else, it rejects and returns an error.
  */
 function GetUser(uid, executor) {
   let uidError = IdError(uid);
@@ -340,7 +341,7 @@ function GetUser(uid, executor) {
 /**
  * Get uptime info.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: timestamp (string), uptime (string), userCount (int), loadAverage (array of integers). Else, it rejects and returns an error.
+ * @returns {Promise<{timestamp: string, uptime: string, userCount: number, loadAverages: Array<number>}>} Returns a promise. If it resolves, it returns an object with the following properties: timestamp (string), uptime (string), userCount (int), loadAverage (array of integers). Else, it rejects and returns an error.
  */
 function Uptime(executor) { // Displays uptime info
   if (!executor)
@@ -363,7 +364,7 @@ function Uptime(executor) { // Displays uptime info
 /**
  * List all running processes.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array objects with the following properties: user (string), uid (int), gid (int), tty (string), start (string), etime (string), pid (int), ppid (int), pgid (int), tid (int), tgid (int), sid (int), ruid (int), rgid (int), euid (int), suid (int), fsuid (int), comm (string). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{user: string, uid: number, gid: number, tty: string, start: string, etime: string, pid: number, ppid: number, pgid: number, tid: number, tgid: number, sid: number, ruid: number, rgid: number, euid: number, suid: number, fsuid: number, comm: string}>>} Returns a promise. If it resolves, it returns an array objects. Else, it returns an error.
  */
 function Processes(executor) { // Gives status of running processes with a unique id called PID and other fields.
   if (!executor)
@@ -412,9 +413,9 @@ function Processes(executor) { // Gives status of running processes with a uniqu
 
 /**
  * Retrieve the running process that matches the specified process id.
- * @param {Number} pid Process ID
+ * @param {number} pid Process ID
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: user (string), uid (int), gid (int), tty (string), start (string), etime (string), pid (int), ppid (int), pgid (int), tid (int), tgid (int), sid (int), ruid (int), rgid (int), euid (int), suid (int), fsuid (int), comm (string). Else, it rejects and returns an error.
+ * @returns {Promise<{user: string, uid: number, gid: number, tty: string, start: string, etime: string, pid: number, ppid: number, pgid: number, tid: number, tgid: number, sid: number, ruid: number, rgid: number, euid: number, suid: number, fsuid: number, comm: string}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function GetProcess(pid, executor) {
   let pidError = VALIDATE.IsInteger(pid);
@@ -445,9 +446,9 @@ function GetProcess(pid, executor) {
 
 /**
  * Terminate a process.
- * @param {Number} pid Process ID
+ * @param {number} pid Process ID
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it returns an error.
  */
 function Kill(pid, executor) { // Kills a process
   let pidError = VALIDATE.IsInteger(pid);
@@ -464,7 +465,7 @@ function Kill(pid, executor) { // Kills a process
           reject(`Failed to kill process: ${output.stderr}`);
           return;
         }
-        resolve(true);
+        resolve();
       }).catch(error => reject(`Failed to kill process: ${error}`));
     }).catch(error => reject(`Failed to kill process: ${error}`));
   });
@@ -473,7 +474,7 @@ function Kill(pid, executor) { // Kills a process
 /**
  * List all memory types an their properties.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following objects: Mem, Swap, Total. Each of these objects have the following properties: total, used, free, shared, buffcache, available (all are integers). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{Mem: {total: number, used: number, free: number, shared: number, buffcache: number, available: number}, Swap: {total: number, used: number, free: number, shared: number, buffcache: number, available: number}, Total: {total: number, used: number, free: number, shared: number, buffcache: number, available: number}}>>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function MemoryCheck(executor) { // Displays info regarding memory and resources (i.e. memory, swap, etc)
   if (!executor)
@@ -508,7 +509,7 @@ function MemoryCheck(executor) { // Displays info regarding memory and resources
 /**
  * List all processes associated with the processor activity and tasks managed by the kernel.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array objects with the following properties: PID (int), USER (string), PR (int), NI (int), VIRT (int), RES (int), SHR (int), S (string), %CPU (Number), %MEM (Number), TIME+ (string), COMMAND (string).
+ * @returns {Promise<Array<{pid: number, user: string, pr: number, ni: number, virt: number, res: number, shr: number, s: string, cpu: number, mem: number, time: string, command: string}>>} Returns a promise. If it resolves, it returns an array objects. Else, it returns an error.
  */
 function TopProcesses(executor) { // Shows CPU processes (1 iteration)
   if (!executor)
@@ -659,7 +660,7 @@ function TopProcesses(executor) { // Shows CPU processes (1 iteration)
 /**
  * List all active users and their processes.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array objects with the following properties: name (string), tty (string), group (string),login (string), idle (string), jcpu (string), pcpu (string), what (string). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{name: string, tty: string, group: string, login: string, idle: string, jcpu: string, pcpu: string, what: string}>>} Returns a promise. If it resolves, it returns an array objects with the following properties: name (string), tty (string), group (string),login (string), idle (string), jcpu (string), pcpu (string), what (string). Else, it rejects and returns an error.
  */
 function WhoIsLoggedIn(executor) { // displays users currently logged in and their process along with load averages.
   if (!executor)
@@ -728,7 +729,7 @@ function WhoIsLoggedIn(executor) { // displays users currently logged in and the
 /**
  * List all open files for a specified user.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array objects with the following properties: COMMAND (string), PID (int), USER (string), FD (string), TYPE (string), DEVICE (string), SIZEOFF (int), NODE (int), S (string), NAME (string). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{command: string, pid: number, user: string, fd: string, type: string, device: string, sizeoff: number}>>} Returns a promise. If it resolves, it returns an array objects with the following properties: COMMAND (string), PID (int), USER (string), FD (string), TYPE (string), DEVICE (string), SIZEOFF (int), NODE (int), S (string), NAME (string). Else, it rejects and returns an error.
  */
 function ListOpenFilesByUser(user, executor) { // Displays all files opened by user
   let userError = VALIDATE.IsStringInput(user);
@@ -772,9 +773,9 @@ function ListOpenFilesByUser(user, executor) { // Displays all files opened by u
 
 /**
  * Check if user has root permissions.
- * @param {string|Number} uid Username or user ID number.
+ * @param {string|number} uid Username or user ID number.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves it returns true or false. Else, it rejects and returns an error.
+ * @returns {Promise<boolean>} Returns a promise. If it resolves, it returns a boolean value. Else, it returns an error.
  */
 function UserHasRootPermissions(uid, executor) {
   let uidError = VALIDATE.IsInteger(uid);
@@ -800,10 +801,10 @@ function UserHasRootPermissions(uid, executor) {
 
 /**
  * Check if user has permissions to change group ownership.
- * @param {string|Number} uid Username or user ID number.
- * @param {string|Number} desiredGid Group name or group ID number.
+ * @param {string|number} uid Username or user ID number.
+ * @param {string|number} desiredGid Group name or group ID number.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves it returns true or false. Else, it rejects and returns an error.
+ * @returns {Promise<boolean>} Returns a promise. If it resolves, it returns a boolean value. Else, it returns an error.
  */
 function UserCanChangeGroupOwnership(uid, desiredGid, executor) { // Must be root OR be part of the desired group to give ownership to that group.
   let uidError = IdError(uid);
@@ -838,9 +839,9 @@ function UserCanChangeGroupOwnership(uid, desiredGid, executor) { // Must be roo
 
 /**
  * Check if user has permissions to change user ownership.
- * @param {string|Number} uid Username or user ID number.
+ * @param {string|number} uid Username or user ID number.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves it returns true or false. Else, it rejects and returns an error.
+ * @returns {Promise<boolean>} Returns a promise. If it resolves, it returns a boolean value. Else, it returns an error.
  */
 function UserCanChangeUserOwnership(uid, executor) { // Must have root permissions to change user ownership.
   let uidError = IdError(uid);
