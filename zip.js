@@ -1,5 +1,54 @@
 let VALIDATE = require('./validate.js');
 
+//---------------------------------------------
+// ERROR
+
+function SrcValidator(dest) {
+  let error = VALIDATE.IsStringInput(dest);
+  if (error)
+    return `source is ${error}`;
+  return null;
+}
+
+function DestValidator(dest) {
+  let error = VALIDATE.IsStringInput(dest);
+  if (error)
+    return `destination is ${error}`;
+  return null;
+}
+
+function SourcesValidator(sources) {
+  let error = VALIDATE.IsArray(sources);
+  if (error)
+    return `sources are ${error}`;
+
+  for (let i = 0; i < sources.length; ++i) {
+    let currSrc = sources[i];
+    let invalidType = VALIDATE.IsStringInput(currSrc);
+    if (invalidType)
+      return `sources contains a path that is ${invalidType}`;
+  }
+
+  return null;
+}
+
+function ArgsValidator(args) {
+  let error = VALIDATE.IsArray(args);
+  if (error)
+    return `arguments are ${error}`;
+
+  for (let i = 0; i < args.length; ++i) {
+    let currArg = args[i];
+    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
+    let argIsValidNumber = !isNaN(currArg);
+
+    if (!argIsValidString && !argIsValidNumber)
+      return `arg elements must be string or number type`;
+  }
+
+  return null;
+}
+
 //-------------------------------------------
 // ZIP
 
@@ -141,55 +190,6 @@ function UnzipManual(args, executor) {
       resolve();
     }).catch(error => reject(`Failed to execute unzip command: ${error}`));
   });
-}
-
-//---------------------------------------------
-// ERROR
-
-function SrcValidator(dest) {
-  let error = VALIDATE.IsStringInput(dest);
-  if (error)
-    return `source is ${error}`;
-  return null;
-}
-
-function DestValidator(dest) {
-  let error = VALIDATE.IsStringInput(dest);
-  if (error)
-    return `destination is ${error}`;
-  return null;
-}
-
-function SourcesValidator(sources) {
-  let error = VALIDATE.IsArray(sources);
-  if (error)
-    return `sources are ${error}`;
-
-  for (let i = 0; i < sources.length; ++i) {
-    let currSrc = sources[i];
-    let invalidType = VALIDATE.IsStringInput(currSrc);
-    if (invalidType)
-      return `sources contains a path that is ${invalidType}`;
-  }
-
-  return null;
-}
-
-function ArgsValidator(args) {
-  let error = VALIDATE.IsArray(args);
-  if (error)
-    return `arguments are ${error}`;
-
-  for (let i = 0; i < args.length; ++i) {
-    let currArg = args[i];
-    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
-    let argIsValidNumber = !isNaN(currArg);
-
-    if (!argIsValidString && !argIsValidNumber)
-      return `arg elements must be string or number type`;
-  }
-
-  return null;
 }
 
 //--------------------------
