@@ -74,7 +74,7 @@ function CurrentUser(executor) {
 }
 
 /**
- * Get current user info.
+ * Get another user's info.
  * @param {string} username
  * @param {Command} executor Command object that will execute the command.
  * @returns {Promise<{username: string, uid: number, gid: number, groups: Array<{gid: number, name: string}> >}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
