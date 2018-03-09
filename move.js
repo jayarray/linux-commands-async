@@ -8,7 +8,7 @@ let VALIDATE = require('./validate.js');
  * @param {string} src Source
  * @param {string} dest Destination
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it returns an error.
  */
 function Move(src, dest, executor) {
   let srcError = VALIDATE.IsStringInput(src);
@@ -28,7 +28,7 @@ function Move(src, dest, executor) {
         reject(`Failed to move: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to move: ${error}`));
   });
 }
