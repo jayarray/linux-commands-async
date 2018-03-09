@@ -10,7 +10,7 @@ let PATH = require('./path.js');
  * Delete a file.
  * @param {string} path
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that resolves if successful, otherwise it returns an error.
  */
 function Remove(path, executor) {
   return REMOVE.Files([path], executor);
@@ -21,7 +21,7 @@ function Remove(path, executor) {
  * @param {string} path
  * @param {string} text
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function Create(path, text, executor) {
   let pathError = VALIDATE.IsStringInput(path);
@@ -41,7 +41,7 @@ function Create(path, text, executor) {
         reject(`Failed to create file: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to create file: ${error}`));
   });
 }
@@ -50,7 +50,7 @@ function Create(path, text, executor) {
  * Make file executable.
  * @param {string} path
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function MakeExecutable(path, executor) {
   let pathError = VALIDATE.IsStringInput(path);
@@ -68,7 +68,7 @@ function MakeExecutable(path, executor) {
       }
 
       CHMOD.AddPermissions('ugo', 'x', [path], false, executor).then(success => {
-        resolve(true);
+        resolve();
       }).catch(error => reject(`Failed to make file executable: ${error}`));
     }).catch(error => reject(`Failed to make file executable: ${error}`));
   });
@@ -78,7 +78,7 @@ function MakeExecutable(path, executor) {
  * Retrieve file content as a single string.
  * @param {string} path
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns a string. Else, it rejects and returns an error.
+ * @returns {Promise<string>} Returns a promise. If it resolves, it returns a string. Else, it returns an error.
  */
 function Read(path, executor) {
   let pathError = VALIDATE.IsStringInput(path);
@@ -110,7 +110,7 @@ function Read(path, executor) {
  * Retrieve file content as multiple strings.
  * @param {string} path
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of strings representing lines of text. Else, it rejects and returns an error.
+ * @returns {Promise<string>} Returns a promise. If it resolves, it returns an array of strings representing lines of text. Else, it returns an error.
  */
 function ReadLines(path, executor) {
   return new Promise((resolve, reject) => {
