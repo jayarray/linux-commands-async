@@ -2,6 +2,52 @@ let VALIDATE = require('./validate.js');
 let USERINFO = require('./userinfo.js');
 
 //-----------------------------------
+// ERROR
+
+function IdStringError(string) {
+  let error = VALIDATE.IsStringInput(string);
+  if (error)
+    return `is ${error} `;
+  return null;
+}
+
+function IdNumberError(int) {
+  let error = VALIDATE.IsInstance(int);
+  if (error)
+    return `is ${error} `;
+
+  let min = 0;
+  error = VALIDATE.IsIntegerInRange(int, min, null);
+  if (error)
+    return error;
+  return null;
+}
+
+function IdError(id) {
+  let error = VALIDATE.IsInstance(id);
+  if (error)
+    return `is ${error} `;
+
+  // Check if string
+  if (typeof id == 'string') {
+    error = IdStringError(id);
+    if (error)
+      return error;
+    return null;
+  }
+
+  // Check if number
+  if (Number.isInteger(id)) {
+    error = IdNumberError(id);
+    if (error)
+      return error;
+    return null;
+  }
+
+  return `is not a valid string or integer`;
+}
+
+//-----------------------------------
 // HELPERS
 
 // UPTIME (helper functions)
@@ -851,52 +897,6 @@ function UserCanChangeUserOwnership(uid, executor) { // Must have root permissio
   if (!executor)
     return Promise.reject(`Failed to verify if user can change group ownership: Executor is required`);
   return UserHasRootPermissions(uid, executor);
-}
-
-//-----------------------------------
-// ERROR
-
-function IdStringError(string) {
-  let error = VALIDATE.IsStringInput(string);
-  if (error)
-    return `is ${error} `;
-  return null;
-}
-
-function IdNumberError(int) {
-  let error = VALIDATE.IsInstance(int);
-  if (error)
-    return `is ${error} `;
-
-  let min = 0;
-  error = VALIDATE.IsIntegerInRange(int, min, null);
-  if (error)
-    return error;
-  return null;
-}
-
-function IdError(id) {
-  let error = VALIDATE.IsInstance(id);
-  if (error)
-    return `is ${error} `;
-
-  // Check if string
-  if (typeof id == 'string') {
-    error = IdStringError(id);
-    if (error)
-      return error;
-    return null;
-  }
-
-  // Check if number
-  if (Number.isInteger(id)) {
-    error = IdNumberError(id);
-    if (error)
-      return error;
-    return null;
-  }
-
-  return `is not a valid string or integer`;
 }
 
 //------------------------------------
