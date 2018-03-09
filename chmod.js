@@ -1,6 +1,86 @@
 let PERMISSIONS = require('./permissions.js');
 let VALIDATE = require('./validate.js');
 
+//------------------------------------
+// ERROR
+
+function ClassesStringValidator(string) {
+  let error = VALIDATE.IsStringInput(string);
+  if (error)
+    return `Classes string is ${error} `;
+
+  let min = 1;
+  let max = 3;
+
+  // Check length
+  if (string.length < min || string.length > max)
+    return `Classes string must have ${min} to ${max} characters`;
+
+  // Check for invalid chars
+  for (let i = 0; i < string.length; ++i) {
+    let currChar = string.charAt(i);
+    if (!ValidClassChars().includes(currChar))
+      return `Classes string contains invalid characters`;
+  }
+
+  return null;
+}
+
+function TypesStringValidator(string) {
+  let error = VALIDATE.IsStringInput(string);
+  if (error)
+    return `Types string is ${error} `;
+
+  let min = 1;
+  let max = 3;
+
+  // Check length
+  if (string.length < min || string.length > max)
+    return `Types string must have ${min} to ${max} characters`;
+
+  // Check for invalid chars
+  for (let i = 0; i < string.length; ++i) {
+    let currChar = string.charAt(i);
+    if (!ValidTypeChars().includes(currChar))
+      return `Types string contains invalid characters`;
+  }
+
+  return null;
+}
+
+function PathsValidator(paths) {
+  let error = VALIDATE.IsArray(paths);
+  if (error)
+    return `Paths are ${error} `;
+
+  for (let i = 0; i < paths.length; ++i) {
+    let currPath = paths[i];
+    let pathIsValid = VALIDATE.IsStringInput(currPath) == null;
+
+    if (!pathIsValid)
+      return `All paths must be valid(non - empty, non - whitespace) strings`;
+  }
+
+  return null;
+}
+
+function ArgsValidator(args) {
+  let error = VALIDATE.IsArray(args);
+  if (error)
+    return `arguments are ${error} `;
+
+  for (let i = 0; i < args.length; ++i) {
+    let currArg = args[i];
+    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
+    let argIsValidNumber = !isNaN(currArg);
+
+    if (!argIsValidString && !argIsValidNumber)
+      return `arg elements must be string or number type`;
+  }
+
+  return null;
+}
+
 //-----------------------------------------
 // CHMOD
 
@@ -213,86 +293,6 @@ function ValidClassChars() {
 
 function ValidTypeChars() {
   return ['r', 'w', 'x'];
-}
-
-//------------------------------------
-// ERROR
-
-function ClassesStringValidator(string) {
-  let error = VALIDATE.IsStringInput(string);
-  if (error)
-    return `Classes string is ${error} `;
-
-  let min = 1;
-  let max = 3;
-
-  // Check length
-  if (string.length < min || string.length > max)
-    return `Classes string must have ${min} to ${max} characters`;
-
-  // Check for invalid chars
-  for (let i = 0; i < string.length; ++i) {
-    let currChar = string.charAt(i);
-    if (!ValidClassChars().includes(currChar))
-      return `Classes string contains invalid characters`;
-  }
-
-  return null;
-}
-
-function TypesStringValidator(string) {
-  let error = VALIDATE.IsStringInput(string);
-  if (error)
-    return `Types string is ${error} `;
-
-  let min = 1;
-  let max = 3;
-
-  // Check length
-  if (string.length < min || string.length > max)
-    return `Types string must have ${min} to ${max} characters`;
-
-  // Check for invalid chars
-  for (let i = 0; i < string.length; ++i) {
-    let currChar = string.charAt(i);
-    if (!ValidTypeChars().includes(currChar))
-      return `Types string contains invalid characters`;
-  }
-
-  return null;
-}
-
-function PathsValidator(paths) {
-  let error = VALIDATE.IsArray(paths);
-  if (error)
-    return `Paths are ${error} `;
-
-  for (let i = 0; i < paths.length; ++i) {
-    let currPath = paths[i];
-    let pathIsValid = VALIDATE.IsStringInput(currPath) == null;
-
-    if (!pathIsValid)
-      return `All paths must be valid(non - empty, non - whitespace) strings`;
-  }
-
-  return null;
-}
-
-function ArgsValidator(args) {
-  let error = VALIDATE.IsArray(args);
-  if (error)
-    return `arguments are ${error} `;
-
-  for (let i = 0; i < args.length; ++i) {
-    let currArg = args[i];
-    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
-    let argIsValidNumber = !isNaN(currArg);
-
-    if (!argIsValidString && !argIsValidNumber)
-      return `arg elements must be string or number type`;
-  }
-
-  return null;
 }
 
 //------------------------------------
