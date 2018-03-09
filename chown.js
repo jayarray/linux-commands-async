@@ -9,7 +9,7 @@ let VALIDATE = require('./validate.js');
  * @param {string|Number} newOwnerId Username or user ID number.
  * @param {boolean} isRecursive Assign as true if ownership is to be applied recursively, otherwise assign as false.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function ChangeOwner(paths, newOwnerId, isRecursive, executor) { // newOwner can be string or integer
   let pathsError = PathsValidator(paths);
@@ -35,7 +35,7 @@ function ChangeOwner(paths, newOwnerId, isRecursive, executor) { // newOwner can
         reject(`Failed to change owner: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to change owner: ${error}`));
   });
 }
@@ -46,7 +46,7 @@ function ChangeOwner(paths, newOwnerId, isRecursive, executor) { // newOwner can
  * @param {string|Number} newGroupId Group name or group ID number.
  * @param {boolean} isRecursive Assign as true if ownership is to be applied recursively, otherwise assign as false.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function ChangeGroup(paths, newGroupId, isRecursive, executor) { // newOwner can be string or integer
   let pathsError = PathsValidator(paths);
@@ -72,7 +72,7 @@ function ChangeGroup(paths, newGroupId, isRecursive, executor) { // newOwner can
         reject(`Failed to change group: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to change group: ${error}`));
   });
 }
@@ -84,7 +84,7 @@ function ChangeGroup(paths, newGroupId, isRecursive, executor) { // newOwner can
  * @param {string|Number} newGroupId Group name or group ID number.
  * @param {boolean} isRecursive Assign as true if ownership is to be applied recursively, otherwise assign as false.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executor) { // newOwner can be string or integer
   let pathsError = PathsValidator(paths);
@@ -114,7 +114,7 @@ function ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executo
         reject(`Failed to change owner and group: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to change owner and group: ${error}`));
   });
 }
@@ -123,7 +123,7 @@ function ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executo
  * Change ownership.
  * @param {Array<string|Number>} args A list of args used in 'chown' command.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function Manual(args, executor) { // newOwner can be string or integer
   let argsError = ArgsValidator(args);
@@ -139,7 +139,7 @@ function Manual(args, executor) { // newOwner can be string or integer
         reject(`Failed to execute chown: ${output.stderr}`);
         return;
       }
-      resolve(true);
+      resolve();
     }).catch(error => reject(`Failed to execute chown: ${error}`));
   });
 }
