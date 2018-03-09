@@ -5,7 +5,7 @@ let VALIDATE = require('./validate.js');
 /**
  * Get info about current host.
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: hostname (string), ipaddress (string). Else, it rejects and returns an error.
+ * @returns {Promise<{hostname: string, ipaddress: string}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
  */
 function Info(executor) {
   if (!executor) {
