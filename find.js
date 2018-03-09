@@ -1,6 +1,71 @@
 let PATH = require('path');
 let VALIDATE = require('./validate.js');
 
+//------------------------------
+// ERROR
+
+function ArgsValidator(args) {
+  let error = VALIDATE.IsArray(args);
+  if (error)
+    return `args is ${error}`;
+
+  for (let i = 0; i < args.length; ++i) {
+    let currArg = args[i];
+
+    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
+    let argIsValidNumber = !isNaN(currArg);
+
+    if (!argIsValidString && !argIsValidNumber)
+      return `Arg elements must be string or number type`;
+  }
+
+  return null;
+}
+
+function MaxDepthValidator(maxDepth) {
+  if (maxDepth == null)
+    return null;
+
+  let error = VALIDATE.IsInteger(maxDepth);
+  if (error)
+    return `MaxDepth is ${error} `;
+
+  let min = 0;
+  error = VALIDATE.IsIntegerInRange(maxDepth, min, null);
+  if (error)
+    return `MaxDepth is ${error} `;
+
+  return null;
+}
+
+function PatternValidator(pattern) {
+  let error = VALIDATE.IsInstance(pattern);
+  if (error)
+    return `Pattern is ${error} `;
+
+  if (typeof pattern != 'string')
+    return 'Pattern must be string type';
+
+  if (pattern == '')
+    return 'Pattern cannot be empty';
+
+  return null;
+}
+
+function TextValidator(text) {
+  let error = VALIDATE.IsInstance(text);
+  if (error)
+    return `Text is ${error} `;
+
+  if (typeof text != 'string')
+    return 'Text must be string type';
+
+  if (text == '')
+    return 'Text cannot be empty';
+
+  return null;
+}
+
 //------------------------------------
 // FIND
 
@@ -363,72 +428,6 @@ function Manual(args, executor) {
     }).catch(error => reject(`Failed to execute find command: ${error}`));
   });
 }
-
-//------------------------------
-// ERROR
-
-function ArgsValidator(args) {
-  let error = VALIDATE.IsArray(args);
-  if (error)
-    return `args is ${error}`;
-
-  for (let i = 0; i < args.length; ++i) {
-    let currArg = args[i];
-
-    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
-    let argIsValidNumber = !isNaN(currArg);
-
-    if (!argIsValidString && !argIsValidNumber)
-      return `Arg elements must be string or number type`;
-  }
-
-  return null;
-}
-
-function MaxDepthValidator(maxDepth) {
-  if (maxDepth == null)
-    return null;
-
-  let error = VALIDATE.IsInteger(maxDepth);
-  if (error)
-    return `MaxDepth is ${error} `;
-
-  let min = 0;
-  error = VALIDATE.IsIntegerInRange(maxDepth, min, null);
-  if (error)
-    return `MaxDepth is ${error} `;
-
-  return null;
-}
-
-function PatternValidator(pattern) {
-  let error = VALIDATE.IsInstance(pattern);
-  if (error)
-    return `Pattern is ${error} `;
-
-  if (typeof pattern != 'string')
-    return 'Pattern must be string type';
-
-  if (pattern == '')
-    return 'Pattern cannot be empty';
-
-  return null;
-}
-
-function TextValidator(text) {
-  let error = VALIDATE.IsInstance(text);
-  if (error)
-    return `Text is ${error} `;
-
-  if (typeof text != 'string')
-    return 'Text must be string type';
-
-  if (text == '')
-    return 'Text cannot be empty';
-
-  return null;
-}
-
 
 //------------------------------
 // EXPORTS
