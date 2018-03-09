@@ -9,7 +9,7 @@ let VALIDATE = require('./validate.js');
  * @param {string} path Location where file should be created.
  * @param {string} content Text to be written in file. (Omit '#!/bin/bash' as it is first line in file).
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it rejects and returns an error.
+ * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
  */
 function Create(path, content, executor) {
   let pathError = VALIDATE.IsStringInput(path);
@@ -26,7 +26,7 @@ function Create(path, content, executor) {
   return new Promise((resolve, reject) => {
     FILE.Create(path, `#!/bin/bash\n${content}`, executor).then(success => {
       FILE.MakeExecutable(path, executor).then(success => {
-        resolve(true);
+        resolve();
       }).catch(error => reject(`Failed to create bashscript: ${error}`));
     }).catch(error => reject(`Failed to create bashscript: ${error}`));
   });
@@ -37,7 +37,7 @@ function Create(path, content, executor) {
  * @param {string} path Location where file should be created.
  * @param {string} content Text to be written in file. (Omit '#!/bin/bash' as it is first line in file).
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns a string with the output. Else, it rejects and returns an error.
+ * @returns {Promise<string>} Returns a promise. If it resolves, it returns a string with the output. Else, it returns an error.
  */
 function Execute(path, content, executor) {
   let pathError = VALIDATE.IsStringInput(path);
