@@ -8,7 +8,7 @@ let VALIDATE = require('./validate.js');
  * List all file and directory names (visible and hidden).
  * @param {string} dirPath Directory location
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filenames. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filenames. Else, it returns an error.
  */
 function AllFilenames(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
@@ -40,7 +40,7 @@ function AllFilenames(dirPath, executor) {
  * List all visible file and directory names.
  * @param {string} dirPath Directory location
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filenames. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filenames. Else, it returns an error.
  */
 function VisibleFilenames(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
@@ -61,7 +61,7 @@ function VisibleFilenames(dirPath, executor) {
  * List all hidden file and directory names.
  * @param {string} dirPath Directory location
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of filenames. Else, it rejects and returns an error.
+ * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filenames. Else, it returns an error.
  */
 function HiddenFilenames(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
@@ -82,7 +82,7 @@ function HiddenFilenames(dirPath, executor) {
  * Retrive file permissions info.
  * @param {string} filepath File location
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {Promise<{permstr: string, hardlinks: number, owner: string, group: string, size: number, modtime: string, name: string, filetype: string}>} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
  */
 function FileInfo(filepath, executor) {
   let filepathError = VALIDATE.IsStringInput(filepath);
@@ -120,7 +120,7 @@ function FileInfo(filepath, executor) {
  * Retrive directory permissions info.
  * @param {string} dirPath Directory location
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {Promise<{permstr: string, hardlinks: number, owner: string, group: string, size: number, modtime: string, name: string, filetype: string}>} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
  */
 function DirInfo(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
@@ -156,9 +156,9 @@ function DirInfo(dirPath, executor) {
 
 /**
  * Retrive permissions info.
- * @param {string} dirPath Directory location
+ * @param {string} path
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {Promise<{permstr: string, hardlinks: number, owner: string, group: string, size: number, modtime: string, name: string, filetype: string}>} Returns a promise. If it resolves, it returns an object with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
  */
 function Info(path, executor) {
   return new Promise((resolve, reject) => {
@@ -186,7 +186,7 @@ function Info(path, executor) {
  * Retrive all permissions info for all files in a directory.
  * @param {string} dirPath Directory location
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{permstr: string, hardlinks: number, owner: string, group: string, size: number, modtime: string, name: string, filetype: string}>>} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
  */
 function AllInfos(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
@@ -227,10 +227,10 @@ function AllInfos(dirPath, executor) {
 }
 
 /**
- * Retrive permissions info for all visible files in a directory.
+ * Retrive all permissions info for all files in a directory.
  * @param {string} dirPath Directory location
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{permstr: string, hardlinks: number, owner: string, group: string, size: number, modtime: string, name: string, filetype: string}>>} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
  */
 function VisibleInfos(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
@@ -248,10 +248,10 @@ function VisibleInfos(dirPath, executor) {
 }
 
 /**
- * Retrive permissions info for all hidden files in a directory.
+ * Retrive all permissions info for all files in a directory.
  * @param {string} dirPath Directory location
  * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
+ * @returns {Promise<Array<{permstr: string, hardlinks: number, owner: string, group: string, size: number, modtime: string, name: string, filetype: string}>>} Returns a promise. If it resolves, it returns an array of objects with the following properties: permstr (string), hardlink (int), owner (string), group (string), size (int), modtime (string), name (string), filetype (string). Else, it rejects and returns an error.
  */
 function HiddenInfos(dirPath, executor) {
   let dirPathError = VALIDATE.IsStringInput(dirPath);
