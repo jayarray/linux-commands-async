@@ -268,6 +268,89 @@ function HiddenInfos(dirPath, executor) {
   });
 }
 
+function LsStringIsFormattedCorrectly(s) {
+  /* Check if it has 7 parts: 
+       1) permissions string
+       2) hard links count
+       3) owner
+       4) group
+       5) size
+       6) date
+       7) filename 
+  */
+
+  let expectedTotal = 7;
+  let parts = [];
+
+  let expectedCount = 5;
+  let actualCount = 0;
+
+  let startIndex = 0;
+  let endIndex = 0;
+  let spaceDelimitedStrings = 5;
+
+  // Check permissions string, hard links, user, group, and size
+  for (let i = 0; i < spaceDelimitedStrings; ++i) {
+    for (let j = startIndex; j < s.length; ++j) {
+      let currChar = s.charAt(j);
+      if (currChar.trim())
+        endIndex = j;
+      else {
+        endIndex += 1;
+        parts.push(s.substring(startIndex, endIndex));
+
+        currChar = s.charAt(endIndex);
+        while (!currChar.trim()) {
+          endIndex += 1;
+          currChar = s.charAt(endIndex);
+        }
+
+        startIndex = endIndex;
+        break;
+      }
+    }
+  }
+
+  if (parts.length < expectedCount)
+    return false;
+
+  // Check date string
+  let dateParts = [];
+
+  for (let i = 0; i < expectedCount; ++i) {
+    for (let j = startIndex; j < s.length; ++j) {
+      let currChar = s.charAt(j);
+      if (currChar.trim())
+        endIndex = j;
+      else {
+        endIndex += 1;
+        dateParts.push(s.substring(startIndex, endIndex));
+        currChar = s.charAt(endIndex);
+        while (!currChar.trim()) {
+          endIndex += 1;
+          currChar = s.charAt(endIndex);
+        }
+
+        startIndex = endIndex;
+        break;
+      }
+    }
+  }
+
+  if (dateParts.length != 3)
+    return false
+
+  parts.push(dateParts.join(' '));
+
+  // Check filepath
+  let substr = s.substring(startIndex);
+  if (!s.substring(startIndex))
+    return false
+
+  parts.push(s.substring(startIndex));
+  return parts.length == expectedTotal;
+}
+
 function ParseLsString(string) {
   let error = VALIDATE.IsStringInput(string);
   if (error)
@@ -467,90 +550,6 @@ function ParseLsString(string) {
   };
   return { info: info, error: null };
 }
-
-function LsStringIsFormattedCorrectly(s) {
-  /* Check if it has 7 parts: 
-       1) permissions string
-       2) hard links count
-       3) owner
-       4) group
-       5) size
-       6) date
-       7) filename 
-  */
-
-  let expectedTotal = 7;
-  let parts = [];
-
-  let expectedCount = 5;
-  let actualCount = 0;
-
-  let startIndex = 0;
-  let endIndex = 0;
-  let spaceDelimitedStrings = 5;
-
-  // Check permissions string, hard links, user, group, and size
-  for (let i = 0; i < spaceDelimitedStrings; ++i) {
-    for (let j = startIndex; j < s.length; ++j) {
-      let currChar = s.charAt(j);
-      if (currChar.trim())
-        endIndex = j;
-      else {
-        endIndex += 1;
-        parts.push(s.substring(startIndex, endIndex));
-
-        currChar = s.charAt(endIndex);
-        while (!currChar.trim()) {
-          endIndex += 1;
-          currChar = s.charAt(endIndex);
-        }
-
-        startIndex = endIndex;
-        break;
-      }
-    }
-  }
-
-  if (parts.length < expectedCount)
-    return false;
-
-  // Check date string
-  let dateParts = [];
-
-  for (let i = 0; i < expectedCount; ++i) {
-    for (let j = startIndex; j < s.length; ++j) {
-      let currChar = s.charAt(j);
-      if (currChar.trim())
-        endIndex = j;
-      else {
-        endIndex += 1;
-        dateParts.push(s.substring(startIndex, endIndex));
-        currChar = s.charAt(endIndex);
-        while (!currChar.trim()) {
-          endIndex += 1;
-          currChar = s.charAt(endIndex);
-        }
-
-        startIndex = endIndex;
-        break;
-      }
-    }
-  }
-
-  if (dateParts.length != 3)
-    return false
-
-  parts.push(dateParts.join(' '));
-
-  // Check filepath
-  let substr = s.substring(startIndex);
-  if (!s.substring(startIndex))
-    return false
-
-  parts.push(s.substring(startIndex));
-  return parts.length == expectedTotal;
-}
-
 
 //-------------------------------
 // EXPORTS
