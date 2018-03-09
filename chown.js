@@ -1,5 +1,52 @@
 let VALIDATE = require('./validate.js');
 
+//-----------------------------------
+// ERROR
+
+function NewIdValidator(id) {
+  let error = VALIDATE.IsInstance(id);
+  if (error)
+    return `is ${error}`;
+
+  if (typeof id != 'string' && !Number.isInteger(id))
+    return `must be a string or integer`;
+
+  return null;
+}
+
+function PathsValidator(paths) {
+  let error = VALIDATE.IsArray(paths);
+  if (error)
+    return `Paths are ${error}`;
+
+  for (let i = 0; i < paths.length; ++i) {
+    let currPath = paths[i];
+    let pathIsValid = VALIDATE.IsStringInput(currPath) == null;
+
+    if (!pathIsValid)
+      return `All paths must be string type`;
+  }
+
+  return null;
+}
+
+function ArgsValidator(args) {
+  let error = VALIDATE.IsArray(args);
+  if (error)
+    return `arguments are ${error}`;
+
+  for (let i = 0; i < args.length; ++i) {
+    let currArg = args[i];
+    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
+    let argIsValidNumber = !isNaN(currArg);
+
+    if (!argIsValidString && !argIsValidNumber)
+      return `arg elements must be string or number type`;
+  }
+
+  return null;
+}
+
 //-----------------------------------------------
 // CHOWN
 
@@ -142,53 +189,6 @@ function Manual(args, executor) { // newOwner can be string or integer
       resolve();
     }).catch(error => reject(`Failed to execute chown: ${error}`));
   });
-}
-
-//-----------------------------------
-// ERROR
-
-function NewIdValidator(id) {
-  let error = VALIDATE.IsInstance(id);
-  if (error)
-    return `is ${error}`;
-
-  if (typeof id != 'string' && !Number.isInteger(id))
-    return `must be a string or integer`;
-
-  return null;
-}
-
-function PathsValidator(paths) {
-  let error = VALIDATE.IsArray(paths);
-  if (error)
-    return `Paths are ${error}`;
-
-  for (let i = 0; i < paths.length; ++i) {
-    let currPath = paths[i];
-    let pathIsValid = VALIDATE.IsStringInput(currPath) == null;
-
-    if (!pathIsValid)
-      return `All paths must be string type`;
-  }
-
-  return null;
-}
-
-function ArgsValidator(args) {
-  let error = VALIDATE.IsArray(args);
-  if (error)
-    return `arguments are ${error}`;
-
-  for (let i = 0; i < args.length; ++i) {
-    let currArg = args[i];
-    let argIsValidString = VALIDATE.IsStringInput(currArg) == null;
-    let argIsValidNumber = !isNaN(currArg);
-
-    if (!argIsValidString && !argIsValidNumber)
-      return `arg elements must be string or number type`;
-  }
-
-  return null;
 }
 
 //-----------------------------------
