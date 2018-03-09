@@ -50,7 +50,7 @@ class Command {
    * Executes a system command locally.
    * @param {string} cmd Command name or command string.
    * @param {Array<string|number>} args List of args associated with command name. (Assign as empty array if no args are needed).
-   * @returns {Promise} Returns a promise. If it resolves, it returns an object with properties: stderr, stdout, exitCode. Else, it rejects and returns an error.
+   * @returns {Promise<{stderr: string, stdout: string, exitCode: number}>} Returns a promise. If it resolves, it returns an object with properties: stderr, stdout, exitCode. Else, it rejects and returns an error.
    */
   Execute(cmd, args) {
     let cmdError = VALIDATE.IsStringInput(cmd);
@@ -104,7 +104,7 @@ class RemoteCommand extends Command {
    * Executes a system command remotely.
    * @param {string} cmd Command name or command string.
    * @param {Array<string|number>} args List of args associated with command name. (Assign as empty array if no args are needed).
-   * @returns {Promise} Returns a promise. If it resolves, it returns an object with properties: stderr, stdout, exitCode. Else, it rejects and returns an error.
+   * @returns {Promise<{stderr: string, stdout: string, exitCode: number}>} Returns a promise. If it resolves, it returns an object with properties: stderr, stdout, exitCode. Else, it rejects and returns an error.
    */
   Execute(cmd, args) {
     let cmdError = VALIDATE.IsStringInput(cmd);
@@ -129,7 +129,7 @@ class RemoteCommand extends Command {
    * Creates a Command object that executes commands remotely.
    * @param {string} user Username
    * @param {string} host Remote host name
-   * @returns {Promise} Returns a promise. If it resolves, it returns a Command object. Else, it rejects and returns an error.
+   * @returns {Promise<Command>} Returns a promise. If it resolves, it returns a Command object. Else, it rejects and returns an error.
    */
   static Create(user, host) {
     let userError = VALIDATE.IsStringInput(user);
