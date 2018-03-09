@@ -1,6 +1,185 @@
 let LIST = require('./list.js');
 let VALIDATE = require('./validate.js');
 
+//----------------------------------------
+// ERROR
+
+function IntegerError(i) {
+  let error = VALIDATE.IsInteger(i);
+  if (error)
+    return `is ${error}`;
+
+  let min = 0;
+  let max = 7;
+
+  error = VALIDATE.IsIntegerInRange(i, min, max);
+  if (error)
+    return error;
+  return null;
+}
+
+function PermissionsStringError(string) {
+  let error = VALIDATE.IsInstance(string);
+  if (error)
+    return `Permissions string is ${error} `;
+
+  let validSize = 9
+  if (string.length != validSize)
+    return `Permissions string must contain exactly ${validSize} characters`;
+
+  string.split('').forEach(char => {
+    if (!CharIsValid(char))
+      return `Permissions string contains invalid characters`;
+  });
+
+  // Check if all chars are valid and in respective positions
+  let readChars = ValidReadChars();
+  let writeChars = ValidWriteChars();
+  let executeChars = ValidExecuteChars();
+
+  // Check user permissions
+  let userChars = string.substring(0, 3);
+
+  for (let i = 0; i < userChars.length; ++i) {
+    let currChar = userChars.charAt(i);
+    if (i == 0 && !readChars.includes(currChar)) // read
+      return `Permissions string contains invalid character for user read permissions`;
+    else if (i == 1 && !writeChars.includes(currChar))  // write
+      return `Permissions string contains invalid character for user write permissions`;
+    else if (i == 2 && !executeChars.includes(currChar))  // execute
+      return `Permissions string contains invalid character for user execute permissions`;
+  }
+
+  // Check group permissions
+  let groupChars = string.substring(3, 6);
+
+  for (let i = 0; i < groupChars.length; ++i) {
+    let currChar = groupChars.charAt(i);
+    if (i == 0 && !readChars.includes(currChar)) // read
+      return `Permissions string contains invalid character for group read permissions`;
+    else if (i == 1 && !writeChars.includes(currChar))  // write
+      return `Permissions string contains invalid character for group write permissions`;
+    else if (i == 2 && !executeChars.includes(currChar))  // execute
+      return `Permissions string contains invalid character for group execute permissions`;
+  }
+
+  // Check others permissions
+  let otherChars = string.substring(6, 9);
+
+  for (let i = 0; i < otherChars.length; ++i) {
+    let currChar = otherChars.charAt(i);
+    if (i == 0 && !readChars.includes(currChar)) // read
+      return `Permissions string contains invalid character for others read permissions`;
+    else if (i == 1 && !writeChars.includes(currChar))  // write
+      return `Permissions string contains invalid character for others write permissions`;
+    else if (i == 2 && !executeChars.includes(currChar))  // execute
+      return `Permissions string contains invalid character for others execute permissions`;
+  }
+
+  return null; // NO errors detected
+}
+
+function OctalStringValidator(octalStr) {
+  let error = VALIDATE.IsInstance(octalStr);
+  if (error)
+    return `Octal string is ${error} `;
+
+  let lengthMin = 3;
+  let lengthMax = 4;
+
+  if (octalStr.length < lengthMin && octalStr.length > lengthMax)
+    return `Octal string must have ${lengthMin} or ${lengthMax} characters`;
+
+  let numbersAsStrings = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => i.toString());
+  for (let i = 0; i < octalStr.length; ++i) {
+    let char = octalStr.charAt(i);
+    if (!numbersAsStrings.includes(char))
+      return 'Octal string contains non-numeric characters';
+  }
+
+  let valMin = 0;
+  let valMax = 7;
+
+  octalStr.split('').forEach(char => {
+    try {
+      let i = parseInt(char);
+      if (i < valMin && i > valMax)
+        return `Octal string numeric values must be between ${valMin} and ${valMax} `;
+    } catch (error) {
+      return `Could not parse char to int: ${error}`;
+    }
+  });
+  return null;
+}
+
+function ObjectError(obj, isPseudo) {
+  let error = VALIDATE.IsInstance(obj);
+  if (error)
+    return `Object is ${error} `;
+
+  let prefix = '';
+  if (isPseudo)
+    prefix = 'Object';
+  else
+    prefix = 'Permissions object';
+
+  // Check if obj missing values
+  let groupChars = ValidClassChars();
+  let variableNames = ['r', 'w', 'x', 'xchar', 'string'];
+
+  groupChars.forEach(gChar => {
+    variableNames.forEach(varName => {
+      if (obj[gChar][varName] === undefined)
+        return `${prefix} is missing required values`;
+    });
+  });
+
+  let octalVariableNames = ['string', 'user', 'group', 'others'];
+  octalVariableNames.forEach(varName => {
+    if (obj.octal[varName] === undefined)
+      return `${prefix} is missing required values`;
+  });
+
+  if (obj.owner === undefined || obj.group === undefined || obj.string === undefined)
+    return `${prefix} is missing required values`;
+
+  // Check if obj values are correct types
+  let boolVars = [obj.u.r, obj.u.w, obj.u.x, obj.g.r, obj.g.w, obj.g.x, obj.o.r, obj.o.w, obj.o.x];
+  boolVars.forEach(bvar => {
+    if (!(bvar === true) || !(bvar === false))
+      return `${prefix} values for u,g,o are all required to be boolean values (true|false)`;
+  });
+
+  if (
+    !ValidExecuteChars().includes(obj.u.xchar) ||
+    !ValidExecuteChars().includes(obj.g.xchar) ||
+    !ValidExecuteChars().includes(obj.o.xchar)
+  )
+    return `${prefix} values for xchar are not valid characters`;
+
+  if (isPseudo)
+    return null;
+
+  if (
+    obj.octal.string == '' ||
+    !obj.octal.string.trim() ||
+    !Number.isInteger(obj.octal.special) ||
+    !Number.isInteger(obj.octal.user) ||
+    !Number.isInteger(obj.octal.group) ||
+    !Number.isInteger(obj.octal.others)
+  )
+    return `${prefix} values for octal are incorrect types`;
+
+  if (
+    obj.owner === undefined ||
+    obj.group === undefined ||
+    obj.string === undefined
+  )
+    return `${prefix} values for owner, group, string are empty or whitespace`;
+
+  return null;
+}
+
 //--------------------------------------------
 // PERMISSIONS
 
@@ -453,185 +632,6 @@ function CharIsValid(c) {
     ValidReadChars().includes(c) ||
     ValidWriteChars().includes(c) ||
     ValidExecuteChars().includes(c);
-}
-
-//----------------------------------------
-// ERROR
-
-function IntegerError(i) {
-  let error = VALIDATE.IsInteger(i);
-  if (error)
-    return `is ${error}`;
-
-  let min = 0;
-  let max = 7;
-
-  error = VALIDATE.IsIntegerInRange(i, min, max);
-  if (error)
-    return error;
-  return null;
-}
-
-function PermissionsStringError(string) {
-  let error = VALIDATE.IsInstance(string);
-  if (error)
-    return `Permissions string is ${error} `;
-
-  let validSize = 9
-  if (string.length != validSize)
-    return `Permissions string must contain exactly ${validSize} characters`;
-
-  string.split('').forEach(char => {
-    if (!CharIsValid(char))
-      return `Permissions string contains invalid characters`;
-  });
-
-  // Check if all chars are valid and in respective positions
-  let readChars = ValidReadChars();
-  let writeChars = ValidWriteChars();
-  let executeChars = ValidExecuteChars();
-
-  // Check user permissions
-  let userChars = string.substring(0, 3);
-
-  for (let i = 0; i < userChars.length; ++i) {
-    let currChar = userChars.charAt(i);
-    if (i == 0 && !readChars.includes(currChar)) // read
-      return `Permissions string contains invalid character for user read permissions`;
-    else if (i == 1 && !writeChars.includes(currChar))  // write
-      return `Permissions string contains invalid character for user write permissions`;
-    else if (i == 2 && !executeChars.includes(currChar))  // execute
-      return `Permissions string contains invalid character for user execute permissions`;
-  }
-
-  // Check group permissions
-  let groupChars = string.substring(3, 6);
-
-  for (let i = 0; i < groupChars.length; ++i) {
-    let currChar = groupChars.charAt(i);
-    if (i == 0 && !readChars.includes(currChar)) // read
-      return `Permissions string contains invalid character for group read permissions`;
-    else if (i == 1 && !writeChars.includes(currChar))  // write
-      return `Permissions string contains invalid character for group write permissions`;
-    else if (i == 2 && !executeChars.includes(currChar))  // execute
-      return `Permissions string contains invalid character for group execute permissions`;
-  }
-
-  // Check others permissions
-  let otherChars = string.substring(6, 9);
-
-  for (let i = 0; i < otherChars.length; ++i) {
-    let currChar = otherChars.charAt(i);
-    if (i == 0 && !readChars.includes(currChar)) // read
-      return `Permissions string contains invalid character for others read permissions`;
-    else if (i == 1 && !writeChars.includes(currChar))  // write
-      return `Permissions string contains invalid character for others write permissions`;
-    else if (i == 2 && !executeChars.includes(currChar))  // execute
-      return `Permissions string contains invalid character for others execute permissions`;
-  }
-
-  return null; // NO errors detected
-}
-
-function OctalStringValidator(octalStr) {
-  let error = VALIDATE.IsInstance(octalStr);
-  if (error)
-    return `Octal string is ${error} `;
-
-  let lengthMin = 3;
-  let lengthMax = 4;
-
-  if (octalStr.length < lengthMin && octalStr.length > lengthMax)
-    return `Octal string must have ${lengthMin} or ${lengthMax} characters`;
-
-  let numbersAsStrings = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => i.toString());
-  for (let i = 0; i < octalStr.length; ++i) {
-    let char = octalStr.charAt(i);
-    if (!numbersAsStrings.includes(char))
-      return 'Octal string contains non-numeric characters';
-  }
-
-  let valMin = 0;
-  let valMax = 7;
-
-  octalStr.split('').forEach(char => {
-    try {
-      let i = parseInt(char);
-      if (i < valMin && i > valMax)
-        return `Octal string numeric values must be between ${valMin} and ${valMax} `;
-    } catch (error) {
-      return `Could not parse char to int: ${error}`;
-    }
-  });
-  return null;
-}
-
-function ObjectError(obj, isPseudo) {
-  let error = VALIDATE.IsInstance(obj);
-  if (error)
-    return `Object is ${error} `;
-
-  let prefix = '';
-  if (isPseudo)
-    prefix = 'Object';
-  else
-    prefix = 'Permissions object';
-
-  // Check if obj missing values
-  let groupChars = ValidClassChars();
-  let variableNames = ['r', 'w', 'x', 'xchar', 'string'];
-
-  groupChars.forEach(gChar => {
-    variableNames.forEach(varName => {
-      if (obj[gChar][varName] === undefined)
-        return `${prefix} is missing required values`;
-    });
-  });
-
-  let octalVariableNames = ['string', 'user', 'group', 'others'];
-  octalVariableNames.forEach(varName => {
-    if (obj.octal[varName] === undefined)
-      return `${prefix} is missing required values`;
-  });
-
-  if (obj.owner === undefined || obj.group === undefined || obj.string === undefined)
-    return `${prefix} is missing required values`;
-
-  // Check if obj values are correct types
-  let boolVars = [obj.u.r, obj.u.w, obj.u.x, obj.g.r, obj.g.w, obj.g.x, obj.o.r, obj.o.w, obj.o.x];
-  boolVars.forEach(bvar => {
-    if (!(bvar === true) || !(bvar === false))
-      return `${prefix} values for u,g,o are all required to be boolean values (true|false)`;
-  });
-
-  if (
-    !ValidExecuteChars().includes(obj.u.xchar) ||
-    !ValidExecuteChars().includes(obj.g.xchar) ||
-    !ValidExecuteChars().includes(obj.o.xchar)
-  )
-    return `${prefix} values for xchar are not valid characters`;
-
-  if (isPseudo)
-    return null;
-
-  if (
-    obj.octal.string == '' ||
-    !obj.octal.string.trim() ||
-    !Number.isInteger(obj.octal.special) ||
-    !Number.isInteger(obj.octal.user) ||
-    !Number.isInteger(obj.octal.group) ||
-    !Number.isInteger(obj.octal.others)
-  )
-    return `${prefix} values for octal are incorrect types`;
-
-  if (
-    obj.owner === undefined ||
-    obj.group === undefined ||
-    obj.string === undefined
-  )
-    return `${prefix} values for owner, group, string are empty or whitespace`;
-
-  return null;
 }
 
 //---------------------------------
