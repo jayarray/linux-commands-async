@@ -389,46 +389,6 @@ function EmptyDirs(path, maxDepth, executor) {
   });
 }
 
-/**
- * List files given the specified arguments.
- * @param {Array<string|Number>} args List of args used in 'find' command.
- * @param {Command} executor Command object that will execute the command.
- * @returns {Promise<Array<string>>} Returns a promise. If it resolves, it returns an array of filepaths. Else, it returns an error.
- */
-function Manual(args, executor) {
-  let error = ArgsValidator(args);
-  if (error)
-    return Promise.reject(`Failed to execute find command: ${error}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to execute find command: Connection is ${executorError}`);
-
-  return new Promise((resolve, reject) => {
-    executor.Execute('find', args).then(output => {
-      let deniedPaths = [];
-
-      if (output.stderr) {
-        if (output.stderr.includes('Permission denied')) {
-          let lines = output.stderr.split('\n').filter(line => line && line.trim() != '' && line != path);
-
-          for (let i = 0; i < lines.length; ++i) {
-            let currLine = lines[i];
-            let dPath = currLine.split(':')[1].trim();
-            deniedPaths.push(dPath);
-          }
-        }
-        else {
-          reject(`Failed to execute find command: ${output.stderr}`);
-          return;
-        }
-      }
-
-      let paths = output.stdout.split('\n').filter(line => line && line.trim() != '' && line != path && line != path);
-      resolve({ paths: paths, denied: deniedPaths });
-    }).catch(error => reject(`Failed to execute find command: ${error}`));
-  });
-}
-
 //------------------------------
 // EXPORTS
 
@@ -438,4 +398,3 @@ exports.FilesByContent = FilesByContent;
 exports.DirsByName = DirsByName;
 exports.EmptyFiles = EmptyFiles;
 exports.EmptyDirs = EmptyDirs;
-exports.Manual = Manual;

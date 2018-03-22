@@ -113,31 +113,6 @@ function Directories(sources, dest, executor) {
 }
 
 /**
- * Compress with ZIP utility using specified arguments.
- * @param {Array<string|Number>} args List of arguments used in 'zip' command.
- * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
- */
-function Manual(args, executor) {
-  let error = ArgsValidator(args);
-  if (error)
-    return Promise.reject(`Failed to execute zip command: ${error}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to execute zip command: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    executor.Execute('zip', args).then(output => {
-      if (output.stderr) {
-        reject(`Failed to execute zip command: ${output.stderr}`);
-        return;
-      }
-      resolve();
-    }).catch(error => reject(`Failed to execute zip command: ${error}`));
-  });
-}
-
-/**
  * Decompress zip file using UNZIP utility.
  * @param {string} src Source for zip file.
  * @param {string} dest Destination.
@@ -167,36 +142,9 @@ function Unzip(src, dest, executor) {
   });
 }
 
-/**
- * Decompress zip file with UNZIP utility using specified arguments.
- * @param {Array<string|Number>} args List of arguments used in 'zip' command.
- * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that resolves if successful, otherwise it rejects and returns an error.
- */
-function UnzipManual(args, executor) {
-  let error = ArgsValidator(args);
-  if (error)
-    return Promise.reject(`Failed to execute unzip command: args are ${error}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to execute unzip command: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    executor.Execute('unzip', args).then(output => {
-      if (output.stderr) {
-        reject(`Failed to execute unzip command: ${output.stderr}`);
-        return;
-      }
-      resolve();
-    }).catch(error => reject(`Failed to execute unzip command: ${error}`));
-  });
-}
-
 //--------------------------
 // EXPORTS
 
 exports.Files = Files;
 exports.Directories = Directories;
-exports.Manual = Manual;
 exports.Unzip = Unzip;
-exports.UnzipManual = UnzipManual;

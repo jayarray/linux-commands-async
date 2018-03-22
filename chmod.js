@@ -262,31 +262,6 @@ function SetPermissions(classes, types, paths, isRecursive, executor) {
   return ChangePermissions_('=', classes, types, paths, isRecursive, executor);
 }
 
-/**
- * Change permissions.
- * @param {Array<string|number>} args A list of args used in 'chmod' command.
- * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
- */
-function Manual(args, executor) {
-  let argsError = ArgsValidator(args);
-  if (argsError)
-    return Promise.reject(`Failed to execute chmod: ${argsError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to execute chmod: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    executor.Execute('chmod', args).then(output => {
-      if (output.stderr) {
-        reject(`Failed to execute chmod: ${output.stderr} `);
-        return;
-      }
-      resolve();
-    }).catch(error => reject(`Failed to execute chmod: ${error} `));
-  });
-}
-
 function ValidClassChars() {
   return ['u', 'g', 'o'];
 }
@@ -303,4 +278,3 @@ exports.UsingOctalString = UsingOctalString;
 exports.RemovePermissions = RemovePermissions;
 exports.AddPermissions = AddPermissions;
 exports.SetPermissions = SetPermissions;
-exports.Manual = Manual;

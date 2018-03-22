@@ -226,34 +226,4 @@ describe('*** chmod.js ***', () => {
       }).catch(error => EXPECT(false));
     });
   });
-
-  describe('Manual(args, executor)', () => {
-    let validArgs = ['a=x', testDirPath];
-    let invalidArgs = [0, { o: 'blah' }, [1, 2, 3]];
-
-    let expectedPermStr = '--x--x--x';
-
-    it('Returns error if args is invalid.', () => {
-      CHMOD.Manual(invalidArgs, executor).then(success => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Returns error if executor is invalid.', () => {
-      CHMOD.Manual(validArgs, null).then(success => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Actually changes permissions.', () => {
-      MKDIR.MakeDirectory(testDirPath, executor).then(success => {
-        CHMOD.Manual(validArgs, executor).then(success => {
-          PERMISSIONS.Permissions(testDirPath, executor).then(permsObj => {
-            let success = expectedPermStr == permsObj.string;
-            DIRECTORY.Remove(testDirPath, executor).then(success => {
-              EXPECT(success).to.equal(true);
-            }).catch(error => EXPECT(false));
-          }).catch(error => EXPECT(false));
-        }).catch(error => EXPECT(false));
-      }).catch(error => EXPECT(false));
-    });
-  });
 });

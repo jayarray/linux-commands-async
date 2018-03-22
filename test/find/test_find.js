@@ -17,27 +17,6 @@ describe('*** find.js ***', () => {
   let pattern = '*';
   let maxDepth = 1;
 
-  describe('Manual(path, args)', () => {
-    let args = ['-type', '-f', '-name', '*'];
-
-    it('Returns error if path is invalid.', () => {
-      FIND.Manual(null, args).then(paths => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Returns error if args is invalid.', () => {
-      FIND.Manual(dirPath, null).then(paths => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Returns array if path and args are valid.', () => {
-      FIND.Manual(dirPath, args).then(paths => {
-        let isValid = Array.isArray(paths);
-        EXPECT(isValid).to.equal(true);
-      }).catch(error => EXPECT(false));
-    });
-  });
-
   describe('FilesByName(path, pattern, maxDepth) ', () => {
     it('Returns error if path is invalid.', () => {
       FIND.FilesByName(null, pattern, maxDepth).then(paths => EXPECT(false))

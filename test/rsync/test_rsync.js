@@ -101,18 +101,6 @@ describe('*** rsync.js ***', () => {
     });
   });
 
-  describe('Manual(args, executor)', () => {
-    it('Returns an error if args is invalid.', () => {
-      RSYNC.Manual(null, executor).then(output => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Returns an error if executor is invalid.', () => {
-      RSYNC.Manual(args, null).then(output => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-  });
-
   describe('DryRun(args, executor)', () => {
     it('Returns an error if args is invalid.', () => {
       RSYNC.DryRun(null, executor).then(output => EXPECT(false))

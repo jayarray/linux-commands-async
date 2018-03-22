@@ -135,31 +135,4 @@ describe('*** chown.js ***', () => {
       }).catch(error => EXPECT(false));
     });
   });
-
-  describe('Manual(args, executor)', () => {
-    it('Returns error if args is invalid.', () => {
-      CHOWN.ChangeOwner(null, executor).then(success => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Returns error if executor is invalid.', () => {
-      CHOWN.ChangeOwner(paths, newOwnerId, newGroupId, isRecursive, null).then(success => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Actually changes owner and group.', () => {
-      USERINFO.CurrentUser(executor).then(info => {
-        let username = info.username;
-        let args = [username, testDirPath];
-        CHOWN.Manual(args, executor).then(success => {
-          PERMISSION.Permissions(testDirPath, executor).then(permsObj => {
-            let successful = username == permsObj.owner;
-            DIRECTORY.Remove(testDirPath, executor).then(success => {
-              EXPECT(successful).to.equal(true);
-            }).catch(error => EXPECT(false));
-          }).catch(error => EXPECT(false));
-        }).catch(error => EXPECT(false));
-      }).catch(error => EXPECT(false));
-    });
-  });
 });

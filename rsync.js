@@ -93,31 +93,6 @@ function Match(user, host, src, dest, executor) { // Copy files and then delete 
 }
 
 /**
- * Execute rsync command using specified arguments.
- * @param {Array<string|number>} args List of args used in 'rsync' command.
- * @param {Command} executor Command object that will execute the command.
- * @returns {Promise<string>} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
- */
-function Manual(args, executor) {
-  let argsError = argsValidator(args);
-  if (argsError)
-    return Promise.reject(`Failed to execute rsync: ${argsError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to execute rsync: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    executor.Execute('rsync', args).then(output => {
-      if (output.stderr) {
-        reject(`Failed to execute rsync: ${output.stderr}`);
-        return;
-      }
-      resolve(output.stdout);
-    }).catch(error => reject(`Failed to execute rsync: ${error}`));
-  });
-}
-
-/**
  * Run rsync command without affecting files. (For testing purposes).
  * @param {Array<string|number>} args List of args used in 'rsync' command.
  * @param {Command} executor Command object that will execute the command.
@@ -131,7 +106,15 @@ function DryRun(args, executor) { // Will execute without making changes (for te
   if (!executor)
     return Promise.reject(`Failed to execute rsync: Executor is required`);
 
-  return Manual(['--dry-run'].concat(args), executor);
+  return new Promise((resolve, reject) => {
+    executor.Execute('rsync', ['--dry-run'].concat(args)).then(output => {
+      if (output.stderr) {
+        reject(`Failed to execute rsync: ${output.stderr}`);
+        return;
+      }
+      resolve(output.stdout);
+    }).catch(error => reject(`Failed to execute rsync: ${error}`));
+  });
 }
 
 //-----------------------------------
@@ -141,4 +124,3 @@ exports.Rsync = Rsync;
 exports.Update = Update;
 exports.Match = Match;
 exports.DryRun = DryRun;
-exports.Manual = Manual;

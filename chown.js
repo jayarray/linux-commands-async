@@ -166,35 +166,9 @@ function ChangeOwnerAndGroup(paths, newOwnerId, newGroupId, isRecursive, executo
   });
 }
 
-/**
- * Change ownership.
- * @param {Array<string|number>} args A list of args used in 'chown' command.
- * @param {Command} executor Command object that will execute the command.
- * @returns {Promise} Returns a promise that will resolve if successful, otherwise it returns an error.
- */
-function Manual(args, executor) { // newOwner can be string or integer
-  let argsError = ArgsValidator(args);
-  if (argsError)
-    return Promise.reject(`Failed to execute chown: ${argsError}`);
-
-  if (!executor)
-    return Promise.reject(`Failed to execute chown: Executor is required`);
-
-  return new Promise((resolve, reject) => {
-    executor.Execute('chown', args).then(output => {
-      if (output.stderr) {
-        reject(`Failed to execute chown: ${output.stderr}`);
-        return;
-      }
-      resolve();
-    }).catch(error => reject(`Failed to execute chown: ${error}`));
-  });
-}
-
 //-----------------------------------
 // EXPORTS
 
 exports.ChangeOwner = ChangeOwner;
 exports.ChangeGroup = ChangeGroup;
 exports.ChangeOwnerAndGroup = ChangeOwnerAndGroup;
-exports.Manual = Manual;

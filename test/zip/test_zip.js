@@ -104,35 +104,6 @@ describe('*** zip.js ***', () => {
     });
   });
 
-  describe('Manual(args, executor)', () => {
-    it('Returns error if args is invalid.', () => {
-      ZIP.Manual(null, executor).then(success => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Returns error if executor is invalid.', () => {
-      ZIP.Manual([], executor).then(success => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Actually zips using args.', () => {
-      DIRECTORY.Create(testDir, executor).then(success => {
-        ZIP.Manual(['-r', zipDest, testDir], executor).then(success => {
-          PATH.Exists(zipDest, executor).then(exists => {
-            if (!exists)
-              EXPECT(false);
-            else
-              FILE.Remove(zipDest, executor).then(success => {
-                DIRECTORY.Remove(testDir, executor).then(success => {
-                  EXPECT(true);
-                }).catch(error => EXPECT(error).to.not.equal(null));
-              }).catch(error => EXPECT(error).to.not.equal(null));
-          }).catch(error => EXPECT(error).to.not.equal(null));
-        }).catch(error => EXPECT(error).to.not.equal(null));
-      }).catch(error => EXPECT(error).to.not.equal(null));
-    });
-  });
-
   describe('Unzip(src, dest, executor)', () => {
     it('Returns error if src are invalid.', () => {
       ZIP.Unzip(null, zipDest, executor).then(success => EXPECT(false))
@@ -162,39 +133,6 @@ describe('*** zip.js ***', () => {
                     FILE.Remove(zipDest, executor).then(success => {
                       EXPECT(true);
                     }).catch(error => EXPECT(false));
-                  }).catch(error => EXPECT(false));
-                }).catch(error => EXPECT(false));
-              }
-            }).catch(error => EXPECT(false));
-          }).catch(error => EXPECT(false));
-        }).catch(error => EXPECT(false));
-      }).catch(error => EXPECT(false));
-    });
-  });
-
-
-  describe('UnzipManual(args, executor)', () => {
-    it('Returns error if args are invalid.', () => {
-      ZIP.UnzipManual(null, executor).then(success => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Returns error if executor is invalid.', () => {
-      ZIP.UnzipManual([], null).then(success => EXPECT(false))
-        .catch(error => EXPECT(error).to.not.equal(null));
-    });
-
-    it('Actually unzips.', () => {
-      DIRECTORY.Create(testDir, executor).then(success => {
-        DIRECTORY.Create(unzipDest, executor).then(success => {
-          ZIP.Directories([testDir], zipDest, executor).then(success => {
-            PATH.Exists(zipDest, executor).then(exists => {
-              if (!exists)
-                EXPECT(false);
-              else {
-                ZIP.UnzipManual([zipDest, '-d', unzipDest], executor).then(success => {
-                  DIRECTORY.Remove(testDir, executor).then(success => {
-                    EXPECT(true);
                   }).catch(error => EXPECT(false));
                 }).catch(error => EXPECT(false));
               }
