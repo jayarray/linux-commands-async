@@ -76,6 +76,7 @@ class Command {
         resolve({
           stderr: stderr.value,
           stdout: stdout.value,
+          pid: childProcess.pid,
           exitCode: exitCode
         });
       });
