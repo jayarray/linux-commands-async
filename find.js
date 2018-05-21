@@ -95,7 +95,7 @@ function FilesByName(path, pattern, maxDepth, executor) {
 
   return new Promise((resolve, reject) => {
     let args = [path];
-    if (maxdepth)
+    if (maxDepth)
       args.push('-maxdepth', maxDepth);
     args.push('-type', 'f', '-name', pattern);
 
@@ -150,8 +150,8 @@ function FilesByContent(path, text, maxDepth, executor) {
 
   return new Promise((resolve, reject) => {
     let cmdStr = `find ${path}`;
-    if (maxdepth)
-      cmdStr += ` -maxdepth ${maxdepth}`;
+    if (maxDepth)
+      cmdStr += ` -maxdepth ${maxDepth}`;
     cmdStr += ` -type f -exec grep -l "${text}" "{}" \\;`;
 
     executor.Execute(cmdStr, []).then(output => {
@@ -205,7 +205,7 @@ function FilesByUser(path, user, maxDepth, executor) {
 
   return new Promise((resolve, reject) => {
     let args = [path];
-    if (maxdepth)
+    if (maxDepth)
       args.push('-maxdepth', maxDepth);
     args.push('-type', 'f', '-user', user);
 
@@ -260,7 +260,7 @@ function DirsByName(path, pattern, maxDepth, executor) {
 
   return new Promise((resolve, reject) => {
     let args = [path];
-    if (maxdepth)
+    if (maxDepth)
       args.push('-maxdepth', maxDepth);
     args.push('-type', 'd', '-name', pattern);
 
@@ -310,7 +310,7 @@ function EmptyFiles(path, maxDepth, executor) {
 
   return new Promise((resolve, reject) => {
     let args = [path];
-    if (maxdepth)
+    if (maxDepth)
       args.push('-maxdepth', maxDepth);
     args.push('-empty', '-type', 'f');
 
@@ -360,7 +360,7 @@ function EmptyDirs(path, maxDepth, executor) {
 
   return new Promise((resolve, reject) => {
     let args = [path];
-    if (maxdepth)
+    if (maxDepth)
       args.push('-maxdepth', maxDepth);
     args.push('-empty', '-type', 'd');
 
