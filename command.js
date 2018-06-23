@@ -130,18 +130,16 @@ class RemoteCommand extends Command {
    * Creates a Command object that executes commands remotely.
    * @param {string} user Username
    * @param {string} host Remote host name
-   * @returns {Promise<Command>} Returns a promise. If it resolves, it returns a Command object. Else, it returns an error.
+   * @returns {Command} Returns a Command object if user and host are valid. Else, it returns an error.
    */
   static Create(user, host) {
     let userError = VALIDATE.IsStringInput(user);
-    if (userError)
-      return Promise.reject(userError);
-
     let hostError = VALIDATE.IsStringInput(host);
-    if (hostError)
-      return Promise.reject(hostError);
 
-    return Promise.resolve(new RemoteCommand(user, host));
+    if (userError || hostError)
+      return null;
+
+    return new RemoteCommand(user, host);
   }
 }
 
