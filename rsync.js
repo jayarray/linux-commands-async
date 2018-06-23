@@ -27,9 +27,11 @@ function Rsync_(user, host, flag, src, dest, executor) { // PRIVATE
   if (hostError)
     return Promise.reject(`Failed to execute rsync: host is ${hostError}`);
 
-  let flagError = VALIDATE.IsStringInput(flag);
-  if (flagError)
-    return Promise.reject(`Failed to execute rsync: flag is ${flagError}`);
+  if (flag) {
+    let flagError = VALIDATE.IsStringInput(flag);
+    if (flagError)
+      return Promise.reject(`Failed to execute rsync: flag is ${flagError}`);
+  }
 
   let srcError = VALIDATE.IsStringInput(src);
   if (srcError)
@@ -43,7 +45,12 @@ function Rsync_(user, host, flag, src, dest, executor) { // PRIVATE
     return Promise.reject(`Failed to execute rsync: Executor is required`);
 
   return new Promise((resolve, reject) => {
-    executor.Execute('rsync', ['-a'].concat(flag).concat([src, `${user}@${host}:${dest}`])).then(output => {
+    let args = ['-a'];
+    if (flag)
+      args.push(flag);
+    args = args.concat([src, `${user}@${host}:${dest}`]);
+
+    executor.Execute('rsync', args).then(output => {
       if (output.stderr) {
         reject(`Failed to execute rsync: ${output.stderr}`);
         return;
@@ -63,7 +70,7 @@ function Rsync_(user, host, flag, src, dest, executor) { // PRIVATE
  * @returns {Promise<string>} Returns a promise. If it resolves, it returns a string with output message. Else, it rejects and returns an error.
  */
 function Rsync(user, host, src, dest, executor) {
-  return Rsync_(user, host, [], src, dest, executor);
+  return Rsync_(user, host, null, src, dest, executor);
 }
 
 /**
