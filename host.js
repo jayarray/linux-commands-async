@@ -21,7 +21,7 @@ function Info(executor) {
         return;
       }
 
-      let lines = output.stdout.trim().split()
+      let lines = output.stdout.trim().split('\n')
         .filter(line => line && line != '' && line.trim() != '')
         .map(line => line.trim());
 
