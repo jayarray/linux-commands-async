@@ -36,6 +36,9 @@ function Create(path, text, executor) {
     return Promise.reject(`Failed to create file: Executor is required`);
 
   return new Promise((resolve, reject) => {
+    // Escape all double-quotes (if you don't, they will NOT be preserved!)
+    text = text.split('"').join('\\"');
+
     executor.Execute(`echo "${text}" > ${path}`, []).then(output => {
       if (output.stderr) {
         reject(`Failed to create file: ${output.stderr}`);
