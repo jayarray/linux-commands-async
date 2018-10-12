@@ -1,6 +1,6 @@
 {
   "name": "linux-commands-async",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "An API for executing linux commands.",
   "main": "api.js",
   "scripts": {
