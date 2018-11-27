@@ -50,9 +50,10 @@ class Command {
    * Executes a system command locally.
    * @param {string} cmd Command name or command string.
    * @param {Array<string|number>} args List of args associated with command name. (Assign as empty array if no args are needed).
+   * @param {Array<string|number>} inputs List of inputs expected from the command prompt.
    * @returns {Promise<{stderr: string, stdout: string, exitCode: number}>} Returns a promise. If it resolves, it returns an object. Else, it returns an error.
    */
-  Execute(cmd, args) {
+  Execute(cmd, args, inputs) {
     let cmdError = VALIDATE.IsStringInput(cmd);
     if (cmdError)
       return Promise.reject(`Failed to execute command: command is ${cmdError}`);
@@ -68,6 +69,11 @@ class Command {
         childProcess = childProcess = CHILD_PROCESS.spawn(cmd, args);
       else
         childProcess = CHILD_PROCESS.exec(cmd);
+
+      if (inputs) { // TEST: providing inputs
+        childProcess.stdin.write(`${inputs.join('\n')}\n`);
+        childProcess.stdin.end();
+      }
 
       let stderr = new SavedData(childProcess.stderr);
       let stdout = new SavedData(childProcess.stdout);
@@ -105,9 +111,10 @@ class RemoteCommand extends Command {
    * Executes a system command remotely.
    * @param {string} cmd Command name or command string.
    * @param {Array<string|number>} args List of args associated with command name. (Assign as empty array if no args are needed).
+   * @param {Array<string|number>} inputs List of inputs expected from the command prompt.
    * @returns {Promise<{stderr: string, stdout: string, exitCode: number}>} Returns a promise. If it resolves, it returns an object. Else, it rejects and returns an error.
    */
-  Execute(cmd, args) {
+  Execute(cmd, args, inputs) {
     let cmdError = VALIDATE.IsStringInput(cmd);
     if (cmdError)
       return Promise.reject(`Failed to execute command: command is ${cmdError}`);
@@ -123,7 +130,7 @@ class RemoteCommand extends Command {
     else
       sshArgs.push(cmd);
 
-    return LOCAL.Execute('ssh', sshArgs);
+    return LOCAL.Execute('ssh', sshArgs, inputs);
   }
 
   /**
