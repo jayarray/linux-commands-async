@@ -70,7 +70,7 @@ class Command {
       else
         childProcess = CHILD_PROCESS.exec(cmd);
 
-      if (inputs) { // TEST: providing inputs
+      if (inputs) {
         childProcess.stdin.write(`${inputs.join('\n')}\n`);
         childProcess.stdin.end();
       }
