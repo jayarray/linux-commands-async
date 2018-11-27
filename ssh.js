@@ -1,8 +1,35 @@
 let VALIDATE = require('./validate.js');
 let USER_INFO = require('./userinfo.js');
 let FILE = require('./file.js');
-let PATH = require('./path.js');
+let PATH = require('./path.js'); // project module
+let path = require('path');
 let COMMAND = require('./command.js');
+
+//----------------------------
+// GUID
+
+/**
+ * Create a GUID number.
+ * @returns {string} Returns an alphanumeric GUID string.
+ */
+function GuiNumber() {
+  let defaultLength = 32;
+  let guid = '';
+
+  for (let i = 0; i < defaultLength; ++i)
+    guid += (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+
+  return guid;
+}
+
+/**
+ * Create a filename with GUID as name.
+ * @param {string} format Output format (i.e. png, jpeg, tiff, exr, etc) 
+ * @returns {string} Returns a string that looks like this: "GUID.FORMAT"
+ */
+function GuiFilename(format) {
+  return `${GuiNumber()}.${format}`;
+}
 
 //----------------------------
 // SSH
@@ -15,8 +42,123 @@ class SSH {
     this.isLocal_ = !host && !password;
     this.executor_ = this.isLocal_ ? COMMAND.LOCAL : COMMAND.CreateRemoteCommand(user, host);
 
+    this.userDir_ = `/home/${user}`;
     this.publicKeyFilepath_ = `/home/${user}/.ssh/id_rsa.pub`;
     this.authorizedKeysFilepath_ = `/home/${user}/.ssh/authorized_keys`;
+  }
+
+  /**
+   * Write to file.
+   * @param {string} filepath 
+   * @param {string} text 
+   * @returns {Promise} Returns a Promise taht resolves if successful. Otherwise, it returns an error.
+   */
+  WriteToFile_(filepath, text) {
+    return new Promise((resolve, reject) => {
+      let inputs = this.isLocal_ ? null : [this.password_];
+
+      // Escape all double-quotes (if you don't, they will NOT be preserved!)
+      text = text.split('"').join('\\"');
+
+      this.executor_.Execute(`echo "${text}" > ${filepath}`, [], inputs).then(output => {
+        if (output.stderr) {
+          reject(`Failed to create file: ${output.stderr}`);
+          return;
+        }
+        resolve();
+      }).catch(error => reject(`Failed to create file: ${error}`));
+    });
+  }
+
+  /**
+   * @param {string} text
+   * @returns {Promise<string>} Returns a Promise that resolves and returns the filepath if successful. Otherwise, it returns an error.
+   */
+  CreateScript_(text) {
+    return new Promise((resolve, reject) => {
+      let filepath = path.join(this.userDir_, GuiFilename('sh'));
+
+      this.WriteToFile_(filepath, text).then(success => {
+        resolve(filepath);
+      }).catch(error => reject(`Failed to create script: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} filepath 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   */
+  MakeScriptExecutable_(filepath) {
+    return new Promise((resolve, reject) => {
+      let inputs = this.isLocal_ ? null : [this.password_];
+
+      this.executor_.Execute('chmod', ['+x', filepath], inputs).then(output => {
+        if (output.stderr) {
+          reject(`Failed to make script executable: ${output.stderr.trim()}`);
+          return;
+        }
+
+        resolve();
+      }).catch(error => reject(`Failed to make script executable: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} filepath 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   */
+  RunScript_(filepath) {
+    return new Promise((resolve, reject) => {
+      let inputs = this.isLocal_ ? null : [this.password_];
+
+      this.executor_.Execute(filepath, [], inputs).then(output => {
+        if (output.stderr) {
+          reject(`Failed to run script: ${output.stderr.trim()}`);
+          return;
+        }
+
+        let outputStr = output.stdout.trim();
+
+        resolve(outputStr);
+      }).catch(error => reject(`Failed to run script: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} filepath 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   */
+  DeleteScript_(filepath) {
+    return new Promise((resolve, reject) => {
+      let inputs = this.isLocal_ ? null : [this.password_];
+
+      this.executor_.Execute('rm', ['-f', filepath], inputs).then(output => {
+        if (output.stderr) {
+          reject(`Failed to delete script: ${output.stderr.trim()}`);
+          return;
+        }
+
+        resolve();
+      }).catch(error => reject(`Failed to delete script: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} text 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   */
+  ExecuteScript(text) {
+    return new Promise((resolve, reject) => {
+      this.CreateScript_(text).then(filepath => {
+        this.MakeScriptExecutable_(filepath).then(execDone => {
+          this.RunScript_(filepath).then(output => {
+            this.DeleteScript_(filepath).then(deleteDone => {
+              resolve(output);
+            }).catch(error => reject(`Failed to execute script: ${error}.`));
+          }).catch(error => reject(`Failed to execute script: ${error}.`));
+        }).catch(error => reject(`Failed to execute script: ${error}.`));
+      }).catch(error => reject(`Failed to execute script: ${error}.`));
+    });
   }
 
   /**
@@ -26,8 +168,6 @@ class SSH {
    */
   FileExists_(path) {
     return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? null : [this.password_];
-
       let cmd = `if [ -e ${path} ]; then`; // can you do !exists and return dne to avoid nested ifs?
       cmd += ` if [ -d ${path} ]; then echo "d";`;
       cmd += ` else`;
@@ -36,40 +176,9 @@ class SSH {
       cmd += ` fi fi`;
       cmd += ` else echo "dne"; fi`;
 
-      this.executor_.Execute(cmd, [], inputs).then(output => {
-        if (output.stderr) {
-          reject(`Failed to check if file exists: ${output.stderr.trim()}.`);
-          return;
-        }
-
-        let outputStr = output.stdout.trim();
-        let exists = outputStr == 'f' || outputStr == 'd';
-
-        resolve(exists);
-      }).catch(error => reject(`failed to check if file exists: ${error}.`));
-    });
-  }
-
-  /**
-   * Write to file.
-   * @param {string} path 
-   * @param {string} text 
-   * @returns {Promise} Returns a Promise taht resolves if successful. Otherwise, it returns an error.
-   */
-  WriteToFile_(path, text) {
-    return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? null : [this.password_];
-
-      // Escape all double-quotes (if you don't, they will NOT be preserved!)
-      text = text.split('"').join('\\"');
-
-      this.executor_.Execute(`echo "${text}" > ${path}`, [], inputs).then(output => {
-        if (output.stderr) {
-          reject(`Failed to create file: ${output.stderr}`);
-          return;
-        }
-        resolve();
-      }).catch(error => reject(`Failed to create file: ${error}`));
+      this.ExecuteScript(cmd).then(output => {
+        resolve(output == 'f' || output == 'd');
+      }).catch(error => reject(`Failed to check if file exists: ${error}.`));
     });
   }
 
@@ -188,15 +297,8 @@ class SSH {
   */
   GetPublicKey() {
     return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? null : [this.password_];
-
-      this.executor_.Execute('cat', [this.publicKeyFilepath_], inputs).then(output => {
-        if (output.stderr) {
-          reject(`Failed to get public key: ${output.stderr.trim()}`);
-          return;
-        }
-
-        let parts = output.stdout.trim().split(' ');
+      this.ExecuteScript(`cat ${this.publicKeyFilepath_}`).then(output => {
+        let parts = output.trim().split(' ');
         let prefix = parts[0];
         let publicKey = parts[1];
 
@@ -212,7 +314,7 @@ class SSH {
         };
 
         resolve(k);
-      }).catch(error => reject(`Failed to get public key: ${error}`));
+      }).catch(error => reject(`Failed to get public key: ${error}.`));
     });
   }
 
@@ -223,16 +325,9 @@ class SSH {
    */
   GetAuthorizedKeys() {
     return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? null : [this.password_];
-
-      this.executor_.Execute('cat', [this.authorizedKeysFilepath_], inputs).then(output => {
-        if (output.stderr) {
-          reject(`Failed to get authorized keys: ${output.stderr.trim()}`);
-          return;
-        }
-
+      this.ExecuteScript(`cat ${this.authorizedKeysFilepath_}`).then(output => {
         let delimiter = 'ssh-rsa';
-        let lines = output.stdout.trim().split(delimiter).filter(x => x && x != '' && x.trim() != '').map(x => x.trim());
+        let lines = output.trim().split(delimiter).filter(x => x && x != '' && x.trim() != '').map(x => x.trim());
         let authKeys = [];
 
         lines.forEach(l => {
@@ -254,7 +349,7 @@ class SSH {
         });
 
         resolve(authKeys);
-      }).catch(error => reject(`Failed to get authorized keys: ${error}`));
+      }).catch(error => reject(`Failed to get public key: ${error}.`));
     });
   }
 
@@ -274,11 +369,25 @@ class SSH {
         }
 
         let filteredKeys = authKeys.filter(x => `${x.user}@${x.remoteHost}` != `${user}@${host}`);
-        let keyStrings = filteredKeys.map(x => `${x.prefix} ${x.publicKey} ${x.user}@${x.remoteHost}`);
 
-        this.WriteToFile_(this.authorizedKeysFilepath_, keyStrings.join('\n')).then(success => {
+        let keyStrings = filteredKeys.map(x => {
+          let str = `${x.prefix} ${x.publicKey} ${x.user}`;
+
+          if (x.remoteHost)
+            str += `@${x.remoteHost}`;
+
+          return str;
+        });
+
+        // Escape all double-quotes (if you don't, they will NOT be preserved!)
+        let text = keyStrings.join('\n');
+        text = text.split('"').join('\\"');
+
+        let cmd = `echo "${text}" > ${this.authorizedKeysFilepath_}`;
+
+        this.ExecuteScript(cmd).then(output => {
           resolve();
-        }).catch(error => reject(`Failed to remove key: ${error}`));
+        }).catch(error => reject(`Failed to remove authorized key: ${error}.`));
       }).catch(error => reject(`Failed to remove key: ${error}`));
     });
   }
@@ -390,18 +499,10 @@ function SetupPasswordlessLogin(localSsh, remoteSsh) {
   });
 }
 
-
-
 //-----------------------------
 // EXPORTS
 
 exports.Create = SSH.Create;
-
-exports.GenerateSshKey = GenerateSshKey;
-exports.CopyPublicKey = CopyPublicKey;
-exports.GetPublicKey = GetPublicKey;
-exports.GetAuthorizedKeys = GetAuthorizedKeys;
-exports.SetupPasswordlessLogin = SetupPasswordlessLogin;
-exports.RemoveAuthorizedKey = RemoveAuthorizedKey;
 exports.AreKeysStale = AreKeysStale;
 exports.RequiresPassword = RequiresPassword;
+exports.SetupPasswordlessLogin = SetupPasswordlessLogin;
