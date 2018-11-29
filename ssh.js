@@ -832,7 +832,7 @@ class SshRemote extends SshBaseClass {
   */
   GetPublicKey() {
     return new Promise((resolve, reject) => {
-      this.ExecuteScript(`cat ${this.publicKeyFilepath_}`).then(output => {
+      this.ExecuteScript_(`cat ${this.publicKeyFilepath_}`).then(output => {
         let parts = output.trim().split(' ');
         let prefix = parts[0];
         let key = parts[1];
@@ -860,7 +860,7 @@ class SshRemote extends SshBaseClass {
   */
   GetAuthorizedKeys() {
     return new Promise((resolve, reject) => {
-      this.ExecuteScript(`cat ${this.authorizedKeysFilepath_}`).then(output => {
+      this.ExecuteScript_(`cat ${this.authorizedKeysFilepath_}`).then(output => {
         let delimiter = 'ssh-rsa';
         let lines = output.trim().split(delimiter).filter(x => x && x != '' && x.trim() != '').map(x => x.trim());
         let authKeys = [];
@@ -921,7 +921,7 @@ class SshRemote extends SshBaseClass {
 
         let cmd = `echo "${text}" > ${this.authorizedKeysFilepath_}`;
 
-        this.ExecuteScript(cmd).then(output => {
+        this.ExecuteScript_(cmd).then(output => {
           resolve();
         }).catch(error => reject(`Failed to remove authorized key: ${error}.`));
       }).catch(error => reject(`Failed to remove authorized key: ${error}`));
@@ -934,8 +934,8 @@ class SshRemote extends SshBaseClass {
    */
   RestartSshService() {
     return new Promise((resolve, reject) => {
-      this.ExecuteScript(this.stopSshServiceCmd_).then(stopped => {
-        this.ExecuteScript(this.startSshServiceCmd_).then(started => {
+      this.ExecuteScript_(this.stopSshServiceCmd_).then(stopped => {
+        this.ExecuteScript_(this.startSshServiceCmd_).then(started => {
           resolve();
         }).catch(error => reject(`Failed to restart ssh service: failed to start ssh service: ${error}.`));
       }).catch(error => reject(`Failed to restart ssh service: failed to stop ssh service: ${error}.`));
@@ -948,7 +948,7 @@ class SshRemote extends SshBaseClass {
    */
   StatusOfSshService() {
     return new Promise((resolve, reject) => {
-      this.ExecuteScript(this.statusSshCmd_).then(output => {
+      this.ExecuteScript_(this.statusSshCmd_).then(output => {
         resolve(output);
       }).catch(error => reject(`Failed to check status of ssh service: ${error}`));
     });
