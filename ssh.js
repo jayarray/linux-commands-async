@@ -95,7 +95,7 @@ class SshBaseClass {
     // Override
   }
 
-  IsKeyStale(remotSsh) {
+  IsKeyStale(remoteSsh) {
     // Override
   }
 
@@ -387,13 +387,13 @@ class SshLocal extends SshBaseClass {
   /**
    * @override
    * Check the state of the public key on the remote machine. State will be either: dne, match, or stale.
-   * @param {SshRemote} remotSsh 
+   * @param {SshRemote} remoteSsh 
    * @returns {Promise<string>} Returns a Promise that resolves if successful.
    */
-  KeyStateIn(remotSsh) {
+  KeyStateIn(remoteSsh) {
     return new Promise((resolve, reject) => {
       this.GetPublicKey().then(pubKey => {
-        remotSsh.GetAuthorizedKeys().then(authKeys => {
+        remoteSsh.GetAuthorizedKeys().then(authKeys => {
           let correspondingKeys = authKeys.filter(x => `${x.user}@${x.host}` == `${pubKey.user}@${pubKey.host}`);
           if (!correspondingKeys || correspondingKeys.length == 0) {
             resolve('dne');
@@ -856,7 +856,7 @@ class SshRemote extends SshBaseClass {
   /**
   * @override
   * Get a list of authorized keys.
-  * @returns {Promise<Array<{prefix: string, key: string, user: string, remoteHost: string}>>} Returns a Promise that resolves if successful.
+  * @returns {Promise<Array<{prefix: string, key: string, user: string, host: string}>>} Returns a Promise that resolves if successful.
   */
   GetAuthorizedKeys() {
     return new Promise((resolve, reject) => {
@@ -871,13 +871,13 @@ class SshRemote extends SshBaseClass {
 
           let otherParts = parts[1].split('@');
           let user = otherParts[0];
-          let remoteHost = otherParts[1];
+          let host = otherParts[1];
 
           let k = {
             prefix: delimiter,
             key: key,
             user: user,
-            remoteHost: remoteHost
+            host: host
           };
 
           authKeys.push(k);
@@ -957,13 +957,13 @@ class SshRemote extends SshBaseClass {
   /**
    * @override
    * Check the state of the public key on the remote machine. State will be either: dne, match, or stale.
-   * @param {SshRemote} remotSsh 
+   * @param {SshRemote} remoteSsh 
    * @returns {Promise<string>} Returns a Promise that resolves if successful.
    */
-  KeyStateIn(remotSsh) {
+  KeyStateIn(remoteSsh) {
     return new Promise((resolve, reject) => {
       this.GetPublicKey().then(pubKey => {
-        remotSsh.GetAuthorizedKeys().then(authKeys => {
+        remoteSsh.GetAuthorizedKeys().then(authKeys => {
           let correspondingKeys = authKeys.filter(x => `${x.user}@${x.host}` == `${pubKey.user}@${pubKey.host}`);
           if (!correspondingKeys || correspondingKeys.length == 0) {
             resolve('dne');
