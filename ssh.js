@@ -32,189 +32,154 @@ function GuiFilename(format) {
 }
 
 //----------------------------
-// SSH
+// SSH (Base Class)
 
-class SSH {
-  constructor(user, host, password) {
+class SshBaseClass {
+  constructor(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd) {
     this.user_ = user;
     this.host_ = host;
     this.password_ = password;
-    this.isLocal_ = !host && !password;
-    this.executor_ = this.isLocal_ ? COMMAND.LOCAL : COMMAND.CreateRemoteCommand(user, host);
+    this.stopSshServiceCmd_ = stopSshServiceCmd;
+    this.startSshServiceCmd_ = startSshServiceCmd;
+    this.statusSshCmd_ = statusSshCmd;
 
     this.userDir_ = `/home/${user}`;
     this.publicKeyFilepath_ = `/home/${user}/.ssh/id_rsa.pub`;
     this.authorizedKeysFilepath_ = `/home/${user}/.ssh/authorized_keys`;
+
+    this.isLocal_ = null;
+    this.executor_ = null;
+  }
+
+  WriteToFile_(filepath, text) {
+    // Overriide
+  }
+
+  FileExists(filepath) {
+    // Overwrite
+  }
+
+  PublicKeyFileExists() {
+    // Overwrite
+  }
+
+  AuthorizedKeysFileExists() {
+    // Override
+  }
+
+  GenerateSshKey(filepath, passphrase) {
+    // Override
+  }
+
+  CopyPublicKeyTo(remoteSsh) {
+    // Override
+  }
+
+  GetPublicKey() {
+    // Override
+  }
+
+  GetAuthorizedKeys() {
+    // Override
+  }
+
+  RemoveAuthorizedKey(user, host) {
+    // Override
+  }
+
+  RestartSshService() {
+    // Override
+  }
+
+  StatusOfSshService() {
+    // Override
+  }
+
+  IsKeyStale(remotSsh) {
+    // Override
+  }
+
+  RequiresPasswordTo(remoteSsh) {
+    // Override
+  }
+
+  SetupPasswordlessLoginWith(remoteSsh, overwriteExistingPubKey) {
+    // Override
+    // 
+  }
+}
+
+//------------------------------
+// SSH Local
+
+class SshLocal extends SshBaseClass {
+  constructor(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd) {
+    super(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd);
+    this.isLocal_ = true;
+    this.executor_ = COMMAND.LOCAL;
   }
 
   /**
-   * Write to file.
+   * @override
    * @param {string} filepath 
    * @param {string} text 
-   * @returns {Promise} Returns a Promise taht resolves if successful. Otherwise, it returns an error.
+   * @returns {Promise} Returns a Promise that resolves if successful.
    */
   WriteToFile_(filepath, text) {
     return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? null : [this.password_];
-
-      // Escape all double-quotes (if you don't, they will NOT be preserved!)
-      text = text.split('"').join('\\"');
-
-      this.executor_.Execute(`echo "${text}" > ${filepath}`, [], inputs).then(output => {
-        if (output.stderr) {
-          reject(`Failed to create file: ${output.stderr}`);
-          return;
-        }
+      FILE.Create(filepath, text, this.executor_).then(success => {
         resolve();
-      }).catch(error => reject(`Failed to create file: ${error}`));
+      }).catch(error => reject(error));
     });
   }
 
   /**
-   * @param {string} text
-   * @returns {Promise<string>} Returns a Promise that resolves and returns the filepath if successful. Otherwise, it returns an error.
-   */
-  CreateScript_(text) {
-    return new Promise((resolve, reject) => {
-      let filepath = path.join(this.userDir_, GuiFilename('sh'));
-
-      this.WriteToFile_(filepath, text).then(success => {
-        resolve(filepath);
-      }).catch(error => reject(`Failed to create script: ${error}.`));
-    });
-  }
-
-  /**
+   * @override
    * @param {string} filepath 
-   * @returns {Promise<string>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   * @returns {Promise<boolean>} Returns a Promise that resolves if successful.
    */
-  MakeScriptExecutable_(filepath) {
+  FileExists(filepath) {
     return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? null : [this.password_];
-
-      this.executor_.Execute('chmod', ['+x', filepath], inputs).then(output => {
-        if (output.stderr) {
-          reject(`Failed to make script executable: ${output.stderr.trim()}`);
-          return;
-        }
-
-        resolve();
-      }).catch(error => reject(`Failed to make script executable: ${error}.`));
+      PATH.Exists(filepath, this.executor_).then(bool => {
+        resolve(bool);
+      }).catch(error => reject(error));
     });
   }
 
   /**
-   * @param {string} filepath 
-   * @returns {Promise<string>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
-   */
-  RunScript_(filepath) {
-    return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? null : [this.password_];
-
-      this.executor_.Execute(filepath, [], inputs).then(output => {
-        if (output.stderr) {
-          reject(`Failed to run script: ${output.stderr.trim()}`);
-          return;
-        }
-
-        let outputStr = output.stdout.trim();
-
-        resolve(outputStr);
-      }).catch(error => reject(`Failed to run script: ${error}.`));
-    });
-  }
-
-  /**
-   * @param {string} filepath 
-   * @returns {Promise<string>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
-   */
-  DeleteScript_(filepath) {
-    return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? null : [this.password_];
-
-      this.executor_.Execute('rm', ['-f', filepath], inputs).then(output => {
-        if (output.stderr) {
-          reject(`Failed to delete script: ${output.stderr.trim()}`);
-          return;
-        }
-
-        resolve();
-      }).catch(error => reject(`Failed to delete script: ${error}.`));
-    });
-  }
-
-  /**
-   * @param {string} text 
-   * @returns {Promise<string>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
-   */
-  ExecuteScript(text) {
-    return new Promise((resolve, reject) => {
-      this.CreateScript_(text).then(filepath => {
-        this.MakeScriptExecutable_(filepath).then(execDone => {
-          this.RunScript_(filepath).then(output => {
-            this.DeleteScript_(filepath).then(deleteDone => {
-              resolve(output);
-            }).catch(error => reject(`Failed to execute script: ${error}.`));
-          }).catch(error => reject(`Failed to execute script: ${error}.`));
-        }).catch(error => reject(`Failed to execute script: ${error}.`));
-      }).catch(error => reject(`Failed to execute script: ${error}.`));
-    });
-  }
-
-  /**
-   * Check if a file exists.
-   * @param {string} path 
-   * @returns {Promise<boolean>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
-   */
-  FileExists_(path) {
-    return new Promise((resolve, reject) => {
-      let cmd = `if [ -e ${path} ]; then`; // can you do !exists and return dne to avoid nested ifs?
-      cmd += ` if [ -d ${path} ]; then echo "d";`;
-      cmd += ` else`;
-      cmd += ` if [ -f ${path} ]; then  echo "f";`;
-      cmd += ` else echo "invalid";`;
-      cmd += ` fi fi`;
-      cmd += ` else echo "dne"; fi`;
-
-      this.ExecuteScript(cmd).then(output => {
-        resolve(output == 'f' || output == 'd');
-      }).catch(error => reject(`Failed to check if file exists: ${error}.`));
-    });
-  }
-
-  /**
-   * Check if public key file exists.
-   * @returns {Promise<boolean>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   * @override
+   * @returns {Promise<boolean>} Returns a Promise that resolves if successful.
    */
   PublicKeyFileExists() {
     return new Promise((resolve, reject) => {
-      this.FileExists_(this.publicKeyFilepath_).then(exists => {
-        resolve(exists);
-      }).catch(error => reject(`Failed to check if public key file exists: ${error}.`));
+      PATH.Exists(this.publicKeyFilepath_, this.executor_).then(bool => {
+        resolve(bool);
+      }).catch(error => reject(error));
     });
   }
 
   /**
-   * Check if authorized keys file exists.
-   * @returns {Promise<boolean>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   * @override
+   * @returns {Promise<boolean>} Returns a Promise that resolves if successful.
    */
   AuthorizedKeysFileExists() {
     return new Promise((resolve, reject) => {
-      this.FileExists_(this.authorizedKeysFilepath_).then(exists => {
-        resolve(exists);
-      }).catch(error => reject(`Failed to check if public key file exists: ${error}.`));
+      PATH.Exists(this.publicKeyFilepath_, this.executor_).then(bool => {
+        resolve(bool);
+      }).catch(error => reject(error));
     });
   }
 
   /**
-   * Create a public and private key on a workstation.
-   * @param {string} filepath
-   * @param {string} passphrase
-   * @returns {Promise} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   * @override
+   * Create a public and private on this workstation.
+   * @param {string} filepath 
+   * @param {string} passphrase 
+   * @returns {Promise} Returns a Promise that resolve is successful.
    */
   GenerateSshKey(filepath, passphrase) {
     return new Promise((resolve, reject) => {
-      let inputs = this.isLocal_ ? [] : [this.password_];
+      let inputs = [];
 
       if (filepath) {
         inputs.push(filepath);
@@ -264,23 +229,17 @@ class SSH {
   }
 
   /**
-  * Copy the public key to remote host.
-  * @param {string} user 
-  * @param {string} remoteHost 
-  * @param {string} remotePassword
-  * @returns {Promise} Returns a Promise that resolves if successful. Otherwise, it returns an error.
-  */
-  CopyPublicKey(user, remoteHost, remotePassword) {
-    let error = VALIDATE.IsStringInput(user);
+   * @override
+   * @param {SSH} remoteSsh 
+   * @returns {Promise} Returns a Promise that resolve if successful.
+   */
+  CopyPublicKeyTo(remoteSsh) {
+    let error = VALIDATE.IsInstance(remoteSsh);
     if (error)
-      return Promise.reject(`Failed to copy SSH key: user is ${error}`);
-
-    error = VALIDATE.IsStringInput(remoteHost);
-    if (error)
-      return Promise.reject(`Failed to copy SSH key: remote host is ${error}`);
+      return Promise.reject(`Failed to copy SSH key: remote ssh is ${error}`);
 
     return new Promise((resolve, reject) => {
-      this.executor_.Execute('ssh-copy-id', [`${user}@${remoteHost}`], [remotePassword]).then(output => {
+      this.executor_.Execute('ssh-copy-id', [`${remoteSsh.user_}@${remoteSsh.host_}`], [remoteSsh.password_]).then(output => {
         if (output.stderr) {
           reject(`Failed to copy SSH key: ${output.stderr.trim()}.`);
           return;
@@ -292,15 +251,15 @@ class SSH {
   }
 
   /**
-  * Get public key.
-  * @returns {Promise<{prefix: string, publicKey: string, user: string, host: string}>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
-  */
+   * @override
+   * @returns {Promise<{prefix: string, key: string, user: string, host: string}>} Returns a Promise that resolves if successful.
+   */
   GetPublicKey() {
     return new Promise((resolve, reject) => {
-      this.ExecuteScript(`cat ${this.publicKeyFilepath_}`).then(output => {
-        let parts = output.trim().split(' ');
+      FILE.Read(this.publicKeyFilepath_, this.executor_).then(text => {
+        let parts = text.trim().split(' ');
         let prefix = parts[0];
-        let publicKey = parts[1];
+        let key = parts[1];
 
         let otherParts = parts[2].split('@');
         let user = otherParts[0];
@@ -308,7 +267,7 @@ class SSH {
 
         let k = {
           prefix: prefix,
-          publicKey: publicKey,
+          key: key,
           user: user,
           host: host
         };
@@ -318,11 +277,587 @@ class SSH {
     });
   }
 
+  /**
+   * @override
+   * @returns {Promise<Array<{prefix: string, key: string, user: string, host: string}>>} Returns a Promise that resolves if successful.
+   */
+  GetAuthorizedKeys() {
+    return new Promise((resolve, reject) => {
+      FILE.Read(this.authorizedKeysFilepath_, this.executor_).then(text => {
+        let delimiter = 'ssh-rsa';
+        let lines = text.trim().split(delimiter).filter(x => x && x != '' && x.trim() != '').map(x => x.trim());
+        let authKeys = [];
+
+        lines.forEach(l => {
+          let parts = l.split(' ');
+          let key = parts[0];
+
+          let otherParts = parts[1].split('@');
+          let user = otherParts[0];
+          let host = otherParts[1];
+
+          let k = {
+            prefix: delimiter,
+            key: key,
+            user: user,
+            host: host
+          };
+
+          authKeys.push(k);
+        });
+
+        resolve(authKeys);
+      }).catch(error => reject(`Failed to get authorized keys: ${error}.`));
+    });
+  }
 
   /**
-   * Get a list of authorized keys.
-   * @returns {Promise<Array<{prefix: string, publicKey: string, user: string, remoteHost: string}>>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
+   * @override
+   * Remove an authroized key. If the specified user and host are not listed in the authorized keys file, the file will remain unchanged.
+   * @param {string} user 
+   * @param {string} host 
+   * @returns {Promise} Returns a Promise that resolves if successful.
    */
+  RemoveAuthorizedKey(user, host) {
+    return new Promise((resolve, reject) => {
+      this.GetAuthorizedKeys().then(authKeys => {
+        let unwantedKeys = authKeys.filter(x => `${x.user}@${x.host}` == `${user}@${host}`);
+        if (!unwantedKeys || unwantedKeys.length == 0) {
+          resolve();
+          return;
+        }
+
+        let filteredKeys = authKeys.filter(x => `${x.user}@${x.host}` != `${user}@${host}`);
+
+        let keyStrings = filteredKeys.map(x => {
+          let str = `${x.prefix} ${x.key} ${x.user}`;
+          if (x.host)
+            str += `@${x.host}`;
+          return str;
+        });
+
+        let text = keyStrings.join('\n');
+
+        // Overwrite current auth keys file
+        this.WriteToFile_(this.authorizedKeysFilepath_, text).then(success => {
+          resolve();
+        }).catch(error => reject(error));
+      }).catch(error => reject(`Failed to remove key: ${error}`));
+    });
+  }
+
+  /**
+   * @override
+   * @returns {Promise} Returns a Promise taht resolves if successful.
+   */
+  RestartSshService() {
+    return new Promise((resolve, reject) => {
+      // Stop SSH service
+      this.executor_.Execute(this.stopSshServiceCmd_, [], [this.password_]).then(stopOutput => {
+        if (stopOutput.stderr) {
+          reject(`Failed to stop ssh service: ${stopOutput.stderr.trim()}.`);
+          return;
+        }
+
+        // Start SSH service
+        this.executor_.Execute(this.startSshServiceCmd_, [], [this.password_]).then(startOutput => {
+          if (startOutput.stderr) {
+            reject(`Failed to start ssh service: ${startOutput.stderr.trim()}.`);
+            return;
+          }
+
+          resolve();
+        }).catch(error => reject(`Failed to start service: ${error}.`));
+      }).catch(error => reject(`Failed to stop service: ${error}.`));
+    });
+  }
+
+  /**
+   * @override
+   * @returns {Promise<string>} Returns a Promise that resolves if successful.
+   */
+  StatusOfSshService() {
+    return new Promise((resolve, reject) => {
+      this.executor_.Execute(this.statusSshCmd_, [], [this.password_]).then(output => {
+        resolve(output);
+      }).catch(error => reject(`Failed to check status of ssh service: ${error}`));
+    });
+  }
+
+  /**
+   * @override
+   * Check the state of the public key on the remote machine. State will be either: dne, match, or stale.
+   * @param {SshRemote} remotSsh 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful.
+   */
+  KeyStateIn(remotSsh) {
+    return new Promise((resolve, reject) => {
+      this.GetPublicKey().then(pubKey => {
+        remotSsh.GetAuthorizedKeys().then(authKeys => {
+          let correspondingKeys = authKeys.filter(x => `${x.user}@${x.host}` == `${pubKey.user}@${pubKey.host}`);
+          if (!correspondingKeys || correspondingKeys.length == 0) {
+            resolve('dne');
+            return;
+          }
+
+          let remotePubKey = correspondingKeys[0];
+
+          if (pubKey.key == remotePubKey.key) {
+            resolve('match');
+            return;
+          }
+
+          resolve('stale');
+        }).catch(error => reject(`Failed to check key state: ${error}.`));
+      }).catch(error => reject(`Failed to check key state: ${error}.`));
+    });
+  }
+
+  /**
+   * @override
+   * @param {SshRemote} remoteSsh 
+   * @returns {Promise<boolean>} Returns a Promise that resolves if successful.
+   */
+  RequiresPasswordTo(remoteSsh) {
+    return new Promise((resolve, reject) => {
+      let testOutput = 'Hello';
+      let testCommand = `echo ${testOutput}`;
+      this.executor_.Execute('ssh', [`${remoteSsh.user_}@${remoteSsh.host_}`, testCommand]).then(output => {
+        if (output.stderr && output.stderr.includes('Permission denied')) {
+          resolve(true);
+          return;
+        }
+
+        resolve(false);
+      }).catch(error => reject(`Failed to check if password is required: ${error}`));
+    });
+  }
+
+  /**
+   * @override
+   * Set up passwordless login between two machines.
+   * @param {SshRemote} remoteSsh 
+   * @param {boolean} overwriteExistingPubKey
+   * @returns {Promise} Returns a Promise that resolves if successful.
+   */
+  SetupPasswordlessLoginWith(remoteSsh, overwriteExistingPubKey) {
+    return new Promise((resolve, reject) => {
+      this.PublicKeyFileExists().then(pubKeyExists => {
+        if (pubKeyExists) {
+          if (overwriteExistingPubKey) {
+            this.GenerateSshKey().then(keyGenSuccessful => {
+              this.KeyStateIn(remoteSsh).then(keyState => {
+                if (keyState == 'dne') {
+                  this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                    remoteSsh.RestartSshService().then(restarted => {
+                      this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                        if (requiresPassword) {
+                          reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                          return;
+                        }
+
+                        resolve();
+                      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }
+                else if (keyState == 'stale') {
+                  remoteSsh.RemoveAuthorizedKey(this.user_, this.host_).then(keyRemoved => {
+                    this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                      remoteSsh.RestartSshService().then(restarted => {
+                        this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                          if (requiresPassword) {
+                            reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                            return;
+                          }
+
+                          resolve();
+                        }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }
+                else if (keyState == 'match') {
+                  resolve();
+                  return;
+                }
+              }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+            }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+          }
+          else {
+            this.KeyStateIn(remoteSsh).then(keyState => {
+              if (keyState == 'dne') {
+                this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                  remoteSsh.RestartSshService().then(restarted => {
+                    this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                      if (requiresPassword) {
+                        reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                        return;
+                      }
+
+                      resolve();
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+              }
+              else if (keyState == 'stale') {
+                remoteSsh.RemoveAuthorizedKey(this.user_, this.host_).then(keyRemoved => {
+                  this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                    remoteSsh.RestartSshService().then(restarted => {
+                      this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                        if (requiresPassword) {
+                          reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                          return;
+                        }
+
+                        resolve();
+                      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+              }
+              else if (keyState == 'match') {
+                resolve();
+                return;
+              }
+            }).catch(error => reject(`Failed to set up passwrodless login: ${error}.`));
+          }
+        }
+        else {
+          this.GenerateSshKey().then(keyGenSuccessful => {
+            this.KeyStateIn(remoteSsh).then(keyState => {
+              if (keyState == 'dne') {
+                this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                  remoteSsh.RestartSshService().then(restarted => {
+                    this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                      if (requiresPassword) {
+                        reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                        return;
+                      }
+
+                      resolve();
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+              }
+              else if (keyState == 'stale') {
+                remoteSsh.RemoveAuthorizedKey(this.user_, this.host_).then(keyRemoved => {
+                  this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                    remoteSsh.RestartSshService().then(restarted => {
+                      this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                        if (requiresPassword) {
+                          reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                          return;
+                        }
+
+                        resolve();
+                      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+              }
+              else if (keyState == 'match') {
+                resolve();
+                return;
+              }
+            }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+          }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+        }
+      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} user 
+   * @param {string} host 
+   * @param {string} password 
+   * @param {string} stopSshServiceCmd 
+   * @param {string} startSshServiceCmd 
+   * @param {string} statusSshCmd 
+   * @returns {SshLocal} Returns an SshLocal object. If arguments are invalid, it returns null.
+   */
+  static Create(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd) {
+    if (!user || !host || !password || !stopSshServiceCmd || !startSshServiceCmd || !statusSshCmd)
+      return null;
+
+    return new SshLocal(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd);
+  }
+}
+
+//------------------------------------
+// SSH Remote
+
+class SshRemote extends SshBaseClass {
+  constructor(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd) {
+    super(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd);
+    this.isLocal_ = false;
+    this.executor_ = COMMAND.CreateRemoteCommand(user, host);
+  }
+
+  /**
+   * @override
+   * @param {string} filepath 
+   * @param {string} text 
+   * @returns {Promise} Returns a Promise that resolves if successful.
+   */
+  WriteToFile_(filepath, text) {
+    return new Promise((resolve, reject) => {
+      // Escape all double-quotes (if you don't, they will NOT be preserved!)
+      text = text.split('"').join('\\"');
+
+      this.executor_.Execute(`echo "${text}" > ${filepath}`, [], [this.password_]).then(output => {
+        if (output.stderr) {
+          reject(`Failed to create file: ${output.stderr}`);
+          return;
+        }
+        resolve();
+      }).catch(error => reject(`Failed to create file: ${error}`));
+    });
+  }
+
+  /**
+  * @param {string} text
+  * @returns {Promise<string>} Returns a Promise that resolves and returns the filepath if successful.
+  */
+  CreateScript_(text) {
+    return new Promise((resolve, reject) => {
+      let filepath = path.join(this.userDir_, GuiFilename('sh'));
+
+      this.WriteToFile_(filepath, text).then(success => {
+        resolve(filepath);
+      }).catch(error => reject(`Failed to create script: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} filepath 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful.
+   */
+  MakeScriptExecutable_(filepath) {
+    return new Promise((resolve, reject) => {
+      this.executor_.Execute('chmod', ['+x', filepath], [this.password_]).then(output => {
+        if (output.stderr) {
+          reject(`Failed to make script executable: ${output.stderr.trim()}`);
+          return;
+        }
+
+        resolve();
+      }).catch(error => reject(`Failed to make script executable: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} filepath 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful.
+   */
+  RunScript_(filepath) {
+    return new Promise((resolve, reject) => {
+      this.executor_.Execute(filepath, [], [this.password_]).then(output => {
+        if (output.stderr) {
+          reject(`Failed to run script: ${output.stderr.trim()}`);
+          return;
+        }
+
+        let outputStr = output.stdout.trim();
+
+        resolve(outputStr);
+      }).catch(error => reject(`Failed to run script: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} filepath 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful.
+   */
+  DeleteScript_(filepath) {
+    return new Promise((resolve, reject) => {
+      let inputs = this.isLocal_ ? null : [this.password_];
+
+      this.executor_.Execute('rm', ['-f', filepath], inputs).then(output => {
+        if (output.stderr) {
+          reject(`Failed to delete script: ${output.stderr.trim()}`);
+          return;
+        }
+
+        resolve();
+      }).catch(error => reject(`Failed to delete script: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} text 
+   * @returns {Promise<string>} Returns a Promise that resolves and returns the output if successful.
+   */
+  ExecuteScript_(text) {
+    return new Promise((resolve, reject) => {
+      this.CreateScript_(text).then(filepath => {
+        this.MakeScriptExecutable_(filepath).then(execDone => {
+          this.RunScript_(filepath).then(output => {
+            this.DeleteScript_(filepath).then(deleteDone => {
+              resolve(output);
+            }).catch(error => reject(`Failed to execute script: ${error}.`));
+          }).catch(error => reject(`Failed to execute script: ${error}.`));
+        }).catch(error => reject(`Failed to execute script: ${error}.`));
+      }).catch(error => reject(`Failed to execute script: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} path 
+   * @returns {Promise<boolean>} Returns a Promise that resolves if successful.
+   */
+  FileExists_(path) {
+    return new Promise((resolve, reject) => {
+      let cmd = `if [ -e ${path} ]; then`;
+      cmd += ` if [ -d ${path} ]; then echo "d";`;
+      cmd += ` else`;
+      cmd += ` if [ -f ${path} ]; then  echo "f";`;
+      cmd += ` else echo "invalid";`;
+      cmd += ` fi fi`;
+      cmd += ` else echo "dne"; fi`;
+
+      this.ExecuteScript_(cmd).then(output => {
+        resolve(output == 'f' || output == 'd');
+      }).catch(error => reject(`Failed to check if file exists: ${error}.`));
+    });
+  }
+
+  /**
+   * @override
+   * @returns {Promise<boolean>} Returns a Promise that resolves if successful.
+   */
+  PublicKeyFileExists() {
+    return new Promise((resolve, reject) => {
+      this.FileExists_(this.publicKeyFilepath_).then(exists => {
+        resolve(exists);
+      }).catch(error => reject(`Failed to check if public key file exists: ${error}.`));
+    });
+  }
+
+  /**
+   * @override
+   * @returns {Promise<boolean>} Returns a Promise that resolves if successful.
+   */
+  AuthorizedKeysFileExists() {
+    return new Promise((resolve, reject) => {
+      this.FileExists_(this.authorizedKeysFilepath_).then(exists => {
+        resolve(exists);
+      }).catch(error => reject(`Failed to check if public key file exists: ${error}.`));
+    });
+  }
+
+  /**
+   * @override
+   * Create a public and private key on this workstation.
+   * @param {string} filepath
+   * @param {string} passphrase
+   * @returns {Promise} Returns a Promise that resolves if successful.
+   */
+  GenerateSshKey(filepath, passphrase) {
+    return new Promise((resolve, reject) => {
+      let inputs = [this.password_];
+
+      if (filepath) {
+        inputs.push(filepath);
+
+        this.FileExists_(filepath).then(filepathExists => {
+          if (filepathExists)
+            inputs.push('y'); // Overwrite option (or nothing will happen)
+
+          if (passphrase)
+            inputs.push(passphrase);
+          else
+            inputs.push('');
+
+          this.executor_.Execute('ssh-keygen', ['-t', 'rsa'], inputs).then(output => {
+            if (output.stderr && !output.stdout.includes('Your public key has been saved in')) {
+              reject(`Failed to generate SSH key: ${output.stderr.trim()}.`);
+              return;
+            }
+
+            resolve();
+          }).catch(error => reject(error));
+        }).catch(error => reject(`Failed to generate SSH key: ${error}`));
+      }
+      else {
+        inputs.push('');
+
+        this.FileExists_(this.publicKeyFilepath_).then(filepathExists => {
+          if (filepathExists)
+            inputs.push('y'); // Overwrite option
+
+          if (passphrase)
+            inputs.push(passphrase);
+          else
+            inputs.push('');
+
+          this.executor_.Execute('ssh-keygen', ['-t', 'rsa'], inputs).then(output => {
+            if (output.stderr && !output.stdout.includes('Your public key has been saved in')) {
+              reject(`Failed to generate SSH key: ${output.stderr.trim()}.`);
+              return;
+            }
+
+            resolve();
+          }).catch(error => reject(error));
+        }).catch(error => reject(`Failed to generate SSH key: ${error}`));
+      }
+    });
+  }
+
+  /**
+   * @override
+   * @param {SSH} remoteSsh 
+   * @returns {Promise} Returns a Promise that resolve if successful.
+   */
+  CopyPublicKeyTo(remoteSsh) {
+    let error = VALIDATE.IsInstance(remoteSsh);
+    if (error)
+      return Promise.reject(`Failed to copy SSH key: remote ssh is ${error}`);
+
+    return new Promise((resolve, reject) => {
+      this.executor_.Execute('ssh-copy-id', [`${remoteSsh.user_}@${remoteSsh.host_}`], [remoteSsh.password_]).then(output => {
+        if (output.stderr) {
+          reject(`Failed to copy SSH key: ${output.stderr.trim()}.`);
+          return;
+        }
+
+        resolve();
+      }).catch(error => reject(error));
+    });
+  }
+
+  /**
+  * @override
+  * @returns {Promise<{prefix: string, key: string, user: string, host: string}>} Returns a Promise that resolves if successful.
+  */
+  GetPublicKey() {
+    return new Promise((resolve, reject) => {
+      this.ExecuteScript(`cat ${this.publicKeyFilepath_}`).then(output => {
+        let parts = output.trim().split(' ');
+        let prefix = parts[0];
+        let key = parts[1];
+
+        let otherParts = parts[2].split('@');
+        let user = otherParts[0];
+        let host = otherParts[1];
+
+        let k = {
+          prefix: prefix,
+          key: key,
+          user: user,
+          host: host
+        };
+
+        resolve(k);
+      }).catch(error => reject(`Failed to get public key: ${error}.`));
+    });
+  }
+
+  /**
+  * @override
+  * Get a list of authorized keys.
+  * @returns {Promise<Array<{prefix: string, key: string, user: string, remoteHost: string}>>} Returns a Promise that resolves if successful.
+  */
   GetAuthorizedKeys() {
     return new Promise((resolve, reject) => {
       this.ExecuteScript(`cat ${this.authorizedKeysFilepath_}`).then(output => {
@@ -332,7 +867,7 @@ class SSH {
 
         lines.forEach(l => {
           let parts = l.split(' ');
-          let publicKey = parts[0];
+          let key = parts[0];
 
           let otherParts = parts[1].split('@');
           let user = otherParts[0];
@@ -340,7 +875,7 @@ class SSH {
 
           let k = {
             prefix: delimiter,
-            publicKey: publicKey,
+            key: key,
             user: user,
             remoteHost: remoteHost
           };
@@ -349,11 +884,12 @@ class SSH {
         });
 
         resolve(authKeys);
-      }).catch(error => reject(`Failed to get public key: ${error}.`));
+      }).catch(error => reject(`Failed to get authorized keys: ${error}.`));
     });
   }
 
   /**
+  * @override
   * Remove an authroized key. If the specified user and host are not listed in the authorized keys file, the file will remain unchanged.
   * @param {string} user 
   * @param {string} host 
@@ -362,19 +898,19 @@ class SSH {
   RemoveAuthorizedKey(user, host) {
     return new Promise((resolve, reject) => {
       this.GetAuthorizedKeys().then(authKeys => {
-        let unwantedKeys = authKeys.filter(x => `${x.user}@${x.remoteHost}` == `${user}@${host}`);
+        let unwantedKeys = authKeys.filter(x => `${x.user}@${x.host}` == `${user}@${host}`);
         if (!unwantedKeys || unwantedKeys.length == 0) {
           resolve();
           return;
         }
 
-        let filteredKeys = authKeys.filter(x => `${x.user}@${x.remoteHost}` != `${user}@${host}`);
+        let filteredKeys = authKeys.filter(x => `${x.user}@${x.host}` != `${user}@${host}`);
 
         let keyStrings = filteredKeys.map(x => {
-          let str = `${x.prefix} ${x.publicKey} ${x.user}`;
+          let str = `${x.prefix} ${x.key} ${x.user}`;
 
-          if (x.remoteHost)
-            str += `@${x.remoteHost}`;
+          if (x.host)
+            str += `@${x.host}`;
 
           return str;
         });
@@ -388,121 +924,238 @@ class SSH {
         this.ExecuteScript(cmd).then(output => {
           resolve();
         }).catch(error => reject(`Failed to remove authorized key: ${error}.`));
-      }).catch(error => reject(`Failed to remove key: ${error}`));
+      }).catch(error => reject(`Failed to remove authorized key: ${error}`));
     });
   }
 
   /**
-   * Create a SSH object.
-   * @param {string} user 
-   * @param {string} host 
-   * @param {string} password 
-   * @returns {SSH} Returns an SSH object. If arguments are invalid, it returns null.
+   * @override
+   * @returns {Promise} Returns a Promise that resolves if successful.
    */
-  static Create(user, host, password) {
-    if (!user)
-      return null;
-
-    return new SSH(user, host, password);
+  RestartSshService() {
+    return new Promise((resolve, reject) => {
+      this.ExecuteScript(this.stopSshServiceCmd_).then(stopped => {
+        this.ExecuteScript(this.startSshServiceCmd_).then(started => {
+          resolve();
+        }).catch(error => reject(`Failed to restart ssh service: failed to start ssh service: ${error}.`));
+      }).catch(error => reject(`Failed to restart ssh service: failed to stop ssh service: ${error}.`));
+    });
   }
-}
 
-//----------------------------
+  /**
+   * @override
+   * @returns {Promise<string>} Returns a Promise that resolves if successful.
+   */
+  StatusOfSshService() {
+    return new Promise((resolve, reject) => {
+      this.ExecuteScript(this.statusSshCmd_).then(output => {
+        resolve(output);
+      }).catch(error => reject(`Failed to check status of ssh service: ${error}`));
+    });
+  }
 
-/**
- * Check if public keys are stale.
- * @param {object} localSsh The local SSH object responsible for getting the public key.
- * @param {object} remoteSsh The remote SSH object responsible for getting the authorized keys.
- * @returns {Promise<boolean>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
- */
-function AreKeysStale(localSsh, remoteSsh) {
-  let error = VALIDATE.IsInstance(localSsh);
-  if (error)
-    return Promise.reject(`Failed to check if keys are stale: local SSH object is ${error}.`);
+  /**
+   * @override
+   * Check the state of the public key on the remote machine. State will be either: dne, match, or stale.
+   * @param {SshRemote} remotSsh 
+   * @returns {Promise<string>} Returns a Promise that resolves if successful.
+   */
+  KeyStateIn(remotSsh) {
+    return new Promise((resolve, reject) => {
+      this.GetPublicKey().then(pubKey => {
+        remotSsh.GetAuthorizedKeys().then(authKeys => {
+          let correspondingKeys = authKeys.filter(x => `${x.user}@${x.host}` == `${pubKey.user}@${pubKey.host}`);
+          if (!correspondingKeys || correspondingKeys.length == 0) {
+            resolve('dne');
+            return;
+          }
 
-  error = VALIDATE.IsInstance(remoteSsh);
-  if (error)
-    return Promise.reject(`Failed to check if keys are stale: remote SSH object is ${error}.`);
+          let remotePubKey = correspondingKeys[0];
 
-  return new Promise((resolve, reject) => {
-    // Get "local" public key
-    localSsh.GetPublicKey().then(pubKey => {
+          if (pubKey.key == remotePubKey.key) {
+            resolve('match');
+            return;
+          }
 
-      // Get "remote" auth keys
-      remoteSsh.GetAuthorizedKeys().then(authKeys => {
+          resolve('stale');
+        }).catch(error => reject(`Failed to check key state: ${error}.`));
+      }).catch(error => reject(`Failed to check key state: ${error}.`));
+    });
+  }
 
-        // Check if local pub key and remote auth key match
-        let remoteKeys = authKeys.filter(x => `${x.user}@${x.remoteHost}` == `${user}@${host}`);
-        if (!remoteKeys || remoteKeys.length == 0) {
+  /**
+   * @override
+   * @param {SshRemote} remoteSsh 
+   * @returns {Promise<boolean>} Returns a Promise that resolves if successful.
+   */
+  RequiresPasswordTo(remoteSsh) {
+    return new Promise((resolve, reject) => {
+      let testOutput = 'Hello';
+      let testCommand = `echo ${testOutput}`;
+      this.executor_.Execute('ssh', [`${remoteSsh.user_}@${remoteSsh.host_}`, testCommand]).then(output => {
+        if (output.stderr && output.stderr.includes('Permission denied')) {
           resolve(true);
           return;
         }
 
-        let authKey = remoteKeys[0];
-        let theyMatch = pubKey.publicKey == authKey.publicKey;
+        resolve(false);
+      }).catch(error => reject(`Failed to check if password is required: ${error}`));
+    });
+  }
 
-        resolve(theyMatch);
-      }).catch(error => reject(`Failed to check if keys are stale: ${error}`));
-    }).catch(error => reject(`Failed to check if keys are stale: ${error}`));
-  });
-}
+  /**
+   * @override
+   * Set up passwordless login between two machines.
+   * @param {SshRemote} remoteSsh 
+   * @param {boolean} overwriteExistingPubKey
+   * @returns {Promise} Returns a Promise that resolves if successful.
+   */
+  SetupPasswordlessLoginWith(remoteSsh, overwriteExistingPubKey) {
+    return new Promise((resolve, reject) => {
+      this.PublicKeyFileExists().then(pubKeyExists => {
+        if (pubKeyExists) {
+          if (overwriteExistingPubKey) {
+            this.GenerateSshKey().then(keyGenSuccessful => {
+              this.KeyStateIn(remoteSsh).then(keyState => {
+                if (keyState == 'dne') {
+                  this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                    remoteSsh.RestartSshService().then(restarted => {
+                      this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                        if (requiresPassword) {
+                          reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                          return;
+                        }
 
-/**
- * Check if local machine requires password to log into remote machine.
- * @param {SSH} localSsh 
- * @param {SSH} remoteSsh 
- * @returns {Promise<boolean>} Returns a Promise that resolves if successful. Otherwise, it returns an error.
- */
-function RequiresPassword(localSsh, remoteSsh) {
-  let error = VALIDATE.IsInstance(localSsh);
-  if (error)
-    return Promise.reject(`Failed to check if keys are stale: local SSH object is ${error}.`);
+                        resolve();
+                      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }
+                else if (keyState == 'stale') {
+                  remoteSsh.RemoveAuthorizedKey(this.user_, this.host_).then(keyRemoved => {
+                    this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                      remoteSsh.RestartSshService().then(restarted => {
+                        this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                          if (requiresPassword) {
+                            reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                            return;
+                          }
 
-  error = VALIDATE.IsInstance(remoteSsh);
-  if (error)
-    return Promise.reject(`Failed to check if keys are stale: remote SSH object is ${error}.`);
-
-  return new Promise((resolve, reject) => {
-    let testOutput = 'Hello';
-    let testCommand = `echo ${testOutput}`;
-    localSsh.executor_.Execute('ssh', [`${remoteSsh.user_}@${remoteSsh.host_}`, testCommand]).then(output => {
-      if (output.stderr && output.stderr.includes('Permission denied')) {
-        resolve(true);
-        return;
-      }
-
-      resolve(false);
-    }).catch(error => reject(`Failed to check if password is required: ${error}`));
-  });
-}
-
-/**
- * Set up passwordless login for local machine onto remote machine.
- * @param {string} localSsh 
- * @param {string} remoteSsh  
- * @returns {Promise} Returns a Promise that resolves if successful. Otherwise, it returns an error.
- */
-function SetupPasswordlessLogin(localSsh, remoteSsh) {
-  return new Promise((resolve, reject) => {
-    localSsh.GenerateSshKey().then(keyGenSuccessful => {
-      localSsh.CopyPublicKey(remoteSsh.user_, remoteSsh.host_, remoteSsh.password_).then(copySuccessful => {
-        RequiresPassword(localSsh, remoteSsh).then(requiresPassword => {
-          if (!requiresPassword) {
-            reject(`Failed to set up passwordless login: password is still required for: ${user}@${remoteHost}.`);
-            return;
+                          resolve();
+                        }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }
+                else if (keyState == 'match') {
+                  resolve();
+                  return;
+                }
+              }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+            }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
           }
+          else {
+            this.KeyStateIn(remoteSsh).then(keyState => {
+              if (keyState == 'dne') {
+                this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                  remoteSsh.RestartSshService().then(restarted => {
+                    this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                      if (requiresPassword) {
+                        reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                        return;
+                      }
 
-          resolve();
-        }).catch(error => reject(error));
-      }).catch(error => reject(error));
-    }).catch(error => reject(error));
-  });
+                      resolve();
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+              }
+              else if (keyState == 'stale') {
+                remoteSsh.RemoveAuthorizedKey(this.user_, this.host_).then(keyRemoved => {
+                  this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                    remoteSsh.RestartSshService().then(restarted => {
+                      this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                        if (requiresPassword) {
+                          reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                          return;
+                        }
+
+                        resolve();
+                      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+              }
+              else if (keyState == 'match') {
+                resolve();
+                return;
+              }
+            }).catch(error => reject(`Failed to set up passwrodless login: ${error}.`));
+          }
+        }
+        else {
+          this.GenerateSshKey().then(keyGenSuccessful => {
+            this.KeyStateIn(remoteSsh).then(keyState => {
+              if (keyState == 'dne') {
+                this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                  remoteSsh.RestartSshService().then(restarted => {
+                    this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                      if (requiresPassword) {
+                        reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                        return;
+                      }
+
+                      resolve();
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+              }
+              else if (keyState == 'stale') {
+                remoteSsh.RemoveAuthorizedKey(this.user_, this.host_).then(keyRemoved => {
+                  this.CopyPublicKeyTo(remoteSsh).then(copySuccessful => {
+                    remoteSsh.RestartSshService().then(restarted => {
+                      this.RequiresPasswordTo(remoteSsh).then(requiresPassword => {
+                        if (requiresPassword) {
+                          reject(`Failed to set up passwordless login: password is still required for: ${remoteSsh.user_}@${remoteSsh.host_}.`);
+                          return;
+                        }
+
+                        resolve();
+                      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                    }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                  }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+                }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+              }
+              else if (keyState == 'match') {
+                resolve();
+                return;
+              }
+            }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+          }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+        }
+      }).catch(error => reject(`Failed to set up passwordless login: ${error}.`));
+    });
+  }
+
+  /**
+   * @param {string} user 
+   * @param {string} host 
+   * @param {string} password 
+   * @param {string} stopSshServiceCmd 
+   * @param {string} startSshServiceCmd 
+   * @param {string} statusSshCmd 
+   * @returns {SshRemote} Returns an SshRemote object. If arguments are invalid, it returns null.
+   */
+  static Create(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd) {
+    if (!user || !host || !password || !stopSshServiceCmd || !startSshServiceCmd || !statusSshCmd)
+      return null;
+
+    return new SshRemote(user, host, password, stopSshServiceCmd, startSshServiceCmd, statusSshCmd);
+  }
 }
 
 //-----------------------------
 // EXPORTS
 
-exports.Create = SSH.Create;
-exports.AreKeysStale = AreKeysStale;
-exports.RequiresPassword = RequiresPassword;
-exports.SetupPasswordlessLogin = SetupPasswordlessLogin;
+exports.SshLocal = SshLocal.Create;
+exports.SshRemote = SshRemote.Create;
