@@ -18,6 +18,7 @@ exports.Ping = require('./ping.js');
 exports.Remove = require('./remove.js');
 exports.Rename = require('./rename.js');
 exports.Rsync = require('./rsync.js');
+exports.Ssh = require('./ssh.js');
 exports.Timestamp = require('./timestamp.js');
 exports.UserInfo = require('./userinfo.js');
 exports.Zip = require('./zip.js');
